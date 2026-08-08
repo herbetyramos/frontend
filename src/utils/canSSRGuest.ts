@@ -1,3 +1,4 @@
+
 import {
   GetServerSideProps,
   GetServerSidePropsContext,
@@ -6,8 +7,12 @@ import {
 import { parseCookies } from "nookies";
 
 // Páginas que só podem ser acessadas por visitantes (não logados)
-export function canSSRGuest<P>(fn: GetServerSideProps<P>) {
-  return async (ctx: GetServerSidePropsContext): Promise<GetServerSidePropsResult<P>> => {
+export function canSSRGuest<P extends Record<string, unknown>>(
+  fn: GetServerSideProps<P>
+) {
+  return async (
+    ctx: GetServerSidePropsContext
+  ): Promise<GetServerSidePropsResult<P>> => {
     const cookies = parseCookies(ctx);
 
     // Se já tiver token, redireciona para /sala
@@ -24,3 +29,4 @@ export function canSSRGuest<P>(fn: GetServerSideProps<P>) {
     return await fn(ctx);
   };
 }
+

@@ -3,25 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
 import { Filtros } from "@/components/almoxarifado/Filtros";
+import { SolicitacaoMaterial } from "@/types/solicitacao";
 
-interface SolicitacaoMaterial {
-    id: string;
-    quantidade: number;
-    observacao?: string;
-    status: string;
-
-    curso: {
-        id: string;
-        nome_curso: string;
-    };
-
-    material: {
-        id: string;
-        nome_material: string;
-        propriedade: string;
-        qtde?: number;
-    };
-}
 
 export default function AlmoxarifadoPage() {
 

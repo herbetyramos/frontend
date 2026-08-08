@@ -1,7 +1,18 @@
 import jsPDF from "jspdf";
 import { api } from "@/services/api";
 
-async function carregarImagem(url: string): Promise<string> {
+interface CertificadoData {
+  aluno: {
+    nome: string;
+  };
+
+  cronograma: {
+    tema: string;
+    data_fim: string;
+  };
+}
+
+function carregarImagem(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
 
@@ -16,7 +27,7 @@ async function carregarImagem(url: string): Promise<string> {
       const ctx = canvas.getContext("2d");
 
       if (!ctx) {
-        reject("Erro ao criar canvas");
+        reject(new Error("Erro ao criar canvas"));
         return;
       }
 
@@ -25,26 +36,33 @@ async function carregarImagem(url: string): Promise<string> {
       resolve(canvas.toDataURL("image/png"));
     };
 
-    img.onerror = reject;
+    img.onerror = () => {
+      reject(new Error("Erro ao carregar imagem"));
+    };
   });
 }
 
-function formatarData(data: string) {
-  const d = new Date(data);
 
-  return d.toLocaleDateString("pt-BR");
+function formatarData(data: string) {
+  if (!data) return "";
+
+  return new Date(data).toLocaleDateString("pt-BR");
 }
+
 
 export async function gerarCertificados(idCronograma: string) {
   try {
-    const { data } = await api.get(
+
+    const { data } = await api.get<CertificadoData[]>(
       `/certificado/cronograma/${idCronograma}`
     );
+
 
     if (!data.length) {
       alert("Nenhum aluno aprovado encontrado.");
       return;
     }
+
 
     const pdf = new jsPDF({
       orientation: "landscape",
@@ -52,137 +70,181 @@ export async function gerarCertificados(idCronograma: string) {
       format: "a4",
     });
 
-    
-    const moldura = await carregarImagem("/imagens/moldura.png");
 
-    data.forEach((item: any, index: number) => {
-  if (index > 0) {
-    pdf.addPage();
-  }
-
-  const largura = pdf.internal.pageSize.getWidth();
-  const altura = pdf.internal.pageSize.getHeight();
-
-  
-pdf.addImage(
-  moldura,
-  "PNG",
-  0,
-  0,
-  largura,
-  altura
-);
-
-  
-  pdf.setFont("times", "normal");
-  pdf.setFontSize(16);
-
-  pdf.text(
-    "Certificamos que",
-    largura / 2,
-    70,
-    {
-      align: "center",
-    }
-  );
+    const moldura = await carregarImagem(
+      "/imagens/moldura.png"
+    );
 
 
-  pdf.setFont("times", "bold");
-  pdf.setFontSize(24);
+    data.forEach((item: CertificadoData, index: number) => {
 
-  pdf.text(
-    item.aluno.nome.toUpperCase(),
-    largura / 2,
-    105,
-    {
-      align: "center",
-    }
-  );
-
-  
-  // Texto antes do curso
-pdf.setFont("helvetica", "normal");
-pdf.setFontSize(12);
-
-const textoAntes = "concluiu com aproveitamento o curso de ";
-
-const larguraAntes = pdf.getTextWidth(textoAntes);
-
-// Nome do curso
-pdf.setFont("helvetica", "bold");
-pdf.setFontSize(16);
-
-const nomeCurso = item.cronograma.tema;
-
-const larguraCurso = pdf.getTextWidth(nomeCurso);
-
-// Centralizar tudo
-const larguraTotal = larguraAntes + larguraCurso;
-const inicioX = (largura - larguraTotal) / 2;
-
-// Desenha texto normal
-pdf.setFont("helvetica", "normal");
-pdf.setFontSize(12);
-pdf.text(textoAntes, inicioX, 114);
+      if (index > 0) {
+        pdf.addPage();
+      }
 
 
-// Desenha curso em negrito maior
-pdf.setFont("helvetica", "bold");
-pdf.setFontSize(15);
-pdf.text(nomeCurso, inicioX + larguraAntes, 114);
+      const largura =
+        pdf.internal.pageSize.getWidth();
 
- 
+      const altura =
+        pdf.internal.pageSize.getHeight();
 
-  // ==========================
-  // CARGA HORÁRIA
-  // ==========================
-  pdf.setFont("times", "normal");
-  pdf.setFontSize(16);
 
- 
-  pdf.text(
-    `Data de encerramento: ${formatarData(
-      item.cronograma.data_fim
-    )}`,
-    largura / 2,
-    125,
-    {
-      align: "center",
-    }
-  );
 
-  // ==========================
-  // NUMERAÇÃO
-  // ==========================
-  const numero = String(index + 1).padStart(4, "0");
+      pdf.addImage(
+        moldura,
+        "PNG",
+        0,
+        0,
+        largura,
+        altura
+      );
 
-  pdf.setFontSize(10);
 
-  pdf.text(
-    `Certificado nº ${numero}/${new Date().getFullYear()}`,
-    largura - 15,
-    altura - 10,
-    {
-      align: "right",
-    }
-  );
 
-  
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(16);
 
-  pdf.text(
-    "",
-    215,
-    182,
-    {
-      align: "center",
-    }
-  );
-});
 
-    const url = pdf.output("bloburl");
-    window.open(url, "_blank");
-  } catch (err) {
+      pdf.text(
+        "Certificamos que",
+        largura / 2,
+        70,
+        {
+          align: "center",
+        }
+      );
+
+
+
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(24);
+
+
+      pdf.text(
+        item.aluno.nome.toUpperCase(),
+        largura / 2,
+        105,
+        {
+          align: "center",
+        }
+      );
+
+
+
+      const textoAntes =
+        "concluiu com aproveitamento o curso de ";
+
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+
+
+      const larguraAntes =
+        pdf.getTextWidth(textoAntes);
+
+
+
+      const nomeCurso =
+        item.cronograma.tema;
+
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+
+
+      const larguraCurso =
+        pdf.getTextWidth(nomeCurso);
+
+
+
+      const larguraTotal =
+        larguraAntes + larguraCurso;
+
+
+      const inicioX =
+        (largura - larguraTotal) / 2;
+
+
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+
+
+      pdf.text(
+        textoAntes,
+        inicioX,
+        114
+      );
+
+
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+
+
+      pdf.text(
+        nomeCurso,
+        inicioX + larguraAntes,
+        114
+      );
+
+
+
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(16);
+
+
+      pdf.text(
+        `Data de encerramento: ${formatarData(
+          item.cronograma.data_fim
+        )}`,
+        largura / 2,
+        125,
+        {
+          align: "center",
+        }
+      );
+
+
+
+      const numero =
+        String(index + 1).padStart(4, "0");
+
+
+      pdf.setFontSize(10);
+
+
+      pdf.text(
+        `Certificado nº ${numero}/${new Date().getFullYear()}`,
+        largura - 15,
+        altura - 10,
+        {
+          align: "right",
+        }
+      );
+
+    });
+
+
+
+    const url =
+      pdf.output("bloburl");
+
+
+    window.open(
+      url,
+      "_blank"
+    );
+
+
+  } catch (err: unknown) {
+
     console.error(err);
-    alert("Erro ao gerar certificados.");
+
+    alert(
+      "Erro ao gerar certificados."
+    );
+
   }
 }

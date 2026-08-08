@@ -1,6 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { CronogramaType } from "@/types/Cronograma";
+import { CronogramaType } from "@/app/matricula/types";
+
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable?: {
+      finalY: number;
+    };
+  }
+}
 
 export function visualizarRelatorioProfessores(
   cronogramaFull: CronogramaType[],
@@ -116,7 +124,8 @@ export function visualizarRelatorioProfessores(
 
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY;
+  const finalY =
+  doc.lastAutoTable?.finalY ?? posY;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);

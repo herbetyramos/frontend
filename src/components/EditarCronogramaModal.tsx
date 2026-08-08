@@ -2,14 +2,53 @@
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
 
+interface CronogramaType {
+  id: string;
+
+  tema: string;
+
+  data_inicio: string;
+
+  data_fim: string;
+
+  hora_inicio: string;
+
+  hora_fim: string;
+
+  bloco_id?: string;
+
+  local_id?: string;
+
+  sala_id?: string;
+
+  professor_id?: string | null;
+
+  formatura_id?: string | null;
+
+  detentoras_id?: string;
+
+  quantidade_aluno?: number | string;
+
+  especificacao?: string | null;
+
+  publicar?: boolean;
+
+  draft?: boolean;
+
+  is_status?: string;
+
+  periodo?: string;
+
+  link_inscricao?: string;
+}
 
 
 interface Props {
-  dados: any;
+  dados: CronogramaType;
   fechar: () => void;
   atualizarLista: () => void;
-
 }
+
 // Tipos
 type LocalType = { id: string; polo: string };
 type SalaType = { id: string; numero_sala: string };
@@ -161,11 +200,7 @@ const [periodo, setPeriodo] = useState("");
   }
 }
 
-function formatarData(data: string): string {
-  if (!data) return "";
-  const [ano, mes, dia] = data.split("-");
-  return `${dia}/${mes}/${ano}`;
-}
+
 
 
  return (

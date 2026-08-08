@@ -1,999 +1,716 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { api } from "@/services/api";
-import { toast } from "react-toastify";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
+import {
+  useParams,
+} from "next/navigation";
+
+import {
+  api,
+} from "@/services/api";
+
+import {
+  toast,
+} from "react-toastify";
+
+import axios from "axios";
+
+
+// ==============================
+// TIPOS
+// ==============================
 
 type MaterialType = {
-    id: string;
-    nome_material: string;
-    qtde: number;
-    propriedade: "PERMANENTE" | "NAO_PERMANENTE";
+
+  id: string;
+
+  nome_material: string;
+
+  qtde: number | null;
+
+  propriedade:
+    | "PERMANENTE"
+    | "NAO_PERMANENTE";
+
 };
+
 
 
 type SelecionadoType = {
-    id_material: string;
-    nome_material: string;
-    quantidade: number;
+
+  id_material: string;
+
+  nome_material: string;
+
+  quantidade: number;
+
 };
+
+
 
 type CronogramaType = {
-    id: string;
-    tema: string;
-    data_inicio: string;
-    data_fim: string;
-    detentoras?: {
-        empresa?: {
-            nome_empresa: string;
-        };
-    };
+
+  id: string;
+
+  tema: string;
+
+  data_inicio: string;
+
+  data_fim: string;
+
+
+  detentoras?: {
+
+    ata?: {
+
+      empresa?: {
+
+        nome_empresa: string;
+
+      } | null;
+
+    } | null;
+
+  } | null;
+
 };
 
+
+
+
+// ==============================
+// ERRO AXIOS
+// ==============================
+
+function getMensagemErro(
+  error: unknown
+){
+
+  if(
+    axios.isAxiosError(error)
+  ){
+
+    return (
+      error.response?.data?.error ??
+      "Erro na comunicação com servidor"
+    );
+
+  }
+
+
+  return "Erro inesperado";
+
+}
+
+
+
+
+// ==============================
+// COMPONENTE
+// ==============================
 
 
 export default function SolicitacaoMaterialPage(){
 
 
-   const params = useParams();
-
-    const idCronograma =
-    params.id_cronograma as string;
+const params =
+useParams();
 
 
-
-    const [materiais,setMateriais] =
-        useState<MaterialType[]>([]);
-
-    const [cronograma,setCronograma] =
-    useState<CronogramaType | null>(null);    
+const idCronograma =
+params.id_cronograma as string;
 
 
 
-    const [selecionados,setSelecionados] =
-        useState<SelecionadoType[]>([]);
+const [
+  materiais,
+  setMateriais
+] =
+useState<MaterialType[]>([]);
 
 
 
-    const [observacao,setObservacao] =
-        useState("");
+const [
+  cronograma,
+  setCronograma
+] =
+useState<CronogramaType | null>(null);
 
 
 
-    const [loading,setLoading] =
-        useState(false);
+const [
+  selecionados,
+  setSelecionados
+] =
+useState<SelecionadoType[]>([]);
+
+
+
+const [
+  observacao,
+  setObservacao
+] =
+useState("");
+
+
+
+const [
+ loading,
+ setLoading
+] =
+useState(false);
 
 
 
 
+// ==============================
+// CARREGAR MATERIAIS
+// ==============================
 
-    const carregarMateriais = useCallback(async () => {
 
-    if (!idCronograma) return;
+const carregarMateriais =
+useCallback(async()=>{
 
-    try {
 
-        const response = await api.get(
-            "/solicitacao-material/materiais",
-            {
-                params: {
-                    id: idCronograma
-                }
-            }
-        );
+if(!idCronograma)
+return;
 
-      
 
-console.log(
-    "Não permanentes:",
-    materiais.filter(
-        m => m.propriedade === "NAO_PERMANENTE"
-    )
+
+try{
+
+
+const response =
+await api.get(
+"/solicitacao-material/materiais",
+{
+
+params:{
+id:idCronograma
+}
+
+}
 );
 
-        const dados = response.data;
 
-        if (Array.isArray(dados)) {
 
-            setMateriais(dados);
+const dados =
+response.data;
 
-        } else if (Array.isArray(dados.materiais)) {
 
-            setMateriais(dados.materiais);
 
-        } else {
+if(
+Array.isArray(dados)
+){
 
-            setMateriais([]);
+setMateriais(dados);
 
-        }
 
-    } catch (error: any) {
+}else if(
+Array.isArray(dados.materiais)
+){
 
-        console.log(error.response?.data);
+setMateriais(
+dados.materiais
+);
 
-                setMateriais([]);
 
-                toast.error("Erro ao carregar materiais");
+}else{
 
-            }
 
-            }, [idCronograma]);
+setMateriais([]);
 
-    const carregarCronograma = useCallback(async () => {
 
-    if (!idCronograma) return;
+}
 
-    try {
 
-        const response = await api.get(
-            `/cronograma/${idCronograma}`
-        );
 
-        setCronograma(response.data);
+}catch(error:unknown){
 
-    } catch (error) {
 
-        console.log(error);
+console.error(
+getMensagemErro(error)
+);
 
-    }
 
-}, [idCronograma]);
+setMateriais([]);
 
 
+toast.error(
+"Erro ao carregar materiais"
+);
 
 
-    useEffect(() => {
+}
 
-    carregarCronograma();
 
-            carregarMateriais();
 
-        }, [
-            carregarCronograma,
-            carregarMateriais
-        ]);
+},[
+idCronograma
+]);
 
 
 
 
+// ==============================
+// CARREGAR CRONOGRAMA
+// ==============================
 
-    function selecionarMaterial(
-        material:MaterialType
-    ){
 
+const carregarCronograma =
+useCallback(async()=>{
 
-        const existe =
-            selecionados.some(
-                item =>
-                item.id_material === material.id
-            );
 
+if(!idCronograma)
+return;
 
 
-        if(existe){
 
+try{
 
-            setSelecionados(
-                anterior =>
-                anterior.filter(
-                    item =>
-                    item.id_material !== material.id
-                )
-            );
 
+const response =
+await api.get(
+`/cronograma/${idCronograma}`
+);
 
-            return;
 
-        }
 
+setCronograma(
+response.data
+);
 
 
-        setSelecionados(
-            anterior => [
-                ...anterior,
-                {
-                    id_material:material.id,
-                    nome_material:material.nome_material,
-                    quantidade:1
-                }
-            ]
-        );
 
+}catch(error:unknown){
 
-    }
 
+console.error(
+getMensagemErro(error)
+);
 
 
+toast.error(
+"Erro ao carregar cronograma"
+);
 
 
-    function alterarQuantidade(
-        id_material:string,
-        quantidade:number
-    ){
+}
 
 
-        setSelecionados(
-            anterior =>
-            anterior.map(item =>
-                item.id_material === id_material
-                ?
-                {
-                    ...item,
-                    quantidade
-                }
-                :
-                item
-            )
-        );
 
+},[
+idCronograma
+]);
 
-    }
 
-        function cancelarMaterial(
-        id_material:string
-    ){
 
-        setSelecionados(
-            anterior =>
-            anterior.filter(
-                item =>
-                item.id_material !== id_material
-            )
-        );
 
-    }
 
+useEffect(()=>{
 
 
+carregarCronograma();
 
+carregarMateriais();
 
 
+},[
+carregarCronograma,
+carregarMateriais
+]);
 
-    async function salvarSolicitacao(){
 
 
-        if(selecionados.length === 0){
 
 
-            toast.warning(
-                "Selecione pelo menos um material"
-            );
 
+// ==============================
+// SELECIONAR MATERIAL
+// ==============================
 
-            return;
 
-        }
+function selecionarMaterial(
+material: MaterialType
+){
 
 
+const existe =
+selecionados.some(
+item =>
+item.id_material === material.id
+);
 
-        try{
 
 
-            setLoading(true);
+if(existe){
 
 
+setSelecionados(
+anterior =>
+anterior.filter(
+item =>
+item.id_material !== material.id
+)
+);
 
-           await api.post("/solicitacao-material", {
 
-    id_cronograma: idCronograma,
+return;
 
-    observacao,
 
-    itens: selecionados.map(item => ({
+}
 
-        id_material: item.id_material,
 
-        quantidade: item.quantidade
 
-    }))
+setSelecionados(
+anterior => [
 
-});
+...anterior,
 
+{
 
+id_material:
+material.id,
 
-            toast.success(
-                "Solicitação de materiais enviada!"
-            );
+nome_material:
+material.nome_material,
 
-            setSelecionados([]);
+quantidade:
+1
 
-            setObservacao("");
+}
 
+]
 
+);
 
-        }catch(error:any){
 
+}
 
-            console.log(
-                error.response?.data
-            );
 
 
-            toast.error(
-                "Erro ao salvar solicitação"
-            );
 
+async function salvarSolicitacao(){
 
-        }finally{
 
+if(
+selecionados.length === 0
+){
 
-            setLoading(false);
 
+toast.warning(
+"Selecione pelo menos um material"
+);
 
-        }
 
+return;
 
-    }
 
+}
 
 
 
+try{
 
 
+setLoading(true);
 
-    const materiaisPermanentes =
-    (materiais ?? []).filter(
-        material =>
-            material.propriedade === "PERMANENTE"
-    );
 
 
+await api.post(
+"/solicitacao-material",
+{
 
-    const materiaisNaoPermanentes =
-    (materiais ?? []).filter(
-        material =>
-            material.propriedade === "NAO_PERMANENTE"
-    );
+id_cronograma:
+idCronograma,
 
 
+observacao,
 
 
-    function MaterialLinha({
+itens:
 
-        material
+selecionados.map(
+item =>
 
-    }:{
-        material:MaterialType;
+({
 
-    }){
+id_material:
+item.id_material,
 
+quantidade:
+item.quantidade
 
-        const selecionado =
-            selecionados.find(
-                item =>
-                item.id_material === material.id
-            );
+})
 
+)
 
+}
 
-        return (
+);
 
-            <tr
-            key={material.id}
-            className="border-b"
-            >
 
 
-                <td
-                className="
-                p-3
-                text-center
-                "
-                >
+toast.success(
+"Solicitação enviada com sucesso!"
+);
 
 
-                    <input
 
-                    type="checkbox"
+setSelecionados([]);
 
-                    checked={
-                        !!selecionado
-                    }
+setObservacao("");
 
 
-                    onChange={()=>
-                        selecionarMaterial(
-                            material
-                        )
-                    }
 
-                    />
+}catch(error:unknown){
 
 
-                </td>
+console.error(
+getMensagemErro(error)
+);
 
 
+toast.error(
+"Erro ao salvar solicitação"
+);
 
 
 
-                <td
-                className="p-3"
-                >
+}finally{
 
-                    {material.nome_material}
 
-                </td>
+setLoading(false);
 
 
+}
 
 
+}
 
-                <td
-                className="
-                p-3
-                text-center
-                "
-                >
 
-                    {material.qtde ?? 0}
 
-                </td>
 
 
+// ==============================
+// TELA
+// ==============================
 
 
+return (
 
-                <td
-                className="
-                p-3
-                text-center
-                "
-                >
+<div className="p-6 space-y-6">
 
 
-                {
-                    selecionado && (
+<h1 className="text-2xl font-bold">
 
-                        <input
+Solicitação de Materiais
 
-                        type="number"
+</h1>
 
-                        min="1"
 
-                        className="
-                        border
-                        rounded
-                        w-20
-                        p-1
-                        text-center
-                        "
 
-                        value={
-                            selecionado.quantidade
-                        }
+{
+cronograma && (
 
+<div className="bg-gray-100 p-4 rounded-lg">
 
-                        onChange={
-                            e =>
-                            alterarQuantidade(
-                                material.id,
-                                Number(
-                                    e.target.value
-                                )
-                            )
-                        }
+<p>
+<strong>Curso:</strong>{" "}
+{cronograma.tema}
+</p>
 
+<p>
+<strong>Período:</strong>{" "}
+{cronograma.data_inicio}
+{" até "}
+{cronograma.data_fim}
+</p>
 
-                        />
+</div>
 
-                    )
-                }
+)
 
+}
 
-                </td>
 
 
 
+<div className="grid grid-cols-2 gap-4">
 
 
-                <td
-                className="
-                p-3
-                text-center
-                "
-                >
+{
+materiais.map(
+material => (
 
+<div
+key={material.id}
+className="
+border
+rounded-lg
+p-4
+flex
+justify-between
+items-center
+"
+>
 
-                {
-                    selecionado && (
 
-                        <button
+<div>
 
-                        onClick={()=>
-                            cancelarMaterial(
-                                material.id
-                            )
-                        }
 
+<p className="font-semibold">
 
-                        className="
-                        bg-red-600
-                        text-white
-                        px-3
-                        py-1
-                        rounded
-                        "
+{material.nome_material}
 
-                        >
+</p>
 
-                            Cancelar
 
-                        </button>
+<p className="text-sm text-gray-500">
 
-                    )
-                }
+{
+material.propriedade === "PERMANENTE"
+?
+"Permanente"
+:
+"Não Permanente"
+}
 
+</p>
 
-                </td>
 
+</div>
 
-            </tr>
 
-        );
 
+<button
 
-    }
+type="button"
 
-        function GrupoMateriais({
+onClick={()=>
+selecionarMaterial(material)
+}
 
-        titulo,
+className="
+bg-blue-600
+text-white
+px-3
+py-2
+rounded
+"
 
-        lista
+>
 
-    }:{
-        titulo:string;
-        lista:MaterialType[];
 
-    }){
+{
 
+selecionados.some(
+item =>
+item.id_material === material.id
+)
 
-        return (
+?
 
-            <div
-            className="
-            mb-8
-            "
-            >
+"Selecionado"
 
+:
 
-                <h2
-                className="
-                text-xl
-                font-bold
-                mb-3
-                text-blue-700
-                "
-                >
+"Adicionar"
 
-                    {titulo}
+}
 
-                </h2>
 
+</button>
 
 
 
-                <div
-                className="
-                border
-                rounded
-                overflow-hidden
-                "
-                >
+</div>
 
+)
 
-                    <table
-                    className="
-                    w-full
-                    "
-                    >
+)
 
+}
 
-                        <thead
-                        className="
-                        bg-gray-100
-                        "
-                        >
 
-                            <tr>
+</div>
 
 
-                                <th
-                                className="p-3"
-                                >
 
-                                    Escolher
 
-                                </th>
 
+<textarea
 
-                                <th
-                                className="p-3 text-left"
-                                >
+value={observacao}
 
-                                    Material
+onChange={
+e =>
+setObservacao(
+e.target.value
+)
+}
 
-                                </th>
+placeholder="Observação"
 
+rows={4}
 
-                                <th
-                                className="p-3"
-                                >
+className="
+w-full
+border
+rounded-lg
+p-3
+"
 
-                                    Disponível
+/>
 
-                                </th>
 
 
-                                <th
-                                className="p-3"
-                                >
 
-                                    Quantidade
 
-                                </th>
 
+<button
 
-                                <th
-                                className="p-3"
-                                >
+type="button"
 
-                                    Ação
+disabled={loading}
 
-                                </th>
+onClick={
+salvarSolicitacao
+}
 
+className="
+w-full
+bg-green-600
+text-white
+py-3
+rounded-lg
+font-bold
+"
 
-                            </tr>
+>
 
 
-                        </thead>
+{
+loading
+?
+"Salvando..."
+:
+"Enviar Solicitação"
+}
 
 
+</button>
 
-                        <tbody>
 
 
-                        {
-                            lista.map(material=>(
+</div>
 
-                                <MaterialLinha
+);
 
-                                key={material.id}
-
-                                material={material}
-
-                                />
-
-                            ))
-                        }
-
-
-                        </tbody>
-
-
-                    </table>
-
-
-                </div>
-
-
-            </div>
-
-        );
-
-    }
-
-
-
-
-
-
-
-
-    return (
-
-        <div
-        className="
-        p-6
-        max-w-6xl
-        mx-auto
-        "
-        >
-
-
-            <h1
-            className="
-            text-3xl
-            font-bold
-            mb-2
-            "
-            >
-
-                Solicitação de Materiais
-
-            </h1>
-
-            {cronograma && (
-
-    <div className="mb-6 rounded border bg-blue-50 p-4">
-
-        <p>
-
-            <strong>Curso:</strong>
-
-            {" "}
-
-            {cronograma.tema}
-
-        </p>
-
-        <p>
-
-            <strong>Período:</strong>
-
-            {" "}
-
-            {new Date(
-                cronograma.data_inicio
-            ).toLocaleDateString("pt-BR")}
-
-            {" até "}
-
-            {new Date(
-                cronograma.data_fim
-            ).toLocaleDateString("pt-BR")}
-
-        </p>
-
-        {cronograma.detentoras?.empresa && (
-
-            <p>
-
-                <strong>Detentora:</strong>
-
-                {" "}
-
-                {cronograma.detentoras.empresa.nome_empresa}
-
-            </p>
-
-        )}
-
-    </div>
-
-)}
-
-
-
-            <p
-            className="
-            text-gray-600
-            mb-6
-            "
-            >
-
-                Cronograma: {idCronograma}
-
-            </p>
-
-
-
-
-
-            <GrupoMateriais
-
-            titulo="Materiais Permanentes"
-
-            lista={materiaisPermanentes}
-
-            />
-
-
-
-
-
-            <GrupoMateriais
-
-            titulo="Materiais Não Permanentes"
-
-            lista={materiaisNaoPermanentes}
-
-            />
-
-
-
-
-
-
-
-            <div
-            className="
-            mt-8
-            "
-            >
-
-
-                <label
-                className="
-                block
-                font-semibold
-                mb-2
-                "
-                >
-
-                    Observação do Professor
-
-                </label>
-
-
-
-                <textarea
-
-                className="
-                border
-                rounded
-                w-full
-                p-3
-                "
-
-                rows={4}
-
-
-                value={observacao}
-
-
-                onChange={
-                    e =>
-                    setObservacao(
-                        e.target.value
-                    )
-                }
-
-
-                placeholder="
-                Informe alguma observação para o almoxarifado
-                "
-
-                />
-
-
-            </div>
-
-
-
-
-
-
-
-            <div
-            className="
-            mt-8
-            border
-            rounded
-            p-4
-            "
-            >
-
-
-                <h2
-                className="
-                font-bold
-                mb-3
-                "
-                >
-
-                    Materiais Selecionados
-
-                </h2>
-
-
-
-
-                {
-                    selecionados.length === 0
-
-                    ?
-
-                    <p>
-                        Nenhum material selecionado.
-                    </p>
-
-                    :
-
-                    <ul>
-
-                    {
-                        selecionados.map(item=>(
-
-                            <li
-                            key={item.id_material}
-                            className="
-                            flex
-                            justify-between
-                            border-b
-                            py-2
-                            "
-                            >
-
-                                <span>
-
-                                    {item.nome_material}
-
-                                </span>
-
-
-                                <span>
-
-                                    Quantidade:
-                                    {" "}
-                                    {item.quantidade}
-
-                                </span>
-
-
-                            </li>
-
-                        ))
-                    }
-
-                    </ul>
-
-                }
-
-
-            </div>
-
-
-
-
-
-
-
-            <button
-
-            onClick={
-                salvarSolicitacao
-            }
-
-
-            disabled={loading}
-
-
-            className="
-            mt-8
-            bg-green-600
-            hover:bg-green-700
-            disabled:bg-gray-400
-            text-white
-            px-6
-            py-3
-            rounded
-            font-bold
-            "
-
-            >
-
-
-                {
-                    loading
-
-                    ?
-
-                    "Salvando..."
-
-                    :
-
-                    "Salvar Solicitação"
-
-                }
-
-
-            </button>
-
-
-        </div>
-
-    );
 
 }

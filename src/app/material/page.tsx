@@ -1,7 +1,15 @@
+
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
 import { useSearchParams } from "next/navigation";
+
 import { api } from "@/services/api";
 
 import DetentoraSelect from "./components/DetentoraSelect";
@@ -11,167 +19,419 @@ import ListaNaoPermanentes from "./components/ListaNaoPermanentes";
 
 import { Material } from "./types";
 
-export default function MaterialPage() {
-  const [curso, setCurso] = useState("");
-  const [materiais, setMateriais] = useState<Material[]>([]);
+// =====================================================
+// CONTEÚDO DA PÁGINA
+// =====================================================
 
+function MaterialContent() {
   const searchParams = useSearchParams();
+
+  // =====================================================
+  // PARÂMETRO DA URL
+  // =====================================================
+
   const idCurso = searchParams.get("id_curso");
-  const [mostrarCadastro, setMostrarCadastro] = useState(false);
 
-const [mostrarPermanentes, setMostrarPermanentes] = useState(false);
+  // =====================================================
+  // ESTADOS
+  // =====================================================
 
-const [mostrarNaoPermanentes, setMostrarNaoPermanentes] = useState(true);
+  const [curso, setCurso] = useState("");
 
-const [filtroNaoPermanente, setFiltroNaoPermanente] = useState("");
+  const [materiais, setMateriais] = useState<
+    Material[]
+  >([]);
 
-  const carregarMateriais = useCallback(async (cursoId: string) => {
-    if (!cursoId) {
+  const [mostrarCadastro, setMostrarCadastro] =
+    useState(false);
+
+  const [mostrarPermanentes, setMostrarPermanentes] =
+    useState(false);
+
+  const [mostrarNaoPermanentes, setMostrarNaoPermanentes] =
+    useState(true);
+
+  const [filtroNaoPermanente, setFiltroNaoPermanente] =
+    useState("");
+
+  // =====================================================
+  // CARREGAR MATERIAIS
+  // =====================================================
+
+  const carregarMateriais = useCallback(
+    async (cursoId: string) => {
+      if (!cursoId) {
+        setMateriais([]);
+        return;
+      }
+
+      try {
+        const response =
+          await api.get<Material[]>(
+            `/material/curso/${cursoId}`
+          );
+
+        setMateriais(
+          response.data ?? []
+        );
+      } catch (error: unknown) {
+        console.error(
+          "Erro ao carregar materiais:",
+          error
+        );
+
+        setMateriais([]);
+      }
+    },
+    []
+  );
+
+  // =====================================================
+  // ABRIR PELA URL
+  // =====================================================
+
+  useEffect(() => {
+    if (!idCurso) {
+      return;
+    }
+
+    setCurso(idCurso);
+
+    void carregarMateriais(idCurso);
+  }, [
+    idCurso,
+    carregarMateriais,
+  ]);
+
+  // =====================================================
+  // QUANDO O CURSO FOR ALTERADO
+  // =====================================================
+
+  useEffect(() => {
+    if (!curso) {
       setMateriais([]);
       return;
     }
 
-    const response = await api.get(`/material/curso/${cursoId}`);
-    setMateriais(response.data);
-  }, []);
+    void carregarMateriais(curso);
+  }, [
+    curso,
+    carregarMateriais,
+  ]);
 
-  // Quando abrir pela tela de Cronograma
-  useEffect(() => {
-    if (!idCurso) return;
+  // =====================================================
+  // EXCLUIR MATERIAL
+  // =====================================================
 
-    setCurso(idCurso);
-    carregarMateriais(idCurso);
-  }, [idCurso, carregarMateriais]);
+  const excluir = useCallback(
+    async (id: string) => {
+      try {
+        await api.delete(
+          `/material/${id}`
+        );
 
-  // Quando o usuário trocar o curso manualmente
-  useEffect(() => {
-    if (curso) {
-      carregarMateriais(curso);
-    }
-  }, [curso, carregarMateriais]);
+        if (curso) {
+          await carregarMateriais(curso);
+        }
+      } catch (error: unknown) {
+        console.error(
+          "Erro ao excluir material:",
+          error
+        );
+      }
+    },
+    [
+      curso,
+      carregarMateriais,
+    ]
+  );
 
-  async function excluir(id: string) {
-    await api.delete(`/material/${id}`);
+  // =====================================================
+  // FILTRO - NÃO PERMANENTES
+  // =====================================================
 
-    if (curso) {
-      carregarMateriais(curso);
-    }
-  }
-
-    const materiaisNaoPermanentesFiltrados = materiais.filter(
-      (m) =>
-        m.propriedade === "NAO_PERMANENTE" &&
-        m.nome_material
+  const materiaisNaoPermanentesFiltrados =
+    materiais.filter(
+      (material) =>
+        material.propriedade ===
+          "NAO_PERMANENTE" &&
+        material.nome_material
           .toLowerCase()
-          .includes(filtroNaoPermanente.toLowerCase())
+          .includes(
+            filtroNaoPermanente
+              .toLowerCase()
+          )
     );
 
+  // =====================================================
+  // RENDER
+  // =====================================================
 
   return (
-    <div className="h-screen overflow-hidden p-2 flex flex-col gap-2">
-       <div className="w-full px-8 gap-4 py-1 font-semibold bg-green-100">
+    <div className="w-full p-4 space-y-4">
 
-  <button
-    onClick={() => setMostrarCadastro(!mostrarCadastro)}
-    className=" w-full px-8 gap-4 py-1 font-semibold bg-green-100"
-  >
-    Cadastro de Materiais
+      {/* =================================================
+          CADASTRO DE MATERIAIS
+      ================================================= */}
 
-    <span>
-      {mostrarCadastro ? "▲" : "▼"}
-    </span>
-  </button>
+      <div className="bg-white rounded-lg shadow border">
+
+        <button
+          type="button"
+          onClick={() =>
+            setMostrarCadastro(
+              (anterior) => !anterior
+            )
+          }
+          className="
+            w-full
+            flex
+            items-center
+            justify-between
+            px-8
+            py-3
+            font-semibold
+            bg-green-100
+            hover:bg-green-200
+            transition
+          "
+        >
+          <span>
+            Cadastro de Materiais
+          </span>
+
+          <span>
+            {mostrarCadastro
+              ? "▲"
+              : "▼"}
+          </span>
+        </button>
 
         {mostrarCadastro && (
           <div className="p-4">
             <CadastroMaterial
               id_curso={curso}
-              onSaved={() => carregarMateriais(curso)}
+              onSaved={() => {
+                if (curso) {
+                  void carregarMateriais(
+                    curso
+                  );
+                }
+              }}
             />
           </div>
         )}
-
       </div>
 
+      {/* =================================================
+          SELEÇÃO DO CURSO
+      ================================================= */}
 
-      <div className="bg-white p-4 rounded shadow">
-        <label className="font-semibold">
+      <div className="bg-white p-4 rounded-lg shadow border">
+
+        <label
+          htmlFor="curso"
+          className="block font-semibold mb-2"
+        >
           Curso
         </label>
 
         <DetentoraSelect
-         value={curso}
-         onChange={setCurso}
+          value={curso}
+          onChange={setCurso}
         />
+
       </div>
 
-     
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1">
+      {/* =================================================
+          LISTAS DE MATERIAIS
+      ================================================= */}
 
-      <div className="bg-white rounded-lg shadow border">
+      <div className="
+        grid
+        grid-cols-1
+        xl:grid-cols-2
+        gap-6
+      ">
 
-            <button
-              onClick={() =>
-                setMostrarPermanentes(!mostrarPermanentes)
-              }
-              
-              className="w-full flex justify-betwee items-center px-4 py-3 font-semibold bg-green-100"
-            >
-              <span>
-                Materiais Permanentes
-              </span>
-              
-              <span>
-                {mostrarPermanentes ? "▲" : "▼"}
-              </span>
-              
-            </button>
+        {/* ===============================================
+            MATERIAIS PERMANENTES
+        =============================================== */}
 
-            {mostrarPermanentes && (
+        <div className="
+          bg-white
+          rounded-lg
+          shadow
+          border
+          overflow-hidden
+        ">
+
+          <button
+            type="button"
+            onClick={() =>
+              setMostrarPermanentes(
+                (anterior) => !anterior
+              )
+            }
+            className="
+              w-full
+              flex
+              items-center
+              justify-between
+              px-4
+              py-3
+              font-semibold
+              bg-green-100
+              hover:bg-green-200
+              transition
+            "
+          >
+            <span>
+              Materiais Permanentes
+            </span>
+
+            <span>
+              {mostrarPermanentes
+                ? "▲"
+                : "▼"}
+            </span>
+          </button>
+
+          {mostrarPermanentes && (
+            <div className="p-4">
 
               <ListaPermanentes
                 materiais={materiais}
                 onDelete={excluir}
               />
 
+            </div>
+          )}
+
+        </div>
+
+        {/* ===============================================
+            MATERIAIS NÃO PERMANENTES
+        =============================================== */}
+
+        <div className="
+          bg-white
+          rounded-lg
+          shadow
+          border
+          overflow-hidden
+        ">
+
+          <div className="
+            flex
+            flex-col
+            gap-3
+            md:flex-row
+            md:items-center
+            md:justify-between
+            px-4
+            py-3
+            bg-green-100
+          ">
+
+            <button
+              type="button"
+              onClick={() =>
+                setMostrarNaoPermanentes(
+                  (anterior) => !anterior
+                )
+              }
+              className="
+                flex
+                items-center
+                gap-2
+                font-semibold
+                text-left
+              "
+            >
+              <span>
+                Materiais Não Permanentes
+              </span>
+
+              <span>
+                {mostrarNaoPermanentes
+                  ? "▲"
+                  : "▼"}
+              </span>
+            </button>
+
+            {mostrarNaoPermanentes && (
+              <input
+                type="text"
+                placeholder="Pesquisar material..."
+                value={
+                  filtroNaoPermanente
+                }
+                onChange={(event) =>
+                  setFiltroNaoPermanente(
+                    event.target.value
+                  )
+                }
+                className="
+                  w-full
+                  md:w-80
+                  px-3
+                  py-2
+                  border
+                  rounded-lg
+                  text-sm
+                  bg-white
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
+              />
             )}
 
           </div>
 
-      <div className="bg-white rounded-lg shadow border">
+          {mostrarNaoPermanentes && (
+            <div className="p-4">
 
-  <div className="flex items-center justify-between px-4 py-3 bg-yellow-100 border-b">
+              <ListaNaoPermanentes
+                materiais={
+                  materiaisNaoPermanentesFiltrados
+                }
+                onDelete={excluir}
+              />
 
-    <button
-      onClick={() =>
-        setMostrarNaoPermanentes(!mostrarNaoPermanentes)
-      }
-      className="flex items-center gap-2 font-semibold"
-    >
-      
+            </div>
+          )}
 
-      <span>Materiais Não Permanentes</span>
-      <span>{mostrarNaoPermanentes ? "▲" : "▼"}</span>
-    </button>
+        </div>
 
-    <input
-      type="text"
-      placeholder="Pesquisar material..."
-      value={filtroNaoPermanente}
-      onChange={(e) => setFiltroNaoPermanente(e.target.value)}
-      className="w-80 px-3 py-2 border rounded-lg text-sm"
-    />
+      </div>
 
-  </div>
-
-  {mostrarNaoPermanentes && (
-    <ListaNaoPermanentes
-      materiais={materiaisNaoPermanentesFiltrados}
-      onDelete={excluir}
-    />
-  )}
-</div>
-</div>
     </div>
+  );
+}
+
+// =====================================================
+// PÁGINA
+// =====================================================
+
+export default function MaterialPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="
+          flex
+          min-h-screen
+          items-center
+          justify-center
+        ">
+          <p className="text-gray-500">
+            Carregando materiais...
+          </p>
+        </div>
+      }
+    >
+      <MaterialContent />
+    </Suspense>
   );
 }

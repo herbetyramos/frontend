@@ -13,7 +13,7 @@ import Link from "next/link";
 import { gerarRelatorioDetentora } from "@/reports/relatorioDetentora";
 import { Send } from "lucide-react";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
+
 import { gerarRelatorioSolicitacao } from "@/reports/gerarRelatorioSolicitacao";
 import { gerarCertificados }from "@/utils/gerarCertificadoPDF";
 
@@ -96,7 +96,7 @@ type AgrupamentoType = {
 };
 
 export default function ListCronograma() {
-  const router = useRouter();
+  
   const [agrupado, setAgrupado] = useState<AgrupamentoType>({});
   const [cronogramaFull, setCronogramaFull] = useState<CronogramaType[]>([]);
   const [blocos, setBlocos] = useState<string[]>([]);

@@ -114,9 +114,7 @@ export default function ResumoCronograma({
           <p>
 
             {
-              cronograma
-              .professor
-              ?.nome || "-"
+              cronograma.professor?.nome_professor || "-"
             }
 
           </p>
@@ -140,9 +138,7 @@ export default function ResumoCronograma({
           <p>
 
             {
-              cronograma
-              .salaAula
-              ?.nome || "-"
+              cronograma.salaAula?.tipo_uso || "-"
             }
 
           </p>
@@ -168,7 +164,7 @@ export default function ResumoCronograma({
             {
               cronograma
               .localAula
-              ?.nome || "-"
+              ?.polo || "-"
             }
 
           </p>

@@ -1,6 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { CronogramaType } from "@/types/Cronograma";
+import { CronogramaType } from "@/app/matricula/types";
+
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable?: {
+      finalY: number;
+    };
+  }
+}
 
 
 function getPeriodo(hora: string) {
@@ -392,9 +400,7 @@ export function visualizarRelatorioProfessorSala(
 
 
           const finalY =
-            (doc as any)
-              .lastAutoTable
-              .finalY;
+  doc.lastAutoTable?.finalY ?? posY;
 
 
 

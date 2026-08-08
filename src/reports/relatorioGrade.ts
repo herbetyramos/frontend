@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { CronogramaType } from "@/types/Cronograma";
+
+import { CronogramaType } from "@/app/matricula/types";
 
 interface CronogramaGroup {
   [bloco: string]: {

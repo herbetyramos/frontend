@@ -1,6 +1,12 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
+
 interface SolicitacaoMaterial {
     quantidade: number;
     observacao?: string | null;
@@ -274,7 +280,8 @@ export function gerarRelatorioSolicitacao(
 
     });
 
-    y = (pdf as any).lastAutoTable.finalY + 10;
+    y = (pdf as JsPDFWithAutoTable).lastAutoTable?.finalY ?? y;
+y += 10;
 
     //--------------------------------------------------
     // OBSERVAÇÃO

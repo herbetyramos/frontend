@@ -1,57 +1,110 @@
 export interface CursoType {
-
   id: string;
-
   nome_curso: string;
 
+  segmento?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 
 export interface ProfessorType {
+  id?: string;
 
-  id: string;
+  nome_professor: string;
 
-  nome: string;
+  telefone?: string;
 
+  Endereco?: string;
+
+  bairro?: string;
+
+  Numero?: string;
+
+  contato?: string;
+
+  CPF?: string;
+
+  especialidade?: string;
+
+  foto?: string | null;
 }
 
 
 export interface SalaType {
+  id?: string;
 
-  id: string;
+  numero_sala: string;
 
-  nome: string;
-
+  tipo_uso?: string;
 }
 
 
 export interface LocalType {
+  id?: string;
 
-  id: string;
+  polo: string;
 
-  nome: string;
+  Telefone?: string;
 
+  Telefone2?: string;
 }
 
 
 export interface FormaturaType {
-
-  id: string;
+  id?: string;
 
   data_formatura: string;
 
+  local?: string;
 }
 
 
 export interface DetentoraType {
 
-  id: string;
+  id?: string;
+
+  ata_id?: string | null;
 
   cursos_id: string;
 
-  curso?: CursoType;
+  quantidade_turma?: number | null;
+
+
+  curso?: CursoType | null;
+
+
+  ata?: {
+
+    id: string;
+
+    numero_ata: string;
+
+
+    empresa?: {
+
+      id?: string;
+
+      nome_empresa: string;
+
+    } | null;
+
+
+  } | null;
 
 }
+
+
+
+export interface BlocoCursoType {
+
+  id?: string;
+
+  bloco_Curso: string;
+
+}
+
 
 
 export interface CronogramaType {
@@ -62,53 +115,37 @@ export interface CronogramaType {
 
   tema: string;
 
+
   data_inicio: string;
 
   data_fim: string;
+
 
   hora_inicio: string;
 
   hora_fim: string;
 
 
+
   professor?: ProfessorType | null;
 
 
-  salaAula?: SalaType;
+  salaAula?: SalaType | null;
 
 
-  localAula?: LocalType;
+  localAula?: LocalType | null;
 
 
-  formatura?: FormaturaType;
+  formatura?: FormaturaType | null;
 
 
   detentoras?: DetentoraType | null;
 
-}
 
-
-
-export interface MatriculaType {
-
-  id: string;
-
-  id_cronograma: string;
-
-  id_aluno: string;
-
-  confirmacao_curso: boolean;
-
-  confirmacao_formatura: boolean;
-
-  aprovado: boolean;
-
-  justificativa?: string | null;
-
-
-  aluno: AlunoType;
+  bloco_curso?: BlocoCursoType | null;
 
 }
+
 
 
 
@@ -125,10 +162,11 @@ export interface AlunoType {
   email?: string;
 
   Telefone_recado?: string;
-  
+
   telefone_recado?: string;
 
 }
+
 
 
 
@@ -136,9 +174,31 @@ export interface MatriculaType {
 
   id: string;
 
-  aluno: AlunoType;
+
+  id_cronograma?: string;
+
+
+  id_aluno?: string;
+
+
+  confirmacao_curso?: boolean;
+
+
+  confirmacao_formatura?: boolean;
+
+
+  aprovado?: boolean;
+
+
+  justificativa?: string | null;
+
+
+  aluno?: AlunoType | null;
 
 }
+
+
+
 
 export interface MaterialType {
 
@@ -151,6 +211,7 @@ export interface MaterialType {
   propriedade: string;
 
 }
+
 
 
 

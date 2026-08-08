@@ -118,7 +118,7 @@ export default function ListaMatriculados({
 
                   <td className="px-2 py-1 text-sm">
 
-                    {item.aluno.nome}
+                    {item.aluno?.nome || "Aluno não informado"}
 
                   </td>
 
@@ -128,7 +128,7 @@ export default function ListaMatriculados({
 
                   <td className="px-2 py-1 text-sm">
 
-                    {item.aluno.CPF}
+                    {item.aluno?.CPF || "Falta CPF"}
 
                   </td>
 

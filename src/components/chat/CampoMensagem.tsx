@@ -32,7 +32,7 @@ export default function CampoMensagem({
 
       setTexto("");
 
-    } catch (err) {
+    } catch {
 
       toast.error("Erro ao enviar mensagem.");
 

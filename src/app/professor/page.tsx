@@ -1,286 +1,424 @@
- "use client";
+"use client";
 
-import { useState, FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { setupAPIClient } from "../../services/api";
 import { toast } from "react-toastify";
+import axios from "axios";
+
 
 export default function Professor() {
-  const [nome_professor, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [Endereco, setEndereco] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [Numero, setNumero] = useState("");
-  const [CPF, setCpf] = useState("");
-  const [especialidade, setEspecialidade] = useState("");
-  const [contato, setContato] = useState("");
-  const [foto, setFoto] = useState<File | null>(null);
 
-  async function handleRegister(event: FormEvent) {
+  const [nome_professor, setNome] = useState("");
+
+  const [telefone, setTelefone] = useState("");
+
+  const [endereco, setEndereco] = useState("");
+
+  const [bairro, setBairro] = useState("");
+
+  const [numero, setNumero] = useState("");
+
+  const [cpf, setCpf] = useState("");
+
+  const [especialidade, setEspecialidade] = useState("");
+
+  const [contato, setContato] = useState("");
+
+  const [foto, setFoto] =
+    useState<File | null>(null);
+
+
+
+  async function handleRegister(
+    event: FormEvent
+  ) {
+
     event.preventDefault();
 
+
     if (
-      nome_professor === "" ||
-      Endereco === "" ||
-      bairro === "" ||
-      Numero === "" ||
-      telefone === "" ||
-      CPF === "" ||
-      especialidade === "" ||
-      contato === ""
+      !nome_professor ||
+      !endereco ||
+      !bairro ||
+      !numero ||
+      !telefone ||
+      !cpf ||
+      !especialidade ||
+      !contato
     ) {
-      toast.error("Preencha todos os campos");
+
+      toast.error(
+        "Preencha todos os campos"
+      );
+
       return;
+
     }
 
+
+
     try {
-      const apiClient = setupAPIClient();
 
-      const data = new FormData();
 
-      data.append("nome_professor", nome_professor);
-      data.append("telefone", telefone);
-      data.append("Endereco", Endereco);
-      data.append("bairro", bairro);
-      data.append("Numero", Numero);
-      data.append("contato", contato);
-      data.append("CPF", CPF);
-      data.append("especialidade", especialidade);
+      const apiClient =
+        setupAPIClient();
 
-      if(foto){
-        data.append("file", foto);
+
+
+      const data =
+        new FormData();
+
+
+
+      data.append(
+        "nome_professor",
+        nome_professor
+      );
+
+
+      data.append(
+        "telefone",
+        telefone
+      );
+
+
+      data.append(
+        "Endereco",
+        endereco
+      );
+
+
+      data.append(
+        "bairro",
+        bairro
+      );
+
+
+      data.append(
+        "Numero",
+        numero
+      );
+
+
+      data.append(
+        "contato",
+        contato
+      );
+
+
+      data.append(
+        "CPF",
+        cpf
+      );
+
+
+      data.append(
+        "especialidade",
+        especialidade
+      );
+
+
+
+      if (foto) {
+
+        data.append(
+          "file",
+          foto
+        );
+
       }
 
-      await apiClient.post("/professor", data);
 
-      toast.success("Professor cadastrado com sucesso!");
 
-      // limpar campos
-      setNome("");
-      setTelefone("");
-      setEndereco("");
-      setBairro("");
-      setNumero("");
-      setCpf("");
-      setEspecialidade("");
-      setContato("");
-    } catch (err: any) {
-  console.log(err.response?.data);
-  console.log(err);
+      await apiClient.post(
+        "/professor",
+        data
+      );
 
-  toast.error(
-    err.response?.data?.error ||
-    err.response?.data?.message ||
-    "Erro ao cadastrar!"
-  );
-}
+
+
+      toast.success(
+        "Professor cadastrado com sucesso!"
+      );
+
+
+
+      limparFormulario();
+
+
+
+    } catch (error: unknown) {
+
+
+      if (
+        axios.isAxiosError(error)
+      ) {
+
+
+        toast.error(
+
+          error.response
+            ?.data
+            ?.error ??
+
+          error.response
+            ?.data
+            ?.message ??
+
+          "Erro ao cadastrar!"
+
+        );
+
+
+      } else {
+
+
+        toast.error(
+          "Erro inesperado ao cadastrar!"
+        );
+
+
+      }
+
+    }
+
   }
 
 
 
+  function limparFormulario() {
 
+    setNome("");
 
+    setTelefone("");
+
+    setEndereco("");
+
+    setBairro("");
+
+    setNumero("");
+
+    setCpf("");
+
+    setEspecialidade("");
+
+    setContato("");
+
+    setFoto(null);
+
+  }
 
 
 
   return (
-    <div className="flex items-center justify-center p-16">
-      <div className="bg-white shadow-xl rounded-2xl w-full max-w-md p-2">
-        <h2 className="text-2xl font-extrabold text-center text-gray-800 mb-3">
-          Cadastro de Professor
-        </h2>
 
-       <form onSubmit={handleRegister} className="space-y-4">
+    <div
+      className="
+      max-w-xl
+      mx-auto
+      p-6
+      "
+    >
 
-  {/* Nome */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={nome_professor}
-      onChange={(e) => setNome(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2                     
-                     peer-focus:top-0 peer-focus:text-sm 
-                      peer-not-placeholder-shown:top-0 peer-not-placeholder-shown:text-blue-300 peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-                     
-                                
-      Nome 
-    </label>
-  </div>
 
-  {/* Endereço */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={Endereco}
-      onChange={(e) => setEndereco(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm
-                      peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-30 0peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-                     
-      Endereço
-    </label>
-  </div>
+      <h1
+        className="
+        text-2xl
+        font-bold
+        mb-6
+        text-center
+        "
+      >
 
-  {/* Número */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={Numero}
-      onChange={(e) => setNumero(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm
-                      peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-300 peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2 ">
-      Número
-    </label>
-  </div>
+        Cadastro de Professor
 
-  {/* Cidade */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={bairro}
-      onChange={(e) => setBairro(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm
-                      peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-300 
-                      peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-      Bairro
-    </label>
-  </div>
+      </h1>
 
-  {/* Telefone */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={telefone}
-      onChange={(e) => setTelefone(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm 
-                      peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-300 
-                      peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-      Telefone
-    </label>
-  </div>
 
-  {/* CPF */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={CPF}
-      onChange={(e) => setCpf(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm
-                      peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-300 
-                      peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-      CPF
-    </label>
-  </div>
 
-  
+      <form
+        onSubmit={handleRegister}
+        className="space-y-4"
+      >
 
-  {/* Especialidade */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={especialidade}
-      onChange={(e) => setEspecialidade(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm 
-                      peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-300 
-                      peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-      Especialidade
-    </label>
-  </div>
 
-  {/* Contato */}
-  <div className="relative col-span-2">
-    <input
-      type="text"
-      value={contato}
-      onChange={(e) => setContato(e.target.value)}
-      placeholder=" "
-      required
-      className="peer w-full px-3 py-2 border rounded-lg focus:outline-none"
-    />
-    <label className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 
-                      transition-all bg-white px-1 pointer-events-none
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:-translate-y-1/2
-                      peer-focus:top-0 peer-focus:text-sm
-                        peer-not-placeholder-shown:top-0  peer-not-placeholder-shown:text-blue-300 
-                        peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:-translate-y-2">
-      Contato
-    </label>
-  </div>
+        <input
+          value={nome_professor}
+          onChange={(e)=>
+            setNome(e.target.value)
+          }
+          placeholder="Nome do professor"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
 
-  {/* Foto */}
-<div className="relative col-span-2">
 
-  <input
-    type="file"
-    accept="image/*"
-    onChange={(e) =>
-      setFoto(e.target.files?.[0] ?? null)
-    }
-    className="w-full border rounded-lg px-3 py-2"
-  />
 
-  <label className="absolute left-3 -top-3 bg-white px-1 text-xs text-blue-600">
-    Foto do Professor
-  </label>
+        <input
+          value={endereco}
+          onChange={(e)=>
+            setEndereco(e.target.value)
+          }
+          placeholder="Endereço"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
 
-</div>
 
-  {/* Botão */}
-  <button
-    type="submit"
-    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg mt-2"
-  >
-    Salvar
-  </button>
-</form>
 
-      </div>
+        <input
+          value={numero}
+          onChange={(e)=>
+            setNumero(e.target.value)
+          }
+          placeholder="Número"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <input
+          value={bairro}
+          onChange={(e)=>
+            setBairro(e.target.value)
+          }
+          placeholder="Bairro"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <input
+          value={telefone}
+          onChange={(e)=>
+            setTelefone(e.target.value)
+          }
+          placeholder="Telefone"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <input
+          value={cpf}
+          onChange={(e)=>
+            setCpf(e.target.value)
+          }
+          placeholder="CPF"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <input
+          value={especialidade}
+          onChange={(e)=>
+            setEspecialidade(e.target.value)
+          }
+          placeholder="Especialidade"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <input
+          value={contato}
+          onChange={(e)=>
+            setContato(e.target.value)
+          }
+          placeholder="Contato"
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e)=>
+            setFoto(
+              e.target.files?.[0] ?? null
+            )
+          }
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          "
+        />
+
+
+
+        <button
+          type="submit"
+          className="
+          w-full
+          bg-blue-600
+          hover:bg-blue-700
+          text-white
+          py-2
+          rounded-lg
+          "
+        >
+
+          Salvar
+
+        </button>
+
+
+      </form>
+
+
     </div>
+
   );
+
 }

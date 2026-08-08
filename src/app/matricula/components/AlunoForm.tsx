@@ -10,7 +10,7 @@ interface Props {
     valor: string
   ) => void;
 
-  buscarCPF: (cpf?: string) => void;
+  buscarCPF: (cpf?: string) => Promise<void>;
 
   mostrarCampos: boolean;
 }
@@ -18,69 +18,46 @@ interface Props {
 export default function AlunoForm({
   aluno,
   onChange,
-  
+  buscarCPF,
   mostrarCampos,
 }: Props) {
   return (
-    <div className="bg-white rounded-lg  md:grid-cols-4 shadow p-3">
-
-      
+    <div>
       {/* CPF sempre visível */}
       <div className="grid md:grid-cols-2 gap-4 items-end">
-
         <div>
+          <input
+            value={aluno.CPF}
+            onChange={(e) => {
+              const cpf = e.target.value;
 
-  <label className="block mb-1 font-medium">
-    CPF do Aluno
-  </label>
+              onChange("CPF", cpf);
 
-  <input
-    value={aluno.CPF}
-    onChange={(e) => {
-
-      onChange(
-        "CPF",
-        e.target.value
-      );
-
-    }}
-    placeholder="Digite o CPF"
-    className="
-      w-full
-      border
-      rounded-lg
-      px-3
-      py-2
-    "
-  />
-
-</div>
-
-        
-        <div>
-
-              <input
-              value={aluno.nome}
-              onChange={(e) =>
-                onChange("nome", e.target.value)
+              if (cpf.replace(/\D/g, "").length === 11) {
+                buscarCPF(cpf);
               }
-              placeholder="Nome"
-              className="w-full border rounded-lg px-3 py-2"
-            />
+            }}
+            placeholder="Digite o CPF"
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
 
-          </div>
-
+        <div>
+          <input
+            value={aluno.nome}
+            onChange={(e) =>
+              onChange("nome", e.target.value)
+            }
+            placeholder="Nome"
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
       </div>
 
       {/* Campos aparecem somente quando necessário */}
       {mostrarCampos && (
-
         <div className="grid md:grid-cols-2 gap-4 mt-2">
-
-          
-
           <div>
-
             <label className="block mb-1 font-medium">
               Celular
             </label>
@@ -93,11 +70,9 @@ export default function AlunoForm({
               placeholder="Celular"
               className="w-full border rounded-lg px-3 py-2"
             />
-
           </div>
 
           <div>
-
             <label className="block mb-1 font-medium">
               Email
             </label>
@@ -110,11 +85,9 @@ export default function AlunoForm({
               placeholder="Email"
               className="w-full border rounded-lg px-3 py-2"
             />
-
           </div>
 
           <div>
-
             <label className="block mb-1 font-medium">
               Telefone Recado
             </label>
@@ -127,13 +100,9 @@ export default function AlunoForm({
               placeholder="Telefone para recado"
               className="w-full border rounded-lg px-3 py-2"
             />
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }
