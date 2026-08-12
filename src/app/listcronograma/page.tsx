@@ -264,7 +264,7 @@ const excluir = async (id: string) => {
   if (!confirm("Deseja realmente excluir este cronograma?")) return;
 
   try {
-    await api.delete(`/cronograma/${id}`);
+    await api.delete(`/listcronograma/${id}`);
     await loadCronograma();
   } catch (error) {
     console.error(error);
