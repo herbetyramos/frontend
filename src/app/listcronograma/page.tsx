@@ -906,7 +906,7 @@ const visualizarSolicitacao = async (id: string) => {
                   `&data=${encodeURIComponent(filtroDataFormatura)}`
                 }
                 target="_blank"
-                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded"
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
               >
                 Chat
               </Link>
