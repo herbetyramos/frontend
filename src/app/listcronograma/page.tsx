@@ -815,7 +815,7 @@ const visualizarSolicitacao = async (id: string) => {
                 Mais Informações
               </h3>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
 
                 <div>
                   <strong>Curso da Ata:</strong> {item.detentoras?.curso?.nome_curso}
@@ -906,7 +906,7 @@ const visualizarSolicitacao = async (id: string) => {
                   `&data=${encodeURIComponent(filtroDataFormatura)}`
                 }
                 target="_blank"
-                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                className="w-40 h-8 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg"
               >
                 Chat
               </Link>
@@ -957,7 +957,7 @@ const visualizarSolicitacao = async (id: string) => {
             </div>
           </td>
           <td
-          colSpan={2}
+          colSpan={3}
             className="border bg-blue-50 px-2 py-1 text-sm"
           
           >
