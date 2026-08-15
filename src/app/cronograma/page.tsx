@@ -126,9 +126,7 @@ export default function Cronograma() {
   const [professor_id, setProfessor] =
     useState("");
 
-  const [quantidade_aluno, setQtdeAlunos] =
-    useState("");
-
+ 
   const [formatura_id, setFormatura] =
     useState("");
 
@@ -392,7 +390,7 @@ export default function Cronograma() {
 
       draft,
 
-      quantidade_aluno,
+      
 
       link_inscricao:
         link_inscricao.trim() !== ""
@@ -505,9 +503,7 @@ export default function Cronograma() {
 
     setHorario("");
 
-    setHorarioFim("");
-
-    setQtdeAlunos("");
+    setHorarioFim("");    
 
     setObservacao("");
 
@@ -1216,23 +1212,7 @@ export default function Cronograma() {
             gap-4
           "
         >
-          <input
-            value={
-              quantidade_aluno
-            }
-            onChange={(e) =>
-              setQtdeAlunos(
-                e.target.value
-              )
-            }
-            placeholder="Quantidade de alunos"
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
+          
 
           <select
             value={
@@ -1321,16 +1301,12 @@ export default function Cronograma() {
             Link de inscrição
           </label>
 
-          <input
+         <input
             id="link_inscricao"
             type="url"
-            value={
-              link_inscricao
-            }
+            value={link_inscricao}
             onChange={(e) =>
-              setLink_inscricao(
-                e.target.value
-              )
+              setLink_inscricao(e.target.value)
             }
             placeholder="https://..."
             className="
