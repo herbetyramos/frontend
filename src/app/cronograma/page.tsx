@@ -611,14 +611,7 @@ export default function Cronograma() {
         {/* ==============================
             STATUS
         ============================== */}
-              <div
-          className="
-            col-span-2
-            grid
-            grid-cols-2
-            gap-4
-          "
-        >
+            
           
 
           <select
@@ -661,7 +654,7 @@ export default function Cronograma() {
               )
             )}
           </select>
-        </div>
+        
 
         <div>
           <select
