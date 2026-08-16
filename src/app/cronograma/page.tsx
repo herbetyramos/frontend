@@ -1265,102 +1265,106 @@ export default function Cronograma() {
             rounded-lg
           "
         />
-{/* ==============================
-    LINK INSCRIÇÃO + IMAGEM DO CURSO
-============================== */}
 
-<div
-  className="
-    col-span-2
-    grid
-    grid-cols-1
-    md:grid-cols-2
-    gap-4
-  "
->
-  {/* ==============================
-      LINK INSCRIÇÃO
-  ============================== */}
+        {/* ==============================
+            LINK INSCRIÇÃO
+        ============================== */}
 
-  <div>
-    <label
-      htmlFor="link_inscricao"
-      className="
-        block
-        text-sm
-        font-medium
-        mb-1
-      "
-    >
-      Link de inscrição
-    </label>
+        <div
+          className="
+            col-span-2
+          "
+        >
+          <label
+            htmlFor="link_inscricao"
+            className="
+              block
+              text-sm
+              font-medium
+              mb-1
+            "
+          >
+            Link de inscrição
+          </label>
 
-    <input
-      id="link_inscricao"
-      type="url"
-      value={link_inscricao}
-      onChange={(e) =>
-        setLink_inscricao(e.target.value)
-      }
-      placeholder="https://..."
-      className="
-        w-full
-        px-3
-        py-2
-        border
-        rounded-lg
-      "
-    />
-  </div>
+         <input
+            id="link_inscricao"
+            type="url"
+            value={link_inscricao}
+            onChange={(e) =>
+              setLink_inscricao(e.target.value)
+            }
+            placeholder="https://..."
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+            "
+          />
+        </div>
 
-  {/* ==============================
-      IMAGEM DO CURSO
-  ============================== */}
+        {/* ==============================
+            IMAGEM DO CURSO
+        ============================== */}
 
-  <div>
-    <label
-      htmlFor="imagem_url"
-      className="
-        block
-        text-sm
-        font-medium
-        mb-1
-      "
-    >
-      URL da imagem do curso
-    </label>
+        <div
+          className="
+            col-span-2
+          "
+        >
+          <label
+            htmlFor="imagem_url"
+            className="
+              block
+              text-sm
+              font-medium
+              mb-1
+            "
+          >
+            URL da imagem do curso
+          </label>
 
-    <input
-      id="imagem_url"
-      type="url"
-      value={imagemUrl}
-      onChange={(e) => {
-        setImagemUrl(e.target.value);
-        setImagemValida(true);
-      }}
-      placeholder="https://exemplo.com/imagem.jpg"
-      className="
-        w-full
-        px-3
-        py-2
-        border
-        rounded-lg
-      "
-    />
+          <input
+            id="imagem_url"
+            type="url"
+            value={
+              imagemUrl
+            }
+            onChange={(e) => {
+              setImagemUrl(
+                e.target.value
+              );
 
-    <p
-      className="
-        mt-1
-        text-xs
-        text-gray-500
-      "
-    >
-      Informe a URL de uma imagem pública.
-      Essa imagem será exibida no card do curso
-      no OfertaCursos.
-    </p>
-  </div>
-</div>
+              setImagemValida(
+                true
+              );
+            }}
+            placeholder="https://exemplo.com/imagem.jpg"
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+            "
+          />
+
+          <p
+            className="
+              mt-1
+              text-xs
+              text-gray-500
+            "
+          >
+            Informe a URL de uma
+            imagem pública. Essa
+            imagem será exibida no
+            card do curso no
+            OfertaCursos.
+          </p>
+
           {/* ==============================
               PREVIEW DA IMAGEM
           ============================== */}
