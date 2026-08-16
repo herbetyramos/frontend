@@ -1265,48 +1265,8 @@ export default function Cronograma() {
             rounded-lg
           "
         />
-
-        {/* ==============================
-            LINK INSCRIÇÃO
-        ============================== */}
-
-        <div
-          className="
-            col-span-2
-          "
-        >
-          <label
-            htmlFor="link_inscricao"
-            className="
-              block
-              text-sm
-              font-medium
-              mb-1
-            "
-          >
-            Link de inscrição
-          </label>
-
-         <input
-            id="link_inscricao"
-            type="url"
-            value={link_inscricao}
-            onChange={(e) =>
-              setLink_inscricao(e.target.value)
-            }
-            placeholder="https://..."
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
-        </div>
-
-       {/* ==============================
-    IMAGEM DO CURSO
+{/* ==============================
+    LINK + IMAGEM + PREVIEW
 ============================== */}
 
 <div
@@ -1314,10 +1274,45 @@ export default function Cronograma() {
     col-span-2
     grid
     grid-cols-1
-    md:grid-cols-2
+    md:grid-cols-3
     gap-6
   "
 >
+  {/* ==============================
+      LINK INSCRIÇÃO
+  ============================== */}
+
+  <div>
+    <label
+      htmlFor="link_inscricao"
+      className="
+        block
+        text-sm
+        font-medium
+        mb-1
+      "
+    >
+      Link de inscrição
+    </label>
+
+    <input
+      id="link_inscricao"
+      type="url"
+      value={link_inscricao}
+      onChange={(e) =>
+        setLink_inscricao(e.target.value)
+      }
+      placeholder="https://..."
+      className="
+        w-full
+        px-3
+        py-2
+        border
+        rounded-lg
+      "
+    />
+  </div>
+
   {/* ==============================
       URL DA IMAGEM
   ============================== */}
@@ -1361,13 +1356,9 @@ export default function Cronograma() {
       "
     >
       Informe a URL de uma imagem pública.
-      Essa imagem será exibida no card do curso
-      no OfertaCursos.
     </p>
 
-    {/* ==============================
-        ERRO DA IMAGEM
-    ============================== */}
+    {/* ERRO DA IMAGEM */}
 
     {imagemUrl.trim() !== "" &&
       !imagemValida && (
@@ -1384,8 +1375,7 @@ export default function Cronograma() {
           "
         >
           Não foi possível carregar essa imagem.
-          Verifique se a URL está correta e se a
-          imagem é pública.
+          Verifique se a URL está correta.
         </div>
       )}
   </div>
@@ -1420,7 +1410,8 @@ export default function Cronograma() {
           "img",
           {
             src: imagemUrl,
-            alt: "Pré-visualização da imagem do curso",
+            alt:
+              "Pré-visualização da imagem do curso",
 
             className:
               "w-full h-full object-cover",
@@ -1438,7 +1429,6 @@ export default function Cronograma() {
     )}
   </div>
 </div>
-
         {/* ==============================
             CHECKBOX
         ============================== */}
