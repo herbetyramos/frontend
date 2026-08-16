@@ -37,7 +37,7 @@ export default function Header({
         right-0
         z-50
         h-12
-        bg-gradient-to-r
+        bg-linear-to-r
         from-fuchsia-500
         to-purple-600
         shadow-md
@@ -63,6 +63,23 @@ export default function Header({
                 <Menu size={20} className="text-white" />
               )}
             </button>
+
+            {/* Link Cronogramas */}
+            <Link
+              href="/cronograma"
+              className="
+                text-white
+                text-sm
+                font-medium
+                hover:bg-white/20
+                px-3
+                py-1
+                rounded-md
+                transition
+              "
+            >
+              ➕ Cadastro de Cronograma
+            </Link>
 
             {/* Link Cronogramas */}
             <Link
