@@ -1118,11 +1118,7 @@ export default function Cronograma() {
             TEMA
         ============================== */}
 
-        <div
-          className="
-            col-span-2
-          "
-        >
+        
           <input
             value={tema}
             onChange={(e) =>
@@ -1139,7 +1135,7 @@ export default function Cronograma() {
               rounded-lg
             "
           />
-        </div>
+        
 
         {/* ==============================
             DATAS E HORÁRIOS
