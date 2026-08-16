@@ -754,7 +754,7 @@ export default function Cronograma() {
     "
   >
     <option value="">
-      SELECIONE O CURSO
+      Curso da Ata
     </option>
 
     {Array.from(
