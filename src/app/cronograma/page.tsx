@@ -1305,160 +1305,139 @@ export default function Cronograma() {
           />
         </div>
 
-        {/* ==============================
-            IMAGEM DO CURSO
-        ============================== */}
-      <div
-          className="
-            col-span-2
-            grid
-            grid-cols-1
-            md:grid-cols-2
-            gap-4
-          "
-        > 
+       {/* ==============================
+    IMAGEM DO CURSO
+============================== */}
+
+<div
+  className="
+    col-span-2
+    grid
+    grid-cols-1
+    md:grid-cols-2
+    gap-6
+  "
+>
+  {/* ==============================
+      URL DA IMAGEM
+  ============================== */}
+
+  <div>
+    <label
+      htmlFor="imagem_url"
+      className="
+        block
+        text-sm
+        font-medium
+        mb-1
+      "
+    >
+      URL da imagem do curso
+    </label>
+
+    <input
+      id="imagem_url"
+      type="url"
+      value={imagemUrl}
+      onChange={(e) => {
+        setImagemUrl(e.target.value);
+        setImagemValida(true);
+      }}
+      placeholder="https://exemplo.com/imagem.jpg"
+      className="
+        w-full
+        px-3
+        py-2
+        border
+        rounded-lg
+      "
+    />
+
+    <p
+      className="
+        mt-1
+        text-xs
+        text-gray-500
+      "
+    >
+      Informe a URL de uma imagem pública.
+      Essa imagem será exibida no card do curso
+      no OfertaCursos.
+    </p>
+
+    {/* ==============================
+        ERRO DA IMAGEM
+    ============================== */}
+
+    {imagemUrl.trim() !== "" &&
+      !imagemValida && (
         <div
           className="
-            col-span-2
+            mt-3
+            p-3
+            rounded-lg
+            border
+            border-red-300
+            bg-red-50
+            text-red-600
+            text-sm
           "
         >
-          <label
-            htmlFor="imagem_url"
-            className="
-              block
-              text-sm
-              font-medium
-              mb-1
-            "
-          >
-            URL da imagem do curso
-          </label>
-
-          <input
-            id="imagem_url"
-            type="url"
-            value={
-              imagemUrl
-            }
-            onChange={(e) => {
-              setImagemUrl(
-                e.target.value
-              );
-
-              setImagemValida(
-                true
-              );
-            }}
-            placeholder="https://exemplo.com/imagem.jpg"
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
-
-          <p
-            className="
-              mt-1
-              text-xs
-              text-gray-500
-            "
-          >
-            Informe a URL de uma
-            imagem pública. Essa
-            imagem será exibida no
-            card do curso no
-            OfertaCursos.
-          </p>
-
-          {/* ==============================
-              PREVIEW DA IMAGEM
-          ============================== */}
-
-          {imagemUrl.trim() !== "" &&
-            imagemValida && (
-              <div
-                className="
-                  mt-4
-                "
-              >
-                <p
-                  className="
-                    text-sm
-                    font-medium
-                    mb-2
-                  "
-                >
-                  Pré-visualização:
-                </p>
-
-                <div
-                  className="
-                    w-full
-                    max-w-md
-                    h-48
-                    overflow-hidden
-                    rounded-lg
-                    border
-                    bg-gray-100
-                  "
-                >
-                  {React.createElement(
-                    "img",
-                    {
-                      src: imagemUrl,
-                      alt:
-                        "Pré-visualização da imagem do curso",
-
-                      className:
-                        "w-full h-full object-cover",
-
-                      onLoad: () => {
-                        setImagemValida(
-                          true
-                        );
-                      },
-
-                      onError: () => {
-                        setImagemValida(
-                          false
-                        );
-                      },
-                    }
-                  )}
-                </div>
-              </div>
-            )}
-
-          {/* ==============================
-              ERRO DA IMAGEM
-          ============================== */}
-
-          {imagemUrl.trim() !== "" &&
-            !imagemValida && (
-              <div
-                className="
-                  mt-3
-                  p-3
-                  rounded-lg
-                  border
-                  border-red-300
-                  bg-red-50
-                  text-red-600
-                  text-sm
-                "
-              >
-                Não foi possível
-                carregar essa imagem.
-                Verifique se a URL está
-                correta e se a imagem é
-                pública.
-              </div>
-            )}
+          Não foi possível carregar essa imagem.
+          Verifique se a URL está correta e se a
+          imagem é pública.
         </div>
-        </div> 
+      )}
+  </div>
+
+  {/* ==============================
+      PREVIEW DA IMAGEM
+  ============================== */}
+
+  <div>
+    <p
+      className="
+        text-sm
+        font-medium
+        mb-2
+      "
+    >
+      Pré-visualização:
+    </p>
+
+    {imagemUrl.trim() !== "" && (
+      <div
+        className="
+          w-full
+          h-48
+          overflow-hidden
+          rounded-lg
+          border
+          bg-gray-100
+        "
+      >
+        {React.createElement(
+          "img",
+          {
+            src: imagemUrl,
+            alt: "Pré-visualização da imagem do curso",
+
+            className:
+              "w-full h-full object-cover",
+
+            onLoad: () => {
+              setImagemValida(true);
+            },
+
+            onError: () => {
+              setImagemValida(false);
+            },
+          }
+        )}
+      </div>
+    )}
+  </div>
+</div>
 
         {/* ==============================
             CHECKBOX
