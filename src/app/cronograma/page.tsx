@@ -767,6 +767,54 @@ export default function Cronograma() {
           </select>
         </div>
 
+         {/* ==============================
+            PROFESSOR
+        ============================== */}
+
+        <div>
+          <select
+            value={
+              professor_id
+            }
+            onChange={(e) =>
+              setProfessor(
+                e.target.value
+              )
+            }
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+              bg-white
+            "
+          >
+            <option value="">
+              Selecione o professor
+            </option>
+
+            {professores.map(
+              (
+                professor
+              ) => (
+                <option
+                  key={
+                    professor.id
+                  }
+                  value={
+                    professor.id
+                  }
+                >
+                  {
+                    professor.nome_professor
+                  }
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
      {/* ==============================
     DETENTORA / CURSO
 ============================== */}
@@ -873,53 +921,7 @@ export default function Cronograma() {
             "
           />
 
-        {/* ==============================
-            PROFESSOR
-        ============================== */}
-
-        <div>
-          <select
-            value={
-              professor_id
-            }
-            onChange={(e) =>
-              setProfessor(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
-              Selecione o professor
-            </option>
-
-            {professores.map(
-              (
-                professor
-              ) => (
-                <option
-                  key={
-                    professor.id
-                  }
-                  value={
-                    professor.id
-                  }
-                >
-                  {
-                    professor.nome_professor
-                  }
-                </option>
-              )
-            )}
-          </select>
-        </div>
+       
 
         {/* ==============================
             LOADING SALDO
