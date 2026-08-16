@@ -611,6 +611,57 @@ export default function Cronograma() {
         {/* ==============================
             STATUS
         ============================== */}
+              <div
+          className="
+            col-span-2
+            grid
+            grid-cols-2
+            gap-4
+          "
+        >
+          
+
+          <select
+            value={
+              formatura_id
+            }
+            onChange={(e) =>
+              setFormatura(
+                e.target.value
+              )
+            }
+            className="
+              px-3
+              py-2
+              border
+              rounded-lg
+              bg-white
+            "
+          >
+            <option value="">
+              Data da formatura
+            </option>
+
+            {formaturas.map(
+              (
+                formatura
+              ) => (
+                <option
+                  key={
+                    formatura.id
+                  }
+                  value={
+                    formatura.id
+                  }
+                >
+                  {
+                    formatura.data_formatura
+                  }
+                </option>
+              )
+            )}
+          </select>
+        </div>
 
         <div>
           <select
@@ -633,9 +684,7 @@ export default function Cronograma() {
               Selecione o status
             </option>
 
-            <option value="ativo">
-              Ativo
-            </option>
+            
 
             <option value="cancelado">
               Cancelado
@@ -1220,57 +1269,7 @@ export default function Cronograma() {
             QUANTIDADE / FORMATURA
         ============================== */}
 
-        <div
-          className="
-            col-span-2
-            grid
-            grid-cols-2
-            gap-4
-          "
-        >
-          
-
-          <select
-            value={
-              formatura_id
-            }
-            onChange={(e) =>
-              setFormatura(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
-              Data da formatura
-            </option>
-
-            {formaturas.map(
-              (
-                formatura
-              ) => (
-                <option
-                  key={
-                    formatura.id
-                  }
-                  value={
-                    formatura.id
-                  }
-                >
-                  {
-                    formatura.data_formatura
-                  }
-                </option>
-              )
-            )}
-          </select>
-        </div>
+  
 
         {/* ==============================
             OBSERVAÇÃO
