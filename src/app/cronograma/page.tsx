@@ -198,39 +198,44 @@ export default function Cronograma() {
   // BUSCAR SALDO DETENTORA
   // ==============================
 
-  async function carregarSaldoDetentora(
-    id: string
-  ) {
-    if (!id) {
-      setSaldoDetentora(null);
-      return;
-    }
+  async function carregarSaldoDetentora(id: string) {
+  if (!id) {
+    setSaldoDetentora(null);
+    return;
+  }
 
-    try {
-      setLoadingSaldo(true);
+  try {
+    setLoadingSaldo(true);
 
-      const response =
-        await api.get<SaldoDetentora>(
-          "/detentora/saldo",
-          {
-            params: {
-              id,
-            },
-          }
-        );
+    console.log("ID DA DETENTORA SELECIONADA:", id);
 
-      setSaldoDetentora(response.data);
-    } catch (error: unknown) {
-      console.error(
-        "Erro ao buscar saldo:",
-        error
+    const response =
+      await api.get<SaldoDetentora>(
+        "/detentora/saldo",
+        {
+          params: {
+            id,
+          },
+        }
       );
 
-      setSaldoDetentora(null);
-    } finally {
-      setLoadingSaldo(false);
-    }
+    console.log(
+      "SALDO RETORNADO:",
+      response.data
+    );
+
+    setSaldoDetentora(response.data);
+  } catch (error: unknown) {
+    console.error(
+      "Erro ao buscar saldo:",
+      error
+    );
+
+    setSaldoDetentora(null);
+  } finally {
+    setLoadingSaldo(false);
   }
+}
 
   // ==============================
   // CARREGAR DADOS
