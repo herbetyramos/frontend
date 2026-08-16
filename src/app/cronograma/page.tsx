@@ -851,6 +851,27 @@ export default function Cronograma() {
       ))}
   </select>
 </div>
+{/* ==============================
+            TEMA
+        ============================== */}
+
+        
+          <input
+            value={tema}
+            onChange={(e) =>
+              setTema(
+                e.target.value
+              )
+            }
+            placeholder="Tema do curso"
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+            "
+          />
 
         {/* ==============================
             PROFESSOR
@@ -1114,27 +1135,7 @@ export default function Cronograma() {
             </div>
           )}
 
-        {/* ==============================
-            TEMA
-        ============================== */}
-
         
-          <input
-            value={tema}
-            onChange={(e) =>
-              setTema(
-                e.target.value
-              )
-            }
-            placeholder="Tema do curso"
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
         
 
         {/* ==============================
