@@ -325,15 +325,21 @@ const visualizarSolicitacao = async (id: string) => {
       const corSala = (sala: string) => {
         const texto = sala.toUpperCase();
 
-        if (texto.includes("BELEZA")) {
-          return "#A855F7"; // Lilás
-        }
+      
+        if (
+              texto.includes("BELEZA") ||
+              texto.includes("BELEZA COM LAVATÓRIO") ||
+              texto.includes("BELEZA COM MACA")
+            ) {
+              return "#A855F7"; // Lilás
+            }
 
-        if (texto.includes("INFORMÁTICA") || texto.includes("INFORMATICA")) {
+        if (texto.includes("INFORMÁTICA") || 
+            texto.includes("INFORMATICA")) {
           return "#EAB308"; // Amarelo
         }
 
-        if (texto.includes("GASTRONOMIA")) {
+        if (texto.includes("GASTRONOMIA")||texto.includes("COZINHA")) {
           return "#2563EB"; // Azul
         }
 
@@ -341,15 +347,25 @@ const visualizarSolicitacao = async (id: string) => {
           return "#DC2626"; // Vermelho
         }
 
-        if (texto.includes("SERVIÇOS") || texto.includes("SERVICOS")) {
+        if (texto.includes("SERVIÇOS")) {
           return "#16A34A"; // Verde
         }
 
-        if (texto.includes("MULTIUSO") || texto.includes("MULTIUSO")) {
+        if (texto.includes("MULTIUSO")) {
           return "#DB9999"; // Verde
         }
 
-        return "#D1D5DB"; // Cinza (padrão)
+        if (texto.includes("SABER")) {
+          return "#DB9910"; // Verde
+        }
+
+        if (texto.includes("MODA")) {
+          return "#D06562"; // Verde
+        }
+
+
+
+        return "#000000"; // Preto
       };
 
 
