@@ -720,11 +720,11 @@ export default function Cronograma() {
           </select>
         </div>
 
-        {/* ==============================
-            DETENTORA
-        ============================== */}
+     {/* ==============================
+    DETENTORA / CURSO
+============================== */}
 
-        <div>
+<div>
   <select
     value={detentoras_id}
     onChange={async (e) => {
@@ -732,11 +732,12 @@ export default function Cronograma() {
 
       setDetentoras_id(id);
 
-      if (id) {
-        await carregarSaldoDetentora(id);
-      } else {
+      if (!id) {
         setSaldoDetentora(null);
+        return;
       }
+
+      await carregarSaldoDetentora(id);
     }}
     className="
       w-full
@@ -751,9 +752,33 @@ export default function Cronograma() {
       SELECIONE O CURSO
     </option>
 
-    {[...detentoras]
+    {Array.from(
+      new Map(
+        detentoras.map((detentora) => {
+          const nomeCurso =
+            detentora.curso?.nome_curso
+              ?.trim()
+              .toUpperCase() || "SEM CURSO";
+
+          const numeroAta =
+            detentora.ata?.numero_ata
+              ?.trim()
+              .toUpperCase() || "SEM ATA";
+
+          const chave =
+            `${nomeCurso}__${numeroAta}`;
+
+          return [
+            chave,
+            detentora,
+          ];
+        })
+      ).values()
+    )
       .sort((a, b) =>
-        (a.curso?.nome_curso ?? "").localeCompare(
+        (
+          a.curso?.nome_curso ?? ""
+        ).localeCompare(
           b.curso?.nome_curso ?? "",
           "pt-BR",
           {
