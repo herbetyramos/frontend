@@ -78,7 +78,7 @@ export default function Header({
                 transition
               "
             >
-              ➕ Cadastro de Cronograma
+              ➕ Curso
             </Link>
 
             {/* Link Cronogramas */}
@@ -95,7 +95,8 @@ export default function Header({
                 transition
               "
             >
-              Cronogramas
+              ☰ Cronogramas
+              
             </Link>
           </div>
                   
