@@ -725,74 +725,60 @@ export default function Cronograma() {
         ============================== */}
 
         <div>
-          <select
-            value={
-              detentoras_id
-            }
-            onChange={
-              async (e) => {
-                const id =
-                  e.target.value;
+  <select
+    value={detentoras_id}
+    onChange={async (e) => {
+      const id = e.target.value;
 
-                setDetentoras_id(
-                  id
-                );
+      setDetentoras_id(id);
 
-                if (id) {
-                  await carregarSaldoDetentora(
-                    id
-                  );
-                } else {
-                  setSaldoDetentora(
-                    null
-                  );
-                }
-              }
-            }
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
-              Selecione o curso
-            </option>
+      if (id) {
+        await carregarSaldoDetentora(id);
+      } else {
+        setSaldoDetentora(null);
+      }
+    }}
+    className="
+      w-full
+      px-3
+      py-2
+      border
+      rounded-lg
+      bg-white
+    "
+  >
+    <option value="">
+      SELECIONE O CURSO
+    </option>
 
-            {detentoras.map(
-              (
-                detentora
-              ) => (
-                <option
-                  key={
-                    detentora.id
-                  }
-                  value={
-                    detentora.id
-                  }
-                >
-                  {
-                    detentora
-                      .curso
-                      ?.nome_curso
-                  }
-
-                  {" - ATA "}
-
-                  {
-                    detentora
-                      .ata
-                      ?.numero_ata ??
-                    "sem ata"
-                  }
-                </option>
-              )
-            )}
-          </select>
-        </div>
+    {[...detentoras]
+      .sort((a, b) =>
+        (a.curso?.nome_curso ?? "").localeCompare(
+          b.curso?.nome_curso ?? "",
+          "pt-BR",
+          {
+            sensitivity: "base",
+          }
+        )
+      )
+      .map((detentora) => (
+        <option
+          key={detentora.id}
+          value={detentora.id}
+        >
+          {(
+            detentora.curso?.nome_curso ??
+            "SEM CURSO"
+          ).toUpperCase()}
+          {" - ATA "}
+          {(
+            detentora.ata?.numero_ata ??
+            "SEM ATA"
+          ).toUpperCase()}
+        </option>
+      ))}
+  </select>
+</div>
 
         {/* ==============================
             PROFESSOR
