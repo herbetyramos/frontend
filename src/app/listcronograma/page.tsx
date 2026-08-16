@@ -352,15 +352,15 @@ const visualizarSolicitacao = async (id: string) => {
         }
 
         if (texto.includes("MULTIUSO")) {
-          return "#DB9999"; // Verde
+          return "#DB9999"; 
         }
 
         if (texto.includes("SABER")) {
-          return "#DB9910"; // Verde
+          return "#DB9910"; 
         }
 
-        if (texto.includes("MODA")) {
-          return "#D06562"; // Verde
+        if (texto.includes("MODA")||texto.includes("MODA")){
+          return "#FACC15"; 
         }
 
 
