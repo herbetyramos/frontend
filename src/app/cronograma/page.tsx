@@ -388,7 +388,7 @@ export default function Cronograma() {
 
       is_status: "ativo",
 
-      especificacao,
+      especificacao: especificacao.trim(),
 
       publicar,
 
