@@ -677,7 +677,9 @@ export default function Cronograma() {
               Selecione o status
             </option>
 
-            
+            <option value="ativo">
+              Ativo
+            </option>
 
             <option value="cancelado">
               Cancelado
