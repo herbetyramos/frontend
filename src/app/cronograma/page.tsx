@@ -8,6 +8,7 @@ import React, {
 
 import { api } from "@/services/api";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 // ==============================
 // TIPOS
@@ -139,7 +140,7 @@ export default function Cronograma() {
   const [draft, setDraft] =
     useState(false);
 
- 
+  
   const [periodo, setPeriodo] =
     useState("");
 
@@ -456,18 +457,23 @@ export default function Cronograma() {
       );
 
       limparFormulario();
-    } catch (
-      error: unknown
-    ) {
-      console.error(
-        "Erro ao salvar cronograma:",
-        error
-      );
+    } catch (error: unknown) {
+    console.error("Erro ao salvar cronograma:", error);
 
-      toast.error(
-        "Erro ao salvar cronograma."
-      );
+    if (axios.isAxiosError(error)) {
+        console.error("STATUS:", error.response?.status);
+        console.error("RESPOSTA DO BACKEND:", error.response?.data);
+
+        alert(
+            error.response?.data?.message ||
+            JSON.stringify(error.response?.data) ||
+            "Erro ao salvar cronograma"
+        );
+    } else {
+        console.error("Erro desconhecido:", error);
+        alert("Erro ao salvar cronograma");
     }
+}
   }
 
   // ==============================
@@ -653,7 +659,7 @@ export default function Cronograma() {
           </select>
         
 
-        
+      
 
         {/* ==============================
             LOCAL
