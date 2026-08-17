@@ -139,9 +139,7 @@ export default function Cronograma() {
   const [draft, setDraft] =
     useState(false);
 
-  const [is_status, setStatus] =
-    useState("ativo");
-
+ 
   const [periodo, setPeriodo] =
     useState("");
 
@@ -387,7 +385,7 @@ export default function Cronograma() {
 
       tema,
 
-      is_status,
+      is_status: "ativo",
 
       especificacao,
 
@@ -512,8 +510,7 @@ export default function Cronograma() {
 
     setObservacao("");
 
-    setStatus("ativo");
-
+    
     setPeriodo("");
 
     setLink_inscricao("");
@@ -656,40 +653,7 @@ export default function Cronograma() {
           </select>
         
 
-        <div>
-          <select
-            value={is_status}
-            onChange={(e) =>
-              setStatus(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
-              Selecione o status
-            </option>
-
-            <option value="ativo">
-              Ativo
-            </option>
-
-            <option value="cancelado">
-              Cancelado
-            </option>
-
-            <option value="prorrogado">
-              Prorrogado
-            </option>
-          </select>
-        </div>
+        
 
         {/* ==============================
             LOCAL
