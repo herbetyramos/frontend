@@ -871,7 +871,11 @@ export default function Cronograma() {
       ))}
   </select>
 </div>
-{/* ==============================
+<div>
+  
+</div>
+<div>
+  {/* ==============================
             TEMA
         ============================== */}
 
@@ -916,6 +920,7 @@ export default function Cronograma() {
             rounded-lg
           "
         />
+       
 
         {/* ==============================
             LOADING SALDO
@@ -932,6 +937,7 @@ export default function Cronograma() {
             Consultando saldo...
           </div>
         )}
+</div>
 
         {/* ==============================
             SALDO
@@ -1257,7 +1263,6 @@ export default function Cronograma() {
 
   
 
-       
 {/* ==============================
     LINK + IMAGEM + PREVIEW
 ============================== */}
