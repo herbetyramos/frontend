@@ -871,11 +871,7 @@ export default function Cronograma() {
       ))}
   </select>
 </div>
-<div>
-  
-</div>
-<div>
-  {/* ==============================
+{/* ==============================
             TEMA
         ============================== */}
 
@@ -897,29 +893,6 @@ export default function Cronograma() {
             "
           />
 
-        {/* ==============================
-            OBSERVAÇÃO
-        ============================== */}
-
-        <textarea
-          rows={1}
-          value={
-            especificacao
-          }
-          onChange={(e) =>
-            setObservacao(
-              e.target.value
-            )
-          }
-          placeholder="Especificação / Observações"
-          className="
-            col-span-2
-            px-3
-            py-2
-            border
-            rounded-lg
-          "
-        />
        
 
         {/* ==============================
@@ -937,7 +910,6 @@ export default function Cronograma() {
             Consultando saldo...
           </div>
         )}
-</div>
 
         {/* ==============================
             SALDO
@@ -1263,6 +1235,29 @@ export default function Cronograma() {
 
   
 
+        {/* ==============================
+            OBSERVAÇÃO
+        ============================== */}
+
+        <textarea
+          rows={1}
+          value={
+            especificacao
+          }
+          onChange={(e) =>
+            setObservacao(
+              e.target.value
+            )
+          }
+          placeholder="Especificação / Observações"
+          className="
+            col-span-2
+            px-3
+            py-2
+            border
+            rounded-lg
+          "
+        />
 {/* ==============================
     LINK + IMAGEM + PREVIEW
 ============================== */}
