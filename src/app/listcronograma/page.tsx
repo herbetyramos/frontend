@@ -336,7 +336,7 @@ const visualizarSolicitacao = async (id: string) => {
 
         if (texto.includes("INFORMÁTICA") || 
             texto.includes("INFORMATICA")) {
-          return "#EAB308"; // Amarelo
+          return "oklch(39.6% 0.141 25.723)"; // Amarelo
         }
 
         if (texto.includes("GASTRONOMIA")||texto.includes("COZINHA")) {
@@ -344,23 +344,31 @@ const visualizarSolicitacao = async (id: string) => {
         }
 
         if (texto.includes("ADMINISTRATIVO")) {
-          return "#DC2626"; // Vermelho
+          return "#oklch(44.4% 0.177 26.899)"; // Vermelho
         }
 
         if (texto.includes("SERVIÇOS")) {
           return "#16A34A"; // Verde
         }
 
-        if (texto.includes("MULTIUSO")) {
-          return "#DB9999"; 
+        if (texto.includes("COSTURA")) {
+          return "#FACC15"; 
         }
 
         if (texto.includes("SABER")) {
-          return "#DB9910"; 
+          return "#oklch(44.4% 0.177 26.899)"; 
         }
 
-        if (texto.includes("MODA")||texto.includes("MODA")){
+        if (texto.includes("MULTIUSO")) {
+          return "#oklch(44.4% 0.177 26.899)"; 
+        }
+
+        if (texto.includes("MODA")){
           return "#FACC15"; 
+        }
+
+         if (texto.includes("CASA ROSA")||texto.includes("CASA ROSA")){
+          return "oklch(90.3% 0.076 319.62)"; 
         }
 
 
