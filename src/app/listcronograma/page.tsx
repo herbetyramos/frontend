@@ -344,7 +344,7 @@ const visualizarSolicitacao = async (id: string) => {
         }
 
         if (texto.includes("ADMINISTRATIVO")) {
-          return "#oklch(44.4% 0.177 26.899)"; // Vermelho
+          return "oklch(44.4% 0.177 26.899)"; // Vermelho
         }
 
         if (texto.includes("SERVIÇOS")) {
@@ -356,19 +356,19 @@ const visualizarSolicitacao = async (id: string) => {
         }
 
         if (texto.includes("SABER")) {
-          return "#oklch(44.4% 0.177 26.899)"; 
+          return "oklch(44.4% 0.177 26.899)"; 
         }
 
         if (texto.includes("MULTIUSO")) {
-          return "#oklch(44.4% 0.177 26.899)"; 
+          return "oklch(44.4% 0.177 26.899)"; 
         }
 
         if (texto.includes("MODA")){
           return "#FACC15"; 
         }
 
-         if (texto.includes("CASA ROSA")||texto.includes("CASA ROSA")){
-          return "oklch(90.3% 0.076 319.62)"; 
+         if (texto.includes("CASA ROSA")){
+          return "oklch(71.2% 0.194 13.428)"; 
         }
 
 
