@@ -1259,260 +1259,177 @@ export default function Cronograma() {
           "
         />
 {/* ==============================
-    LINK + IMAGEM + PREVIEW
+    LINK + IMAGEM + BOTÃO
 ============================== */}
 
 <div
   className="
     col-span-2
-    grid
-    grid-cols-1
-    md:grid-cols-3
+    flex
+    flex-col
+    md:flex-row
+    md:items-end
+    md:justify-between
     gap-6
   "
 >
   {/* ==============================
-      LINK INSCRIÇÃO
+      CAMPOS - LADO ESQUERDO
   ============================== */}
 
-  <div>
-    <label
-      htmlFor="link_inscricao"
-      className="
-        block
-        text-sm
-        font-medium
-        mb-1
-      "
-    >
-      Link de inscrição
-    </label>
+  <div
+    className="
+      flex
+      flex-col
+      md:flex-row
+      gap-6
+      flex-1
+    "
+  >
+    {/* LINK INSCRIÇÃO */}
 
-    <input
-      id="link_inscricao"
-      type="url"
-      value={link_inscricao}
-      onChange={(e) =>
-        setLink_inscricao(e.target.value)
-      }
-      placeholder="https://..."
-      className="
-        w-full
-        px-3
-        py-2
-        border
-        rounded-lg
-      "
-    />
-  </div>
-
-  {/* ==============================
-      URL DA IMAGEM
-  ============================== */}
-
-  <div>
-    <label
-      htmlFor="imagem_url"
-      className="
-        block
-        text-sm
-        font-medium
-        mb-1
-      "
-    >
-      URL da imagem do curso
-    </label>
-
-    <input
-      id="imagem_url"
-      type="url"
-      value={imagemUrl}
-      onChange={(e) => {
-        setImagemUrl(e.target.value);
-        setImagemValida(true);
-      }}
-      placeholder="https://exemplo.com/imagem.jpg"
-      className="
-        w-full
-        px-3
-        py-2
-        border
-        rounded-lg
-      "
-    />
-
-    <p
-      className="
-        mt-1
-        text-xs
-        text-gray-500
-      "
-    >
-      Informe a URL de uma imagem pública.
-    </p>
-
-    {/* ERRO DA IMAGEM */}
-
-    {imagemUrl.trim() !== "" &&
-      !imagemValida && (
-        <div
-          className="
-            mt-3
-            p-3
-            rounded-lg
-            border
-            border-red-300
-            bg-red-50
-            text-red-600
-            text-sm
-          "
-        >
-          Não foi possível carregar essa imagem.
-          Verifique se a URL está correta.
-        </div>
-      )}
-  </div>
-
-  {/* ==============================
-      PREVIEW DA IMAGEM
-  ============================== */}
-
-  <div>
-    <p
-      className="
-        text-sm
-        font-medium
-        mb-2
-      "
-    >
-      Pré-visualização:
-    </p>
-
-    {imagemUrl.trim() !== "" && (
-      <div
+    <div className="flex-1">
+      <label
+        htmlFor="link_inscricao"
         className="
-          w-full
-          h-48
-          overflow-hidden
-          rounded-lg
-          border
-          bg-gray-100
+          block
+          text-sm
+          font-medium
+          mb-1
         "
       >
-        {React.createElement(
-          "img",
-          {
-            src: imagemUrl,
-            alt:
-              "Pré-visualização da imagem do curso",
+        Link de inscrição
+      </label>
 
-            className:
-              "w-full h-full object-cover",
+      <input
+        id="link_inscricao"
+        type="url"
+        value={link_inscricao}
+        onChange={(e) =>
+          setLink_inscricao(e.target.value)
+        }
+        placeholder="https://..."
+        className="
+          w-full
+          px-3
+          py-2
+          border
+          rounded-lg
+        "
+      />
+    </div>
 
-            onLoad: () => {
-              setImagemValida(true);
-            },
+    {/* URL DA IMAGEM */}
 
-            onError: () => {
-              setImagemValida(false);
-            },
-          }
-        )}
-      </div>
-    )}
-  </div>
-</div>
-        {/* ==============================
-            CHECKBOX
-        ============================== */}
+    <div className="flex-1">
+      <label
+        htmlFor="imagem_url"
+        className="
+          block
+          text-sm
+          font-medium
+          mb-1
+        "
+      >
+        URL da imagem do curso
+      </label>
 
-        <div
-          className="
-            col-span-2
-            flex
-            gap-6
-          "
-        >
-          <label>
-            <input
-              type="checkbox"
-              checked={
-                draft
-              }
-              onChange={(e) =>
-                setDraft(
-                  e.target.checked
-                )
-              }
-            />
+      <input
+        id="imagem_url"
+        type="url"
+        value={imagemUrl}
+        onChange={(e) => {
+          setImagemUrl(e.target.value);
+          setImagemValida(true);
+        }}
+        placeholder="https://exemplo.com/imagem.jpg"
+        className="
+          w-full
+          px-3
+          py-2
+          border
+          rounded-lg
+        "
+      />
 
-            {" "}Rascunho
-          </label>
+      <p
+        className="
+          mt-1
+          text-xs
+          text-gray-500
+        "
+      >
+        Informe a URL de uma imagem pública.
+      </p>
 
-          <label>
-            <input
-              type="checkbox"
-              checked={
-                publicar
-              }
-              onChange={(e) =>
-                setPublicar(
-                  e.target.checked
-                )
-              }
-            />
-
-            {" "}Publicar
-          </label>
-        </div>
-
-        {/* ==============================
-            BOTÃO
-        ============================== */}
-
-        <div
-          className="
-            col-span-2
-            flex
-            justify-end
-          "
-        >
-          <button
-            type="submit"
-            disabled={
-              loadingSaldo ||
-              !detentoras_id ||
-              (
-                saldoDetentora !==
-                  null &&
-                saldoDetentora.saldo <=
-                  0
-              )
-            }
-            className={`
-              px-6
-              py-3
+      {imagemUrl.trim() !== "" &&
+        !imagemValida && (
+          <div
+            className="
+              mt-3
+              p-3
               rounded-lg
-              text-white
-              font-semibold
-
-              ${
-                loadingSaldo ||
-                (
-                  saldoDetentora &&
-                  saldoDetentora.saldo <=
-                    0
-                )
-                  ? "bg-gray-400"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }
-            `}
+              border
+              border-red-300
+              bg-red-50
+              text-red-600
+              text-sm
+            "
           >
-            {loadingSaldo
-              ? "Consultando saldo..."
-              : "Salvar Cronograma"}
-          </button>
-        </div>
+            Não foi possível carregar essa imagem.
+            Verifique se a URL está correta.
+          </div>
+        )}
+    </div>
+  </div>
+
+  {/* ==============================
+      BOTÃO - LADO DIREITO
+  ============================== */}
+
+  <div
+    className="
+      flex
+      justify-end
+      shrink-0
+    "
+  >
+    <button
+      type="submit"
+      disabled={
+        loadingSaldo ||
+        !detentoras_id ||
+        (
+          saldoDetentora !== null &&
+          saldoDetentora.saldo <= 0
+        )
+      }
+      className={`
+        px-6
+        py-3
+        rounded-lg
+        text-white
+        font-semibold
+        whitespace-nowrap
+
+        ${
+          loadingSaldo ||
+          (
+            saldoDetentora &&
+            saldoDetentora.saldo <= 0
+          )
+            ? "bg-gray-400"
+            : "bg-blue-600 hover:bg-blue-700"
+        }
+      `}
+    >
+      {loadingSaldo
+        ? "Consultando saldo..."
+        : "Salvar Cronograma"}
+    </button>
+  </div>
+
+   </div>     
       </form>
     </div>
   );
