@@ -739,53 +739,7 @@ export default function Cronograma() {
           </select>
         </div>
 
-         {/* ==============================
-            PROFESSOR
-        ============================== */}
-
-        <div>
-          <select
-            value={
-              professor_id
-            }
-            onChange={(e) =>
-              setProfessor(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
-              Selecione o professor
-            </option>
-
-            {professores.map(
-              (
-                professor
-              ) => (
-                <option
-                  key={
-                    professor.id
-                  }
-                  value={
-                    professor.id
-                  }
-                >
-                  {
-                    professor.nome_professor
-                  }
-                </option>
-              )
-            )}
-          </select>
-        </div>
+       
 
      {/* ==============================
     DETENTORA / CURSO
@@ -1232,32 +1186,68 @@ export default function Cronograma() {
         {/* ==============================
             QUANTIDADE / FORMATURA
         ============================== */}
+{/* ==============================
+    PROFESSOR + OBSERVAÇÃO
+============================== */}
 
-  
+<div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* ==============================
-            OBSERVAÇÃO
-        ============================== */}
+  {/* ==============================
+      PROFESSOR
+  ============================== */}
 
-        <textarea
-          rows={1}
-          value={
-            especificacao
-          }
-          onChange={(e) =>
-            setObservacao(
-              e.target.value
-            )
-          }
-          placeholder="Especificação / Observações"
-          className="
-            col-span-2
-            px-3
-            py-2
-            border
-            rounded-lg
-          "
-        />
+  <div>
+    <select
+      value={professor_id}
+      onChange={(e) =>
+        setProfessor(e.target.value)
+      }
+      className="
+        w-full
+        px-3
+        py-2
+        border
+        rounded-lg
+        bg-white
+      "
+    >
+      <option value="">
+        Selecione o professor
+      </option>
+
+      {professores.map((professor) => (
+        <option
+          key={professor.id}
+          value={professor.id}
+        >
+          {professor.nome_professor}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* ==============================
+      OBSERVAÇÃO
+  ============================== */}
+
+  <textarea
+    rows={1}
+    value={especificacao}
+    onChange={(e) =>
+      setObservacao(e.target.value)
+    }
+    placeholder="Especificação / Observações"
+    className="
+      w-full
+      px-3
+      py-2
+      border
+      rounded-lg
+      resize-none
+    "
+  />
+
+</div>
 {/* ==============================
     LINK + IMAGEM + BOTÃO
 ============================== */}
