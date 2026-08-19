@@ -22,6 +22,7 @@ interface LocalType {
 interface SalaType {
   id: string;
   numero_sala: string;
+  tipo_uso: string;
   local_id: string;
 }
 
@@ -699,18 +700,10 @@ export default function Cronograma() {
           </select>
         </div>
 
-        {/* ==============================
-            SALA
-        ============================== */}
-
-        <div>
+       <div>
           <select
             value={sala_id}
-            onChange={(e) =>
-              setSala(
-                e.target.value
-              )
-            }
+            onChange={(e) => setSala(e.target.value)}
             className="
               w-full
               px-3
@@ -721,42 +714,37 @@ export default function Cronograma() {
             "
           >
             <option value="">
-              Selecione a sala
-            </option>
+      Selecione a sala
+          </option>
 
-            {salasFiltradas.map(
-              (sala) => (
-                <option
-                  key={sala.id}
-                  value={sala.id}
-                >
-                  {
-                    sala.numero_sala
-                  }
-                </option>
-              )
-            )}
+    {salasFiltradas.map((sala) => (
+      <option
+        key={sala.id}
+        value={sala.id}
+      >
+                {sala.numero_sala} - {sala.tipo_uso}
+              </option>
+            ))}
           </select>
         </div>
+              
 
-       
+            {/* ==============================
+            DETENTORA / CURSO
+        ============================== */}
 
-     {/* ==============================
-    DETENTORA / CURSO
-============================== */}
+        <div>
+          <select
+            value={detentoras_id}
+            onChange={async (e) => {
+              const id = e.target.value;
 
-<div>
-  <select
-    value={detentoras_id}
-    onChange={async (e) => {
-      const id = e.target.value;
+              setDetentoras_id(id);
 
-      setDetentoras_id(id);
-
-      if (!id) {
-        setSaldoDetentora(null);
-        return;
-      }
+              if (!id) {
+                setSaldoDetentora(null);
+                return;
+              }
 
       await carregarSaldoDetentora(id);
     }}
