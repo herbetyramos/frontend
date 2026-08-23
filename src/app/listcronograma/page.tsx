@@ -867,17 +867,6 @@ const visualizarSolicitacao = async (id: string) => {
                 
 
           
-
-           <div>
-                <strong>Turmas Contratadas:</strong>{" "}
-                {item.saldoDetentora?.contratado}
-              </div>
-
-              <div>
-            <strong>Turmas Utilizadas:</strong>{" "}
-            {item.saldoDetentora?.utilizadas}
-          </div>
-
                 
 
               <Link
