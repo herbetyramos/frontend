@@ -864,10 +864,7 @@ const visualizarSolicitacao = async (id: string) => {
                 <div>
                   <strong>Númedo da Ata:</strong> {item.detentoras?.ata?.numero_ata}
                 </div> 
-                <div>
-                <strong>Turmas Contratadas:</strong>{" "}
-                {item.saldoDetentora?.contratado}
-              </div>
+                
 
           
 
@@ -881,32 +878,7 @@ const visualizarSolicitacao = async (id: string) => {
             {item.saldoDetentora?.utilizadas}
           </div>
 
-          <div>
-            
-
-            <td className=" p-2 text-center">
-            <strong>Saldo:</strong>{" "}
-            {(() => {
-              const saldo = item.saldoDetentora?.saldo ?? 0;
-
-              return (
-                <span
-                  className={`px-2 py-1 rounded-full border-0 text-white text-xs font-bold ${
-                    saldo <= 0
-                      ? "bg-red-600"
-                      : saldo <= 5
-                      ? "bg-yellow-500"
-                      : "bg-green-600"
-                  }`}
-                >
-                  {saldo}
-                </span>
-              );
-
-            })()}
-
-          </td>
-          </div>
+        
                 
 
               <Link
