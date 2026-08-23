@@ -25,7 +25,36 @@ function getPeriodo(hora?: string) {
 function formatarData(data?: string | null) {
   if (!data) return "";
 
-  return new Date(data).toLocaleDateString("pt-BR");
+  const valor = String(data).trim();
+
+  if (!valor) return "";
+
+  // Já está no formato brasileiro: DD/MM/YYYY
+  const formatoBR = valor.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})/
+  );
+
+  if (formatoBR) {
+    return `${formatoBR[1]}/${formatoBR[2]}/${formatoBR[3]}`;
+  }
+
+  // Formato ISO: YYYY-MM-DD
+  const formatoISO = valor.match(
+    /^(\d{4})-(\d{2})-(\d{2})/
+  );
+
+  if (formatoISO) {
+    return `${formatoISO[3]}/${formatoISO[2]}/${formatoISO[1]}`;
+  }
+
+  // Última tentativa para outros formatos válidos
+  const date = new Date(valor);
+
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("pt-BR");
 }
 
 
