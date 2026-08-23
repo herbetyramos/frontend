@@ -405,7 +405,7 @@ const visualizarSolicitacao = async (id: string) => {
         <div>
             <h1 className="text-lg py-0 font-semibold mb-0 flex items-center gap-2">
         
-          <span className="text-2xl font-bold text-red-600">
+          <span className="text-2xl font-bold text-red-800">
            {totalGeralCursos} Cursos
          </span>
         
@@ -659,18 +659,16 @@ const visualizarSolicitacao = async (id: string) => {
   return (
     
        <div key={polo} className="mb-5">
-            <div className="grid grid-cols-3 items-center">
-        <div>
-          <h2 className="text-xl font-bold text-blue-700">
-            {polo}
-          </h2>
-        </div>
-
-        <div className="text-center">
-          <span className="text-lg font-bold text-blue-700">
-            {totalCursosPolo} Cursos
-          </span>
-        </div>
+              <div className="flex items-center gap-3">
+              
+                <h2 className="text-xl font-bold text-blue-700">
+                  {polo}
+                </h2>
+              
+                <span className="px-3 py-1 rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                   {totalCursosPolo} Cursos
+                </span>
+            
 
         <div />
       </div>
