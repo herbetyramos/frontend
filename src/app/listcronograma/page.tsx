@@ -563,6 +563,32 @@ const visualizarSolicitacao = async (id: string) => {
         Professores
       </button>
 
+      <Link
+                href={
+                  filtroEmpresa
+                    ? `/detentora/saldo-relatorio?empresa=${encodeURIComponent(
+                        filtroEmpresa
+                      )}`
+                    : "/detentora/saldo-relatorio"
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  px-4
+                  py-1
+                  bg-blue-600
+                  text-white
+                  rounded-md
+                  hover:bg-blue-700
+                "
+              >
+                <FileText size={16} />
+                Saldo
+          </Link>
+
     </div>
   </div>
 
