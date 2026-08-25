@@ -21,12 +21,21 @@ export function relatorioGrade(
 
   const agrupadoPorBloco: CronogramaGroup = {};
 
+  // ============================================================
+  // FILTRO
+  // ============================================================
+
   const listaFiltrada = filtroBloco
     ? cronogramaFull.filter(
         (item) =>
           item.bloco_curso?.bloco_Curso === filtroBloco
       )
     : cronogramaFull;
+
+  // ============================================================
+  // AGRUPAMENTO
+  // BLOCO -> POLO -> SALA
+  // ============================================================
 
   listaFiltrada.forEach((item) => {
     const bloco =
@@ -39,19 +48,29 @@ export function relatorioGrade(
       ? `${item.salaAula.numero_sala} (${item.salaAula.tipo_uso})`
       : "Sem Sala";
 
-    if (!agrupadoPorBloco[bloco])
+    if (!agrupadoPorBloco[bloco]) {
       agrupadoPorBloco[bloco] = {};
+    }
 
-    if (!agrupadoPorBloco[bloco][polo])
+    if (!agrupadoPorBloco[bloco][polo]) {
       agrupadoPorBloco[bloco][polo] = {};
+    }
 
-    if (!agrupadoPorBloco[bloco][polo][sala])
+    if (!agrupadoPorBloco[bloco][polo][sala]) {
       agrupadoPorBloco[bloco][polo][sala] = [];
+    }
 
     agrupadoPorBloco[bloco][polo][sala].push(item);
   });
 
+  // ============================================================
+  // RELATÓRIO
+  // ============================================================
+
   Object.keys(agrupadoPorBloco).forEach((bloco) => {
+    // ----------------------------------------------------------
+    // TÍTULO DO BLOCO
+    // ----------------------------------------------------------
 
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 150);
@@ -64,108 +83,172 @@ export function relatorioGrade(
 
     posY += 2;
 
+    // ----------------------------------------------------------
+    // POLOS
+    // ----------------------------------------------------------
+
     Object.keys(agrupadoPorBloco[bloco]).forEach(
       (polo) => {
+        const salasDoPolo =
+          agrupadoPorBloco[bloco][polo];
+
+        // --------------------------------------------------------
+        // LINHA DO POLO
+        // --------------------------------------------------------
 
         doc.setFontSize(12);
         doc.setTextColor(0, 100, 0);
 
         posY += 8;
 
-        doc.text(polo, 14, posY);
+        // Polo
+        doc.text(
+          `Polo: ${polo}`,
+          14,
+          posY
+        );
 
-        posY += 2;
+        // --------------------------------------------------------
+        // RÓTULO PERÍODO
+        // Centralizado sobre as duas colunas de datas
+        // --------------------------------------------------------
 
-        Object.keys(
-          agrupadoPorBloco[bloco][polo]
-        ).forEach((sala) => {
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
 
-          const registros =
-            agrupadoPorBloco[bloco][polo][sala];
+        doc.text(
+          "Período",
+          113,
+          posY,
+          {
+            align: "center",
+          }
+        );
 
-          const rows = registros.map((item) => [
-            item.codigo,
-            item.tema,
-            item.data_inicio,
-            item.data_fim,
-            item.hora_inicio,
-            item.hora_fim,
-          ]);
+        // --------------------------------------------------------
+        // RÓTULO HORÁRIO
+        // Centralizado sobre as duas colunas de horários
+        // --------------------------------------------------------
 
-          autoTable(doc, {
-            startY: posY,
+        doc.text(
+          "Horário",
+          158,
+          posY,
+          {
+            align: "center",
+          }
+        );
 
-            head: [[
-              { content: "Código" },
-              { content: `Sala ${sala}` },
-              {
-                content: "Período",
-                colSpan: 2,
-                styles: {
-                  halign: "center",
+        posY += 3;
+
+        // --------------------------------------------------------
+        // SALAS
+        // --------------------------------------------------------
+
+        Object.keys(salasDoPolo).forEach(
+          (sala) => {
+            const registros =
+              salasDoPolo[sala];
+
+            // ----------------------------------------------------
+            // DADOS DA TABELA
+            //
+            // Não existem mais os rótulos:
+            // Data início
+            // Data fim
+            // Hora início
+            // Hora fim
+            // ----------------------------------------------------
+
+            const rows = registros.map(
+              (item) => [
+                item.codigo,
+                item.tema,
+                item.data_inicio,
+                item.data_fim,
+                item.hora_inicio,
+                item.hora_fim,
+              ]
+            );
+
+            // ----------------------------------------------------
+            // TABELA
+            // ----------------------------------------------------
+
+            autoTable(doc, {
+              startY: posY,
+
+              // Sem head.
+              // A tabela terá somente os dados.
+              body: rows,
+
+              theme: "grid",
+
+              styles: {
+                fontSize: 10,
+                overflow: "linebreak",
+                textColor: [0, 0, 0],
+              },
+
+              columnStyles: {
+                // Código
+                0: {
+                  cellWidth: 18,
+                },
+
+                // Tema / Sala
+                1: {
+                  cellWidth: 80,
+                },
+
+                // Data início
+                2: {
+                  cellWidth: 22,
+                },
+
+                // Data fim
+                3: {
+                  cellWidth: 22,
+                },
+
+                // Hora início
+                4: {
+                  cellWidth: 15,
+                },
+
+                // Hora fim
+                5: {
+                  cellWidth: 15,
                 },
               },
-              {
-                content: "Horário",
-                colSpan: 2,
-                styles: {
-                  halign: "center",
-                },
-              },
-            ]],
 
-            body: rows,
+              tableWidth: "wrap",
+            });
 
-            theme: "grid",
+            // ----------------------------------------------------
+            // POSIÇÃO APÓS A TABELA
+            // ----------------------------------------------------
 
-            headStyles: {
-              fillColor: [200, 0, 0],
-              textColor: "#fff",
-            },
-
-            styles: {
-              fontSize: 10,
-              overflow: "linebreak",
-            },
-
-            columnStyles: {
-              0: {
-                cellWidth: 18,
-              },
-              1: {
-                cellWidth: 80,
-              },
-              2: {
-                cellWidth: 22,
-              },
-              3: {
-                cellWidth: 22,
-              },
-              4: {
-                cellWidth: 15,
-              },
-              5: {
-                cellWidth: 15,
-              },
-            },
-
-            tableWidth: "wrap",
-          });
-
-          posY =
-            (
-              doc as unknown as {
-                lastAutoTable: {
-                  finalY: number;
-                };
-              }
-            ).lastAutoTable.finalY + 1;
-        });
+            posY =
+              (
+                doc as unknown as {
+                  lastAutoTable: {
+                    finalY: number;
+                  };
+                }
+              ).lastAutoTable.finalY + 1;
+          }
+        );
       }
     );
 
+    // Espaçamento entre blocos
     posY += 5;
   });
+
+  // ============================================================
+  // ABRIR PDF
+  // ============================================================
 
   const blob = doc.output("blob");
 
