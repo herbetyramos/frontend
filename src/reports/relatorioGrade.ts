@@ -11,6 +11,67 @@ interface CronogramaGroup {
   };
 }
 
+// ============================================================
+// COR DA SALA
+// Mantém a mesma lógica utilizada no frontend
+// ============================================================
+
+const corSala = (sala: string): [number, number, number] => {
+  const texto = sala.toUpperCase();
+
+  if (
+    texto.includes("BELEZA") ||
+    texto.includes("BELEZA COM LAVATÓRIO") ||
+    texto.includes("BELEZA COM MACA")
+  ) {
+    return [168, 85, 247]; // Lilás #A855F7
+  }
+
+  if (
+    texto.includes("INFORMÁTICA") ||
+    texto.includes("INFORMATICA")
+  ) {
+    return [145, 145, 0]; // Amarelo aproximado
+  }
+
+  if (
+    texto.includes("GASTRONOMIA") ||
+    texto.includes("COZINHA")
+  ) {
+    return [37, 99, 235]; // Azul #2563EB
+  }
+
+  if (texto.includes("ADMINISTRATIVO")) {
+    return [180, 30, 30]; // Vermelho
+  }
+
+  if (texto.includes("SERVIÇOS")) {
+    return [22, 163, 74]; // Verde #16A34A
+  }
+
+  if (texto.includes("COSTURA")) {
+    return [250, 204, 21]; // Amarelo #FACC15
+  }
+
+  if (texto.includes("SABER")) {
+    return [180, 30, 30]; // Vermelho
+  }
+
+  if (texto.includes("MULTIUSO")) {
+    return [180, 30, 30]; // Vermelho
+  }
+
+  if (texto.includes("MODA")) {
+    return [250, 204, 21]; // Amarelo #FACC15
+  }
+
+  if (texto.includes("CASA ROSA")) {
+    return [236, 140, 160]; // Rosa
+  }
+
+  return [0, 0, 0]; // Preto
+};
+
 export function relatorioGrade(
   cronogramaFull: CronogramaType[],
   filtroBloco: string
@@ -84,7 +145,7 @@ export function relatorioGrade(
     posY += 2;
 
     // ----------------------------------------------------------
-    // POLOS DA SECRETARIA E DE TODOS OS CRAS
+    // POLOS
     // ----------------------------------------------------------
 
     Object.keys(agrupadoPorBloco[bloco]).forEach(
@@ -101,7 +162,6 @@ export function relatorioGrade(
 
         posY += 8;
 
-        // Polo
         doc.text(
           `Polo: ${polo}`,
           14,
@@ -109,8 +169,7 @@ export function relatorioGrade(
         );
 
         // --------------------------------------------------------
-        // RÓTULO PERÍODO
-        // Centralizado sobre as duas colunas de datas
+        // PERÍODO
         // --------------------------------------------------------
 
         doc.setFontSize(10);
@@ -126,8 +185,7 @@ export function relatorioGrade(
         );
 
         // --------------------------------------------------------
-        // RÓTULO HORÁRIO
-        // Centralizado sobre as duas colunas de horários
+        // HORÁRIO
         // --------------------------------------------------------
 
         doc.text(
@@ -139,25 +197,56 @@ export function relatorioGrade(
           }
         );
 
-        posY += 3;
+        posY += 5;
 
         // --------------------------------------------------------
         // SALAS
+        // Ordenação numérica
         // --------------------------------------------------------
 
-        Object.keys(salasDoPolo).forEach(
-          (sala) => {
+        Object.keys(salasDoPolo)
+          .sort((a, b) => {
+            const numeroA = parseInt(
+              a.match(/\d+/)?.[0] || "0",
+              10
+            );
+
+            const numeroB = parseInt(
+              b.match(/\d+/)?.[0] || "0",
+              10
+            );
+
+            return numeroA - numeroB;
+          })
+          .forEach((sala) => {
             const registros =
               salasDoPolo[sala];
 
             // ----------------------------------------------------
-            // DADOS DA TABELA
-            //
-            // Não existem mais os rótulos:
-            // Data início
-            // Data fim
-            // Hora início
-            // Hora fim
+            // IDENTIFICAÇÃO DA SALA
+            // ----------------------------------------------------
+
+            const cor = corSala(sala);
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+
+            doc.setTextColor(
+              cor[0],
+              cor[1],
+              cor[2]
+            );
+
+            doc.text(
+              `Sala ${sala}`,
+              14,
+              posY
+            );
+
+            posY += 4;
+
+            // ----------------------------------------------------
+            // DADOS
             // ----------------------------------------------------
 
             const rows = registros.map(
@@ -173,13 +262,12 @@ export function relatorioGrade(
 
             // ----------------------------------------------------
             // TABELA
+            // Somente dados, sem cabeçalho
             // ----------------------------------------------------
 
             autoTable(doc, {
               startY: posY,
 
-              // Sem head.
-              // A tabela terá somente os dados.
               body: rows,
 
               theme: "grid",
@@ -191,32 +279,26 @@ export function relatorioGrade(
               },
 
               columnStyles: {
-                // Código
                 0: {
                   cellWidth: 18,
                 },
 
-                // Tema / Sala
                 1: {
                   cellWidth: 80,
                 },
 
-                // Data início
                 2: {
                   cellWidth: 22,
                 },
 
-                // Data fim
                 3: {
                   cellWidth: 22,
                 },
 
-                // Hora início
                 4: {
                   cellWidth: 15,
                 },
 
-                // Hora fim
                 5: {
                   cellWidth: 15,
                 },
@@ -236,13 +318,15 @@ export function relatorioGrade(
                     finalY: number;
                   };
                 }
-              ).lastAutoTable.finalY + 1;
-          }
-        );
+              ).lastAutoTable.finalY + 3;
+          });
       }
     );
 
-    // Espaçamento entre blocos
+    // ----------------------------------------------------------
+    // ESPAÇO ENTRE BLOCOS
+    // ----------------------------------------------------------
+
     posY += 5;
   });
 
