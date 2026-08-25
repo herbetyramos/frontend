@@ -84,7 +84,7 @@ export function relatorioGrade(
     posY += 2;
 
     // ----------------------------------------------------------
-    // POLOS
+    // POLOS DA SECRETARIA E DE TODOS OS CRAS
     // ----------------------------------------------------------
 
     Object.keys(agrupadoPorBloco[bloco]).forEach(
