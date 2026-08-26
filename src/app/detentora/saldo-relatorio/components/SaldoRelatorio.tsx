@@ -22,7 +22,7 @@ export default function SaldoRelatorio() {
   useEffect(() => {
     const carregar = async () => {
       try {
-        const response = await api.get<SaldoType[]>("/detentora/saldo");
+        const response = await api.get<SaldoType[]>("/detentora/saldo-relatorio");
         setDados(response.data);
       } catch (error) {
         console.error("Erro ao carregar relatório de saldo:", error);
