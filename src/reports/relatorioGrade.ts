@@ -335,89 +335,116 @@ export function relatorioGrade(
             // --------------------------------------------------
 
             autoTable(doc, {
-              startY: posY,
+                  startY: posY,
 
-              head: [
-                      [
-                        {
-                          content: `Sala ${sala}`,
-                          colSpan: 6,
-                          styles: {
-                            fillColor: cor,
-                            textColor: corTexto,
-                            halign: "left",
-                            valign: "middle",
-                            fontStyle: "bold",
-                            fontSize: 9,
-                            cellPadding: {
-                              top: 1,
-                              bottom: 0.5,
-                              left: 2,
-                              right: 2,
-                            },
-                            minCellHeight: 5,
-                          },
+                  head: [
+                    [
+                      {
+                        content: `Sala ${sala}`,
+                        colSpan: 6,
+                      styles: {
+                        fillColor: cor,
+                        textColor: corTexto,
+                        halign: "left",
+                        valign: "middle",
+                        fontStyle: "bold",
+                        fontSize: 9,
+                        cellPadding: {
+                          top: 1,
+                          bottom: 1,
+                          left: 2,
+                          right: 2,
                         },
-                      ],
-                    ],
+                        minCellHeight: 5,
+                      },
+                    },
+                  ],
+                ],
 
-              body: rows,
+                body: rows,
 
-              theme: "grid",
+                theme: "grid",
 
-              headStyles: {
-                fillColor: cor,
-                textColor: corTexto,
-                fontStyle: "bold",
-              },
-
-              styles: {
-                fontSize: 10,
-                overflow: "linebreak",
-                textColor: [0, 0, 0],
-                cellPadding: 2,
-              },
-
-              columnStyles: {
-                // Código
-                0: {
-                  cellWidth:
-                    COLUMN_WIDTHS.codigo,
+                headStyles: {
+                  fillColor: cor,
+                  textColor: corTexto,
+                  fontStyle: "bold",
+                  lineColor: cor,
+                  lineWidth: 0.5,
                 },
 
-                // Tema
-                1: {
-                  cellWidth:
-                    COLUMN_WIDTHS.tema,
+                styles: {
+                  fontSize: 10,
+                  overflow: "linebreak",
+                  textColor: [0, 0, 0],
+                  cellPadding: 2,
+                  lineColor: [180, 180, 180],
+                  lineWidth: 0.2,
+                              },
+
+                columnStyles: {
+                  0: {
+                    cellWidth: COLUMN_WIDTHS.codigo,
+                  },
+                  1: {
+                    cellWidth: COLUMN_WIDTHS.tema,
+                  },
+                  2: {
+                    cellWidth: COLUMN_WIDTHS.dataInicio,
+                  },
+                  3: {
+                    cellWidth: COLUMN_WIDTHS.dataFim,
+                  },
+                  4: {
+                    cellWidth: COLUMN_WIDTHS.horaInicio,
+                  },
+                  5: {
+                    cellWidth: COLUMN_WIDTHS.horaFim,
+                  },
                 },
 
-                // Data início
-                2: {
-                  cellWidth:
-                    COLUMN_WIDTHS.dataInicio,
-                },
+                tableWidth: "wrap",
+              });
 
-                // Data fim
-                3: {
-                  cellWidth:
-                    COLUMN_WIDTHS.dataFim,
-                },
+                      // ==========================================================
+                      // BORDA EXTERNA DA TABELA
+                      // MESMA COR DA SALA
+                      // ==========================================================
 
-                // Hora início
-                4: {
-                  cellWidth:
-                    COLUMN_WIDTHS.horaInicio,
-                },
+                      const finalY =
+                        (
+                          doc as unknown as {
+                            lastAutoTable: {
+                              finalY: number;
+                            };
+                          }
+                        ).lastAutoTable.finalY;
 
-                // Hora fim
-                5: {
-                  cellWidth:
-                    COLUMN_WIDTHS.horaFim,
-                },
-              },
+                      const tableWidth =
+                        COLUMN_WIDTHS.codigo +
+                        COLUMN_WIDTHS.tema +
+                        COLUMN_WIDTHS.dataInicio +
+                        COLUMN_WIDTHS.dataFim +
+                        COLUMN_WIDTHS.horaInicio +
+                        COLUMN_WIDTHS.horaFim;
 
-              tableWidth: "wrap",
-            });
+                  doc.setDrawColor(
+                    cor[0],
+                    cor[1],
+                    cor[2]
+                  );
+
+                  doc.setLineWidth(0.8);
+
+                  doc.rect(
+                    TABLE_START_X,
+                    posY,
+                    tableWidth,
+                    finalY - posY
+                  );
+
+                  // Continua depois da tabela
+            posY = finalY + 2;
 
             // --------------------------------------------------
             // POSIÇÃO APÓS A TABELA
