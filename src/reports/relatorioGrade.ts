@@ -350,7 +350,7 @@ export function relatorioGrade(
                             fontStyle: "bold",
                             fontSize: 9,
                             cellPadding: {
-                              top: 0.5,
+                              top: 1,
                               bottom: 0.5,
                               left: 2,
                               right: 2,
