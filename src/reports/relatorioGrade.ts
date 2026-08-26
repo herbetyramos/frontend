@@ -12,11 +12,53 @@ interface CronogramaGroup {
 }
 
 // ============================================================
+// CONFIGURAÇÃO DAS COLUNAS
+// ============================================================
+
+const COLUMN_WIDTHS = {
+  codigo: 18,
+  tema: 80,
+  dataInicio: 22,
+  dataFim: 22,
+  horaInicio: 15,
+  horaFim: 15,
+};
+
+// Posição inicial da tabela
+const TABLE_START_X = 14;
+
+// ============================================================
+// POSIÇÃO CENTRAL DOS RÓTULOS
+// ============================================================
+
+// Centro das duas colunas de datas
+const PERIODO_X =
+  TABLE_START_X +
+  COLUMN_WIDTHS.codigo +
+  COLUMN_WIDTHS.tema +
+  (COLUMN_WIDTHS.dataInicio +
+    COLUMN_WIDTHS.dataFim) /
+    2;
+
+// Centro das duas colunas de horários
+const HORARIO_X =
+  TABLE_START_X +
+  COLUMN_WIDTHS.codigo +
+  COLUMN_WIDTHS.tema +
+  COLUMN_WIDTHS.dataInicio +
+  COLUMN_WIDTHS.dataFim +
+  (COLUMN_WIDTHS.horaInicio +
+    COLUMN_WIDTHS.horaFim) /
+    2;
+
+// ============================================================
 // COR DA SALA
 // Mantém a mesma lógica utilizada no frontend
 // ============================================================
 
-const corSala = (sala: string): [number, number, number] => {
+const corSala = (
+  sala: string
+): [number, number, number] => {
   const texto = sala.toUpperCase();
 
   if (
@@ -72,6 +114,29 @@ const corSala = (sala: string): [number, number, number] => {
   return [0, 0, 0]; // Preto
 };
 
+// ============================================================
+// COR DE CONTRASTE
+// ============================================================
+
+const corTextoContraste = (
+  cor: [number, number, number]
+): [number, number, number] => {
+  const luminosidade =
+    cor[0] * 0.299 +
+    cor[1] * 0.587 +
+    cor[2] * 0.114;
+
+  if (luminosidade > 160) {
+    return [0, 0, 0];
+  }
+
+  return [255, 255, 255];
+};
+
+// ============================================================
+// RELATÓRIO
+// ============================================================
+
 export function relatorioGrade(
   cronogramaFull: CronogramaType[],
   filtroBloco: string
@@ -89,7 +154,8 @@ export function relatorioGrade(
   const listaFiltrada = filtroBloco
     ? cronogramaFull.filter(
         (item) =>
-          item.bloco_curso?.bloco_Curso === filtroBloco
+          item.bloco_curso?.bloco_Curso ===
+          filtroBloco
       )
     : cronogramaFull;
 
@@ -100,10 +166,12 @@ export function relatorioGrade(
 
   listaFiltrada.forEach((item) => {
     const bloco =
-      item.bloco_curso?.bloco_Curso || "Sem Bloco";
+      item.bloco_curso?.bloco_Curso ||
+      "Sem Bloco";
 
     const polo =
-      item.localAula?.polo || "Sem Polo";
+      item.localAula?.polo ||
+      "Sem Polo";
 
     const sala = item.salaAula
       ? `${item.salaAula.numero_sala} (${item.salaAula.tipo_uso})`
@@ -117,80 +185,92 @@ export function relatorioGrade(
       agrupadoPorBloco[bloco][polo] = {};
     }
 
-    if (!agrupadoPorBloco[bloco][polo][sala]) {
-      agrupadoPorBloco[bloco][polo][sala] = [];
+    if (
+      !agrupadoPorBloco[bloco][polo][sala]
+    ) {
+      agrupadoPorBloco[bloco][polo][sala] =
+        [];
     }
 
-    agrupadoPorBloco[bloco][polo][sala].push(item);
+    agrupadoPorBloco[bloco][polo][sala].push(
+      item
+    );
   });
 
   // ============================================================
-  // RELATÓRIO
+  // PERCORRER BLOCOS
   // ============================================================
 
-  Object.keys(agrupadoPorBloco).forEach((bloco) => {
-    // ----------------------------------------------------------
-    // TÍTULO DO BLOCO
-    // ----------------------------------------------------------
+  Object.keys(agrupadoPorBloco).forEach(
+    (bloco) => {
+      // --------------------------------------------------------
+      // TÍTULO DO BLOCO
+      // --------------------------------------------------------
 
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 150);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 150);
 
-    doc.text(
-      `Cursos da Secretaria da Mulher e da Família - ${bloco}`,
-      14,
-      posY
-    );
+      doc.text(
+        `Cursos da Secretaria da Mulher e da Família - ${bloco}`,
+        14,
+        posY
+      );
 
-    posY += 2;
+      posY += 2;
 
-    // ----------------------------------------------------------
-    // POLOS
-    // ----------------------------------------------------------
+      // --------------------------------------------------------
+      // POLOS
+      // --------------------------------------------------------
 
-    Object.keys(agrupadoPorBloco[bloco]).forEach(
-      (polo) => {
+      Object.keys(
+        agrupadoPorBloco[bloco]
+      ).forEach((polo) => {
         const salasDoPolo =
           agrupadoPorBloco[bloco][polo];
 
-        // --------------------------------------------------------
+        // ------------------------------------------------------
         // LINHA DO POLO
-        // --------------------------------------------------------
+        // ------------------------------------------------------
 
         doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
         doc.setTextColor(0, 100, 0);
 
         posY += 8;
 
         doc.text(
           `Polo: ${polo}`,
-          14,
+          TABLE_START_X,
           posY
         );
 
-        // --------------------------------------------------------
+        // ------------------------------------------------------
         // PERÍODO
-        // --------------------------------------------------------
+        // Centralizado sobre DATA INÍCIO + DATA FIM
+        // ------------------------------------------------------
 
         doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
         doc.setTextColor(0, 0, 0);
 
         doc.text(
           "Período",
-          113,
+          PERIODO_X,
           posY,
           {
             align: "center",
           }
         );
 
-        // --------------------------------------------------------
+        // ------------------------------------------------------
         // HORÁRIO
-        // --------------------------------------------------------
+        // Centralizado sobre HORA INÍCIO + HORA FIM
+        // ------------------------------------------------------
 
         doc.text(
           "Horário",
-          158,
+          HORARIO_X,
           posY,
           {
             align: "center",
@@ -199,10 +279,10 @@ export function relatorioGrade(
 
         posY += 5;
 
-        // --------------------------------------------------------
+        // ------------------------------------------------------
         // SALAS
         // Ordenação numérica
-        // --------------------------------------------------------
+        // ------------------------------------------------------
 
         Object.keys(salasDoPolo)
           .sort((a, b) => {
@@ -222,32 +302,18 @@ export function relatorioGrade(
             const registros =
               salasDoPolo[sala];
 
-            // ----------------------------------------------------
-            // IDENTIFICAÇÃO DA SALA
-            // ----------------------------------------------------
+            // --------------------------------------------------
+            // COR DA SALA
+            // --------------------------------------------------
 
             const cor = corSala(sala);
 
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
+            const corTexto =
+              corTextoContraste(cor);
 
-            doc.setTextColor(
-              cor[0],
-              cor[1],
-              cor[2]
-            );
-
-            doc.text(
-              `Sala ${sala}`,
-              14,
-              posY
-            );
-
-            posY += 4;
-
-            // ----------------------------------------------------
+            // --------------------------------------------------
             // DADOS
-            // ----------------------------------------------------
+            // --------------------------------------------------
 
             const rows = registros.map(
               (item) => [
@@ -260,56 +326,97 @@ export function relatorioGrade(
               ]
             );
 
-            // ----------------------------------------------------
+            // --------------------------------------------------
             // TABELA
-            // Somente dados, sem cabeçalho
-            // ----------------------------------------------------
+            //
+            // A primeira linha é a sala.
+            // colSpan: 6 = uma única célula ocupando
+            // toda a largura da tabela.
+            // --------------------------------------------------
 
             autoTable(doc, {
               startY: posY,
+
+              head: [
+                [
+                  {
+                    content: `Sala ${sala}`,
+                    colSpan: 6,
+
+                    styles: {
+                      fillColor: cor,
+                      textColor: corTexto,
+                      halign: "left",
+                      valign: "middle",
+                      fontStyle: "bold",
+                      fontSize: 10,
+                      cellPadding: 3,
+                    },
+                  },
+                ],
+              ],
 
               body: rows,
 
               theme: "grid",
 
+              headStyles: {
+                fillColor: cor,
+                textColor: corTexto,
+                fontStyle: "bold",
+              },
+
               styles: {
                 fontSize: 10,
                 overflow: "linebreak",
                 textColor: [0, 0, 0],
+                cellPadding: 2,
               },
 
               columnStyles: {
+                // Código
                 0: {
-                  cellWidth: 18,
+                  cellWidth:
+                    COLUMN_WIDTHS.codigo,
                 },
 
+                // Tema
                 1: {
-                  cellWidth: 80,
+                  cellWidth:
+                    COLUMN_WIDTHS.tema,
                 },
 
+                // Data início
                 2: {
-                  cellWidth: 22,
+                  cellWidth:
+                    COLUMN_WIDTHS.dataInicio,
                 },
 
+                // Data fim
                 3: {
-                  cellWidth: 22,
+                  cellWidth:
+                    COLUMN_WIDTHS.dataFim,
                 },
 
+                // Hora início
                 4: {
-                  cellWidth: 15,
+                  cellWidth:
+                    COLUMN_WIDTHS.horaInicio,
                 },
 
+                // Hora fim
                 5: {
-                  cellWidth: 15,
+                  cellWidth:
+                    COLUMN_WIDTHS.horaFim,
                 },
               },
 
               tableWidth: "wrap",
             });
 
-            // ----------------------------------------------------
+            // --------------------------------------------------
             // POSIÇÃO APÓS A TABELA
-            // ----------------------------------------------------
+            // --------------------------------------------------
 
             posY =
               (
@@ -320,15 +427,15 @@ export function relatorioGrade(
                 }
               ).lastAutoTable.finalY + 3;
           });
-      }
-    );
+      });
 
-    // ----------------------------------------------------------
-    // ESPAÇO ENTRE BLOCOS
-    // ----------------------------------------------------------
+      // --------------------------------------------------------
+      // ESPAÇO ENTRE BLOCOS
+      // --------------------------------------------------------
 
-    posY += 5;
-  });
+      posY += 5;
+    }
+  );
 
   // ============================================================
   // ABRIR PDF
