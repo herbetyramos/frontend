@@ -428,19 +428,27 @@ export function relatorioGrade(
                         COLUMN_WIDTHS.horaInicio +
                         COLUMN_WIDTHS.horaFim;
 
+                                  // ==========================================================
+                  // BORDA EXTERNA DA TABELA
+                  // MESMA COR DA SALA
+                  // FINA E COM CANTOS LEVEMENTE ARREDONDADOS
+                  // ==========================================================
+
                   doc.setDrawColor(
                     cor[0],
                     cor[1],
                     cor[2]
                   );
 
-                  doc.setLineWidth(0.8);
+                  doc.setLineWidth(0.5);
 
-                  doc.rect(
+                  doc.roundedRect(
                     TABLE_START_X,
                     posY,
                     tableWidth,
-                    finalY - posY
+                    finalY - posY,
+                    1.2,
+                    1.2
                   );
 
                   // Continua depois da tabela
