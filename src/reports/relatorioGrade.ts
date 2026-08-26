@@ -277,7 +277,7 @@ export function relatorioGrade(
           }
         );
 
-        posY += 5;
+        posY += 2;
 
         // ------------------------------------------------------
         // SALAS
@@ -338,23 +338,28 @@ export function relatorioGrade(
               startY: posY,
 
               head: [
-                [
-                  {
-                    content: `Sala ${sala}`,
-                    colSpan: 6,
-
-                    styles: {
-                      fillColor: cor,
-                      textColor: corTexto,
-                      halign: "left",
-                      valign: "middle",
-                      fontStyle: "bold",
-                      fontSize: 10,
-                      cellPadding: 3,
-                    },
-                  },
-                ],
-              ],
+                      [
+                        {
+                          content: `Sala ${sala}`,
+                          colSpan: 6,
+                          styles: {
+                            fillColor: cor,
+                            textColor: corTexto,
+                            halign: "left",
+                            valign: "middle",
+                            fontStyle: "bold",
+                            fontSize: 9,
+                            cellPadding: {
+                              top: 0.5,
+                              bottom: 0.5,
+                              left: 2,
+                              right: 2,
+                            },
+                            minCellHeight: 5,
+                          },
+                        },
+                      ],
+                    ],
 
               body: rows,
 
