@@ -15,7 +15,7 @@ import { Send } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { gerarRelatorioSolicitacao } from "@/reports/gerarRelatorioSolicitacao";
-import { gerarCertificados }from "@/utils/gerarCertificadoPDF";
+import { gerarCertificados } from "@/utils/gerarCertificadoPDF";
 
 
 
@@ -505,7 +505,7 @@ const visualizarSolicitacao = async (id: string) => {
 
             <div className="flex items-center gap-3">
 
-  {/* MENU RELATÓRIOS DE GRADES */}
+  {/* MENU RELATÓRIOS DE GRADES  k*/}
   <div className="relative group">
     <button className="flex items-center gap-2 px-4 py-1 bg-red-600 text-white rounded-md hover:bg-red-700">
       <FileText size={16} />
