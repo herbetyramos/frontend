@@ -31,17 +31,10 @@ type SaldoRelatorioResponse = {
 };
 
 export default function SaldoRelatorio() {
-  const [dados, setDados] =
-    useState<SaldoRelatorioResponse | null>(null);
-
-  const [empresaSelecionada, setEmpresaSelecionada] =
-    useState("");
-
-  const [carregando, setCarregando] =
-    useState(true);
-
-  const [erro, setErro] =
-    useState("");
+  const [dados, setDados] = useState<SaldoRelatorioResponse | null>(null);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState("");
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     const carregar = async () => {
@@ -49,15 +42,11 @@ export default function SaldoRelatorio() {
         setCarregando(true);
         setErro("");
 
-        const response =
-          await api.get<SaldoRelatorioResponse>(
-            "/detentora/saldo-relatorio"
-          );
-
-        console.log(
-          "RETORNO SALDO RELATÓRIO:",
-          response.data
+        const response = await api.get<SaldoRelatorioResponse>(
+          "/detentora/saldo-relatorio"
         );
+
+        console.log("RETORNO SALDO RELATÓRIO:", response.data);
 
         setDados(response.data);
       } catch (error: unknown) {
@@ -101,10 +90,7 @@ export default function SaldoRelatorio() {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(
-      window.location.search
-    );
-
+    const params = new URLSearchParams(window.location.search);
     const empresa = params.get("empresa");
 
     if (empresa) {
@@ -118,13 +104,8 @@ export default function SaldoRelatorio() {
     }
 
     return [...dados.empresas]
-      .map(
-        (item) =>
-          item.empresa?.trim() || "SEM EMPRESA"
-      )
-      .sort((a, b) =>
-        a.localeCompare(b)
-      );
+      .map((item) => item.empresa?.trim() || "SEM EMPRESA")
+      .sort((a, b) => a.localeCompare(b));
   }, [dados]);
 
   const empresasFiltradas = useMemo(() => {
@@ -138,21 +119,14 @@ export default function SaldoRelatorio() {
 
     return dados.empresas.filter(
       (empresa) =>
-        empresa.empresa.trim() ===
-        empresaSelecionada.trim()
+        empresa.empresa.trim() === empresaSelecionada.trim()
     );
-  }, [
-    dados,
-    empresaSelecionada,
-  ]);
+  }, [dados, empresaSelecionada]);
 
   const totalContratado = useMemo(() => {
     return empresasFiltradas.reduce(
       (total, empresa) =>
-        total +
-        Number(
-          empresa.totalContratado || 0
-        ),
+        total + Number(empresa.totalContratado || 0),
       0
     );
   }, [empresasFiltradas]);
@@ -160,10 +134,7 @@ export default function SaldoRelatorio() {
   const totalUtilizado = useMemo(() => {
     return empresasFiltradas.reduce(
       (total, empresa) =>
-        total +
-        Number(
-          empresa.totalUtilizado || 0
-        ),
+        total + Number(empresa.totalUtilizado || 0),
       0
     );
   }, [empresasFiltradas]);
@@ -171,37 +142,20 @@ export default function SaldoRelatorio() {
   const totalSaldo = useMemo(() => {
     return empresasFiltradas.reduce(
       (total, empresa) =>
-        total +
-        Number(
-          empresa.saldoAtual || 0
-        ),
+        total + Number(empresa.saldoAtual || 0),
       0
     );
   }, [empresasFiltradas]);
 
-  const formatarNumero = (
-    valor: number
-  ) => {
-    return Number(
-      valor || 0
-    ).toLocaleString("pt-BR");
-  };
-
-  const formatarCurso = (
-    curso: string
-  ) => {
-    return (
-      curso?.trim() || "SEM CURSO"
-    ).toLocaleUpperCase("pt-BR");
+  const formatarNumero = (valor: number) => {
+    return Number(valor || 0).toLocaleString("pt-BR");
   };
 
   const imprimir = () => {
     window.print();
   };
 
-  const obterClasseSaldo = (
-    saldo: number
-  ) => {
+  const obterClasseSaldo = (saldo: number) => {
     if (saldo <= 0) {
       return "bg-red-600";
     }
@@ -239,9 +193,7 @@ export default function SaldoRelatorio() {
 
           <button
             type="button"
-            onClick={() =>
-              window.location.reload()
-            }
+            onClick={() => window.location.reload()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold"
           >
             Tentar novamente
@@ -253,21 +205,16 @@ export default function SaldoRelatorio() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-
       {/* CABEÇALHO */}
       <div className="bg-white rounded-lg shadow p-5 mb-5">
-
         <div className="flex items-center justify-between gap-4">
-
           <div className="flex items-center gap-3">
-
             <FileText
               size={30}
               className="text-blue-700"
             />
 
             <div>
-
               <h1 className="text-2xl font-bold text-blue-800">
                 Relatório de Saldo
               </h1>
@@ -275,9 +222,7 @@ export default function SaldoRelatorio() {
               <p className="text-sm text-gray-500">
                 Saldo por empresa e curso
               </p>
-
             </div>
-
           </div>
 
           <button
@@ -289,12 +234,10 @@ export default function SaldoRelatorio() {
 
             Imprimir / PDF
           </button>
-
         </div>
 
         {/* FILTRO */}
         <div className="no-print mt-5 flex items-center gap-3">
-
           <label
             htmlFor="empresa"
             className="font-semibold text-gray-700"
@@ -306,39 +249,29 @@ export default function SaldoRelatorio() {
             id="empresa"
             value={empresaSelecionada}
             onChange={(e) =>
-              setEmpresaSelecionada(
-                e.target.value
-              )
+              setEmpresaSelecionada(e.target.value)
             }
             className="border border-gray-300 rounded-md px-3 py-2 bg-white min-w-[320px] outline-none focus:ring-2 focus:ring-blue-500"
           >
-
             <option value="">
               Todas as empresas
             </option>
 
-            {empresas.map(
-              (empresa) => (
-                <option
-                  key={empresa}
-                  value={empresa}
-                >
-                  {empresa}
-                </option>
-              )
-            )}
-
+            {empresas.map((empresa) => (
+              <option
+                key={empresa}
+                value={empresa}
+              >
+                {empresa}
+              </option>
+            ))}
           </select>
-
         </div>
-
       </div>
 
       {/* RELATÓRIO */}
       <div className="bg-white rounded-lg shadow p-6">
-
         <div className="text-center mb-6">
-
           <h2 className="text-xl font-bold text-gray-800">
             RELATÓRIO DE SALDO
           </h2>
@@ -348,243 +281,179 @@ export default function SaldoRelatorio() {
               ? empresaSelecionada
               : "TODAS AS EMPRESAS"}
           </p>
-
         </div>
 
         {empresasFiltradas.length === 0 ? (
-
           <div className="text-center py-10 text-gray-500">
             Nenhum registro de saldo encontrado.
           </div>
-
         ) : (
+          empresasFiltradas.map((empresa) => {
+            const totalEmpresaContratado =
+              Number(empresa.totalContratado || 0);
 
-          empresasFiltradas.map(
-            (empresa) => {
+            const totalEmpresaUtilizado =
+              Number(empresa.totalUtilizado || 0);
 
-              const totalEmpresaContratado =
-                Number(
-                  empresa.totalContratado || 0
-                );
+            const totalEmpresaSaldo =
+              Number(empresa.saldoAtual || 0);
 
-              const totalEmpresaUtilizado =
-                Number(
-                  empresa.totalUtilizado || 0
-                );
-
-              const totalEmpresaSaldo =
-                Number(
-                  empresa.saldoAtual || 0
-                );
-
-              return (
-                <div
-                  key={empresa.empresa}
-                  className="mb-8"
-                >
-
-                  {/* EMPRESA */}
-                  <div className="bg-blue-700 text-white px-4 py-3 rounded-t-lg font-bold text-lg">
-                    EMPRESA:{" "}
-                    {empresa.empresa.trim()}
-                  </div>
-
-                  {/* TABELA */}
-                  <div className="overflow-x-auto">
-
-                    <table className="w-full border-collapse">
-
-                      <thead>
-
-                        <tr className="bg-gray-200">
-
-                          <th className="border border-gray-300 p-2 text-left">
-                            CURSO
-                          </th>
-
-                          <th className="border border-gray-300 p-2 text-center w-32">
-                            CONTRATADO
-                          </th>
-
-                          <th className="border border-gray-300 p-2 text-center w-32">
-                            UTILIZADO
-                          </th>
-
-                          <th className="border border-gray-300 p-2 text-center w-32">
-                            SALDO
-                          </th>
-
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {empresa.cursos.map(
-                          (curso) => {
-
-                            const saldo =
-                              Number(
-                                curso.saldo || 0
-                              );
-
-                            return (
-                              <tr
-                                key={curso.id}
-                                className="hover:bg-gray-50"
-                              >
-
-                                {/* CURSO EM MAIÚSCULAS */}
-                                <td className="border border-gray-300 p-2 font-medium">
-                                  {formatarCurso(
-                                    curso.curso
-                                  )}
-                                </td>
-
-                                <td className="border border-gray-300 p-2 text-center">
-                                  {formatarNumero(
-                                    Number(
-                                      curso.contratado || 0
-                                    )
-                                  )}
-                                </td>
-
-                                <td className="border border-gray-300 p-2 text-center">
-                                  {formatarNumero(
-                                    Number(
-                                      curso.utilizadas || 0
-                                    )
-                                  )}
-                                </td>
-
-                                <td className="border border-gray-300 p-2 text-center">
-
-                                  <span
-                                    className={`inline-block px-3 py-1 rounded-full font-bold text-white ${obterClasseSaldo(
-                                      saldo
-                                    )}`}
-                                  >
-                                    {formatarNumero(
-                                      saldo
-                                    )}
-                                  </span>
-
-                                </td>
-
-                              </tr>
-                            );
-                          }
-                        )}
-
-                      </tbody>
-
-                      {/* TOTAL EMPRESA */}
-                      <tfoot>
-
-                        <tr className="bg-blue-50 font-bold">
-
-                          <td className="border border-gray-300 p-2 text-right">
-                            TOTAL{" "}
-                            {empresa.empresa.trim()}:
-                          </td>
-
-                          <td className="border border-gray-300 p-2 text-center">
-                            {formatarNumero(
-                              totalEmpresaContratado
-                            )}
-                          </td>
-
-                          <td className="border border-gray-300 p-2 text-center">
-                            {formatarNumero(
-                              totalEmpresaUtilizado
-                            )}
-                          </td>
-
-                          <td className="border border-gray-300 p-2 text-center">
-
-                            <span className="font-bold text-blue-700">
-                              {formatarNumero(
-                                totalEmpresaSaldo
-                              )}
-                            </span>
-
-                          </td>
-
-                        </tr>
-
-                      </tfoot>
-
-                    </table>
-
-                  </div>
-
+            return (
+              <div
+                key={empresa.empresa}
+                className="mb-8"
+              >
+                {/* NOME DA EMPRESA */}
+                <div className="bg-blue-700 text-white px-4 py-3 rounded-t-lg font-bold text-lg">
+                  EMPRESA: {empresa.empresa.trim()}
                 </div>
-              );
-            }
-          )
+
+                {/* TABELA */}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="border border-gray-300 p-2 text-left">
+                          CURSO
+                        </th>
+
+                        <th className="border border-gray-300 p-2 text-center w-32">
+                          CONTRATADO
+                        </th>
+
+                        <th className="border border-gray-300 p-2 text-center w-32">
+                          UTILIZADO
+                        </th>
+
+                        <th className="border border-gray-300 p-2 text-center w-32">
+                          SALDO
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {empresa.cursos.map((curso) => {
+                        const saldo = Number(
+                          curso.saldo || 0
+                        );
+
+                        return (
+                          <tr
+                            key={curso.id}
+                            className="hover:bg-gray-50"
+                          >
+                            <td className="border border-gray-300 p-2">
+                              {curso.curso?.trim() ||
+                                "SEM CURSO"}
+                            </td>
+
+                            <td className="border border-gray-300 p-2 text-center">
+                              {formatarNumero(
+                                Number(
+                                  curso.contratado || 0
+                                )
+                              )}
+                            </td>
+
+                            <td className="border border-gray-300 p-2 text-center">
+                              {formatarNumero(
+                                Number(
+                                  curso.utilizadas || 0
+                                )
+                              )}
+                            </td>
+
+                            <td className="border border-gray-300 p-2 text-center">
+                              <span
+                                className={`inline-block min-w-[42px] px-3 py-1 rounded-full font-bold text-white ${obterClasseSaldo(
+                                  saldo
+                                )}`}
+                              >
+                                {formatarNumero(saldo)}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+
+                    {/* TOTAL DA EMPRESA */}
+                    <tfoot>
+                      <tr className="bg-blue-50 font-bold">
+                        <td className="border border-gray-300 p-2 text-right">
+                          TOTAL {empresa.empresa.trim()}:
+                        </td>
+
+                        <td className="border border-gray-300 p-2 text-center">
+                          {formatarNumero(
+                            totalEmpresaContratado
+                          )}
+                        </td>
+
+                        <td className="border border-gray-300 p-2 text-center">
+                          {formatarNumero(
+                            totalEmpresaUtilizado
+                          )}
+                        </td>
+
+                        <td className="border border-gray-300 p-2 text-center">
+                          <span className="font-bold text-blue-700">
+                            {formatarNumero(
+                              totalEmpresaSaldo
+                            )}
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            );
+          })
         )}
 
         {/* TOTAL GERAL */}
         <div className="border-t-4 border-blue-700 mt-8 pt-5">
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-
             {/* CONTRATADO */}
             <div className="bg-gray-100 rounded-lg p-4">
-
               <div className="text-sm text-gray-600 font-semibold">
                 TOTAL CONTRATADO
               </div>
 
               <div className="text-2xl font-bold text-gray-800 mt-1">
-                {formatarNumero(
-                  totalContratado
-                )}
+                {formatarNumero(totalContratado)}
               </div>
-
             </div>
 
             {/* UTILIZADO */}
             <div className="bg-gray-100 rounded-lg p-4">
-
               <div className="text-sm text-gray-600 font-semibold">
                 TOTAL UTILIZADO
               </div>
 
               <div className="text-2xl font-bold text-gray-800 mt-1">
-                {formatarNumero(
-                  totalUtilizado
-                )}
+                {formatarNumero(totalUtilizado)}
               </div>
-
             </div>
 
             {/* SALDO */}
             <div className="bg-blue-100 rounded-lg p-4">
-
               <div className="text-sm text-blue-700 font-semibold">
                 TOTAL GERAL DO SALDO
               </div>
 
               <div className="text-3xl font-bold text-blue-800 mt-1">
-                {formatarNumero(
-                  totalSaldo
-                )}
+                {formatarNumero(totalSaldo)}
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       {/* IMPRESSÃO */}
       <style jsx global>{`
-
         @media print {
-
           @page {
             size: A4 landscape;
             margin: 10mm;
@@ -643,11 +512,8 @@ export default function SaldoRelatorio() {
           .mb-8 {
             margin-bottom: 20px !important;
           }
-
         }
-
       `}</style>
-
     </div>
   );
 }
