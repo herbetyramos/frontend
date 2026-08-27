@@ -904,7 +904,7 @@ const visualizarSolicitacao = async (id: string) => {
                     </div>
                     
                   
-                   <div className="text-xs font-semibold text-orange-700">
+                   <div className="text-xs font-semibold text-shadow-orange-950">
                       <strong>Saldo Atual:</strong> {item.saldoDetentora?.saldo ?? 0}
                     </div>
                 
