@@ -890,7 +890,27 @@ const visualizarSolicitacao = async (id: string) => {
                 <div>
                   <strong>Númedo da Ata:</strong> {item.detentoras?.ata?.numero_ata}
                 </div> 
-                
+                <div className="grid grid-cols-2 gap-3 mt-2 mb-3">
+
+                  <div className="bg-blue-100 border border-blue-300 rounded-lg px-3 py-2">
+                    <div className="text-xs font-semibold text-blue-700">
+                      SALDO CONTRATADO
+                    </div>
+                    <div className="text-lg font-bold text-blue-900">
+                      {item.saldoDetentora?.contratado ?? 0}
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-100 border border-orange-300 rounded-lg px-3 py-2">
+                    <div className="text-xs font-semibold text-orange-700">
+                      SALDO UTILIZADO
+                    </div>
+                    <div className="text-lg font-bold text-orange-900">
+                      {item.saldoDetentora?.utilizadas ?? 0}
+                    </div>
+                  </div>
+
+                </div>
 
           
                 
