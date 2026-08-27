@@ -82,6 +82,9 @@ export default function Cronograma() {
   const [blocoCurso, setBlocos] =
     useState<BlocoType[]>([]);
 
+  const [is_status, setIsStatus] =
+  useState("ativo");  
+
   const [salas, setSalas] =
     useState<SalaType[]>([]);
 
@@ -387,7 +390,7 @@ export default function Cronograma() {
 
       tema,
 
-      is_status: "ativo",
+      is_status,
 
       especificacao: especificacao.trim(),
 
@@ -517,6 +520,7 @@ export default function Cronograma() {
 
     setObservacao("");
 
+    setIsStatus("ativo");
     
     setPeriodo("");
 
@@ -613,9 +617,33 @@ export default function Cronograma() {
         </div>
 
         {/* ==============================
-            STATUS
-        ============================== */}
-            
+    STATUS
+============================== */}
+
+<div>
+  <select
+    value={is_status}
+    onChange={(e) =>
+      setIsStatus(e.target.value)
+    }
+    className="
+      w-full
+      px-3
+      py-2
+      border
+      rounded-lg
+      bg-white
+    "
+  >
+    <option value="ativo">
+      ATIVO
+    </option>
+
+    <option value="inativo">
+      INATIVO
+    </option>
+  </select>
+</div>
           
 
           <select
