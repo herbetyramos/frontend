@@ -1,11 +1,8 @@
 
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-} from "react";
-
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -46,12 +43,12 @@ interface DetentoraType {
   ata_id: string;
   cursos_id: string;
 
-  curso: {
+  curso?: {
     id: string;
     nome_curso: string;
   };
 
-  ata: {
+  ata?: {
     id: string;
     numero_ata: string;
   };
@@ -68,10 +65,51 @@ interface SaldoDetentora {
 }
 
 // ==============================
+// TIPO DO CRONOGRAMA
+// ==============================
+
+interface CronogramaType {
+  codigo?: string | number;
+
+  bloco_id?: string | null;
+  detentoras_id?: string | null;
+  professor_id?: string | null;
+  local_id?: string | null;
+  sala_id?: string | null;
+  formatura_id?: string | null;
+
+  data_inicio?: string | null;
+  data_fim?: string | null;
+
+  hora_inicio?: string | null;
+  hora_fim?: string | null;
+
+  tema?: string | null;
+
+  is_status?: string | null;
+  status?: string | null;
+
+  especificacao?: string | null;
+
+  publicar?: boolean | null;
+  draft?: boolean | null;
+
+  link_inscricao?: string | null;
+  imagem_url?: string | null;
+}
+
+// ==============================
 // COMPONENTE
 // ==============================
 
-export default function Cronograma() {
+export default function CronogramaEditar() {
+  const params = useParams();
+  const router = useRouter();
+
+  const id = Array.isArray(params?.id)
+    ? params.id[0]
+    : params?.id;
+
   // ==============================
   // LISTAS
   // ==============================
@@ -81,9 +119,6 @@ export default function Cronograma() {
 
   const [blocoCurso, setBlocos] =
     useState<BlocoType[]>([]);
-
-  const [is_status, setIsStatus] =
-  useState("ativo");  
 
   const [salas, setSalas] =
     useState<SalaType[]>([]);
@@ -131,7 +166,6 @@ export default function Cronograma() {
   const [professor_id, setProfessor] =
     useState("");
 
- 
   const [formatura_id, setFormatura] =
     useState("");
 
@@ -144,16 +178,11 @@ export default function Cronograma() {
   const [draft, setDraft] =
     useState(false);
 
-  
   const [periodo, setPeriodo] =
     useState("");
 
   const [link_inscricao, setLink_inscricao] =
     useState("");
-
-  // ==============================
-  // NOVO CAMPO: IMAGEM
-  // ==============================
 
   const [imagemUrl, setImagemUrl] =
     useState("");
@@ -161,17 +190,34 @@ export default function Cronograma() {
   const [imagemValida, setImagemValida] =
     useState(true);
 
-  const [mostrarSaldo, setMostrarSaldo] =
-    useState(false);
+  // ==============================
+  // STATUS
+  // ==============================
+
+  const [is_status, setIsStatus] =
+    useState("ativo");
 
   // ==============================
-  // SALDO DETENTORA
+  // SALDO
   // ==============================
 
   const [saldoDetentora, setSaldoDetentora] =
     useState<SaldoDetentora | null>(null);
 
   const [loadingSaldo, setLoadingSaldo] =
+    useState(false);
+
+  const [mostrarSaldo, setMostrarSaldo] =
+    useState(false);
+
+  // ==============================
+  // LOADING
+  // ==============================
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [salvando, setSalvando] =
     useState(false);
 
   // ==============================
@@ -198,55 +244,120 @@ export default function Cronograma() {
   }
 
   // ==============================
-  // BUSCAR SALDO DETENTORA
+  // CONVERTER DATA PARA INPUT
   // ==============================
 
-  async function carregarSaldoDetentora(id: string) {
-  if (!id) {
-    setSaldoDetentora(null);
-    return;
+  function converterDataParaInput(
+    data: string | null | undefined
+  ): string {
+    if (!data) {
+      return "";
+    }
+
+    // Já está no formato YYYY-MM-DD
+    if (
+      /^\d{4}-\d{2}-\d{2}$/.test(data)
+    ) {
+      return data;
+    }
+
+    // Caso venha como ISO
+    if (data.includes("T")) {
+      return data.substring(0, 10);
+    }
+
+    // Caso venha DD/MM/YYYY
+    const partes = data.split("/");
+
+    if (partes.length === 3) {
+      const [dia, mes, ano] = partes;
+
+      return `${ano}-${mes.padStart(
+        2,
+        "0"
+      )}-${dia.padStart(2, "0")}`;
+    }
+
+    return data;
   }
 
-  try {
-    setLoadingSaldo(true);
+  // ==============================
+  // FORMATAR DATA PARA BACKEND
+  // ==============================
 
-    console.log("ID DA DETENTORA SELECIONADA:", id);
+  function formatarData(
+    data: string
+  ): string {
+    if (!data) {
+      return "";
+    }
 
-    const response =
-      await api.get<SaldoDetentora>(
-        "/detentora/saldo",
-        {
-          params: {
-            id,
-          },
-        }
+    if (data.includes("/")) {
+      return data;
+    }
+
+    const partes = data.split("-");
+
+    if (partes.length !== 3) {
+      return data;
+    }
+
+    const [ano, mes, dia] = partes;
+
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  // ==============================
+  // CARREGAR SALDO
+  // ==============================
+
+  async function carregarSaldoDetentora(
+    idDetentora: string
+  ) {
+    if (!idDetentora) {
+      setSaldoDetentora(null);
+      return;
+    }
+
+    try {
+      setLoadingSaldo(true);
+
+      const response =
+        await api.get<SaldoDetentora>(
+          "/detentora/saldo",
+          {
+            params: {
+              id: idDetentora,
+            },
+          }
+        );
+
+      setSaldoDetentora(response.data);
+    } catch (error) {
+      console.error(
+        "Erro ao buscar saldo:",
+        error
       );
 
-    console.log(
-      "SALDO RETORNADO:",
-      response.data
-    );
-
-    setSaldoDetentora(response.data);
-  } catch (error: unknown) {
-    console.error(
-      "Erro ao buscar saldo:",
-      error
-    );
-
-    setSaldoDetentora(null);
-  } finally {
-    setLoadingSaldo(false);
+      setSaldoDetentora(null);
+    } finally {
+      setLoadingSaldo(false);
+    }
   }
-}
 
   // ==============================
-  // CARREGAR DADOS
+  // CARREGAR LISTAS + CRONOGRAMA
   // ==============================
 
   useEffect(() => {
+    if (!id) {
+      return;
+    }
+
     async function loadData() {
       try {
+        setLoading(true);
+
         const [
           locaisRes,
           blocoRes,
@@ -254,16 +365,34 @@ export default function Cronograma() {
           profRes,
           formRes,
           detRes,
+          cronogramaRes,
         ] = await Promise.all([
           api.get<LocalType[]>("/local"),
+
           api.get<BlocoType[]>("/bloco"),
+
           api.get<SalaType[]>("/sala"),
-          api.get<ProfessorType[]>("/professor"),
-          api.get<FormaturaType[]>("/formatura"),
+
+          api.get<ProfessorType[]>(
+            "/professor"
+          ),
+
+          api.get<FormaturaType[]>(
+            "/formatura"
+          ),
+
           api.get<DetentoraType[]>(
             "/detentora"
           ),
+
+          api.get<CronogramaType>(
+            `/cronograma/${id}`
+          ),
         ]);
+
+        // ==============================
+        // LISTAS
+        // ==============================
 
         setLocaisList(
           locaisRes.data
@@ -288,50 +417,145 @@ export default function Cronograma() {
         setDetentoras(
           detRes.data
         );
+
+        // ==============================
+        // CRONOGRAMA
+        // ==============================
+
+        const cronograma =
+          cronogramaRes.data;
+
+        setBloco(
+          cronograma.bloco_id ?? ""
+        );
+
+        setDetentoras_id(
+          cronograma.detentoras_id ?? ""
+        );
+
+        setProfessor(
+          cronograma.professor_id ?? ""
+        );
+
+        setLocal(
+          cronograma.local_id ?? ""
+        );
+
+        setSala(
+          cronograma.sala_id ?? ""
+        );
+
+        setFormatura(
+          cronograma.formatura_id ?? ""
+        );
+
+        setTema(
+          cronograma.tema ?? ""
+        );
+
+        setDataInicio(
+          converterDataParaInput(
+            cronograma.data_inicio
+          )
+        );
+
+        setDataFim(
+          converterDataParaInput(
+            cronograma.data_fim
+          )
+        );
+
+        setHorario(
+          cronograma.hora_inicio ?? ""
+        );
+
+        setHorarioFim(
+          cronograma.hora_fim ?? ""
+        );
+
+        setObservacao(
+          cronograma.especificacao ?? ""
+        );
+
+        setPublicar(
+          Boolean(cronograma.publicar)
+        );
+
+        setDraft(
+          Boolean(cronograma.draft)
+        );
+
+        setLink_inscricao(
+          cronograma.link_inscricao ?? ""
+        );
+
+        setImagemUrl(
+          cronograma.imagem_url ?? ""
+        );
+
+        // ==============================
+        // STATUS
+        // ==============================
+
+        setIsStatus(
+          cronograma.is_status ??
+            cronograma.status ??
+            "ativo"
+        );
+
+        // ==============================
+        // SALDO
+        // ==============================
+
+        if (cronograma.detentoras_id) {
+          carregarSaldoDetentora(
+            cronograma.detentoras_id
+          );
+        }
       } catch (error: unknown) {
         console.error(
-          "Erro ao carregar dados:",
+          "Erro ao carregar cronograma:",
           error
         );
 
+        if (
+          axios.isAxiosError(error)
+        ) {
+          console.error(
+            "STATUS:",
+            error.response?.status
+          );
+
+          console.error(
+            "RESPOSTA:",
+            error.response?.data
+          );
+        }
+
         toast.error(
-          "Erro ao carregar informações."
+          "Erro ao carregar o cronograma."
         );
+      } finally {
+        setLoading(false);
       }
     }
 
     loadData();
-  }, []);
+  }, [id]);
 
   // ==============================
-  // FORMATAR DATA
+  // SALAS FILTRADAS
   // ==============================
 
-  function formatarData(
-    data: string
-  ): string {
-    if (!data) {
-      return "";
-    }
-
-    const partes =
-      data.split("-");
-
-    if (partes.length !== 3) {
-      return data;
-    }
-
-    const [
-      ano,
-      mes,
-      dia,
-    ] = partes;
-
-    return `${dia}/${mes}/${ano}`;
-  }
+  const salasFiltradas =
+    salas.filter(
+      (sala) =>
+        sala.local_id ===
+        local_id
+    );
 
   // ==============================
-  // SALVAR CRONOGRAMA
+  // ATUALIZAR CRONOGRAMA
   // ==============================
 
   async function handleSubmit(
@@ -339,16 +563,17 @@ export default function Cronograma() {
   ) {
     e.preventDefault();
 
-    // ==============================
-    // VALIDAÇÃO SALDO
-    // ==============================
-
-    if (
-      saldoDetentora &&
-      saldoDetentora.saldo <= 0
-    ) {
+    if (!id) {
       toast.error(
-        "Esta detentora não possui saldo disponível."
+        "ID do cronograma não encontrado."
+      );
+
+      return;
+    }
+
+    if (!detentoras_id) {
+      toast.error(
+        "Selecione o curso da ata."
       );
 
       return;
@@ -368,46 +593,44 @@ export default function Cronograma() {
       professor_id:
         professor_id || null,
 
-      local_id,
+      local_id:
+        local_id || null,
 
-      sala_id,
+      sala_id:
+        sala_id || null,
 
-      formatura_id,
+      formatura_id:
+        formatura_id || null,
 
       data_inicio:
-        formatarData(
-          data_inicio
-        ),
+        formatarData(data_inicio),
 
       data_fim:
-        formatarData(
-          data_fim
-        ),
+        formatarData(data_fim),
 
       hora_inicio,
 
       hora_fim,
 
-      tema,
+      tema: tema.trim(),
+
+      // ==============================
+      // STATUS
+      // ==============================
 
       is_status,
 
-      especificacao: especificacao.trim(),
+      especificacao:
+        especificacao.trim(),
 
       publicar,
 
       draft,
 
-      
-
       link_inscricao:
         link_inscricao.trim() !== ""
           ? link_inscricao.trim()
           : null,
-
-      // ==============================
-      // IMAGEM
-      // ==============================
 
       imagem_url:
         imagemUrl.trim() !== ""
@@ -420,126 +643,100 @@ export default function Cronograma() {
     );
 
     console.log(
-      "PAYLOAD CRONOGRAMA:"
+      "ATUALIZANDO CRONOGRAMA:",
+      id
     );
 
     console.log(
+      "PAYLOAD:",
       payload
     );
 
     console.log(
-      "IMAGEM URL:",
-      payload.imagem_url
+      "STATUS:",
+      is_status
     );
 
     console.log(
       "================================="
     );
 
-    // ==============================
-    // POST
-    // ==============================
-
     try {
+      setSalvando(true);
+
       const response =
-        await api.post(
-          "/cronograma",
+        await api.put(
+          `/cronograma/${id}`,
           payload
         );
 
       console.log(
-        "Cronograma criado:",
+        "Cronograma atualizado:",
         response.data
       );
 
       toast.success(
-        "Cronograma criado com sucesso!"
+        "Cronograma atualizado com sucesso!"
       );
 
+      // Atualiza saldo
       await carregarSaldoDetentora(
         detentoras_id
       );
 
-      limparFormulario();
-    } catch (error: unknown) {
-    console.error("Erro ao salvar cronograma:", error);
-
-    if (axios.isAxiosError(error)) {
-        console.error("STATUS:", error.response?.status);
-        console.error("RESPOSTA DO BACKEND:", error.response?.data);
-
-        alert(
-            error.response?.data?.message ||
-            JSON.stringify(error.response?.data) ||
-            "Erro ao salvar cronograma"
+      // Volta para a listagem
+      setTimeout(() => {
+        router.push(
+          "/cronograma"
         );
-    } else {
-        console.error("Erro desconhecido:", error);
-        alert("Erro ao salvar cronograma");
+      }, 800);
+    } catch (error: unknown) {
+      console.error(
+        "Erro ao atualizar cronograma:",
+        error
+      );
+
+      if (
+        axios.isAxiosError(error)
+      ) {
+        console.error(
+          "STATUS:",
+          error.response?.status
+        );
+
+        console.error(
+          "RESPOSTA DO BACKEND:",
+          error.response?.data
+        );
+
+        toast.error(
+          error.response?.data
+            ?.message ||
+            "Erro ao atualizar cronograma."
+        );
+      } else {
+        toast.error(
+          "Erro ao atualizar cronograma."
+        );
+      }
+    } finally {
+      setSalvando(false);
     }
-}
   }
 
   // ==============================
-  // SALAS FILTRADAS
+  // LOADING
   // ==============================
 
-  const salasFiltradas =
-    salas.filter(
-      (sala) =>
-        sala.local_id ===
-        local_id
-    );
-
-  // ==============================
-  // LIMPAR FORMULÁRIO
-  // ==============================
-
-  function limparFormulario() {
-    setBloco("");
-
-    setDetentoras_id("");
-
-    setProfessor("");
-
-    setLocal("");
-
-    setSala("");
-
-    setFormatura("");
-
-    setTema("");
-
-    setDataInicio("");
-
-    setDataFim("");
-
-    setHorario("");
-
-    setHorarioFim("");    
-
-    setObservacao("");
-
-    setIsStatus("ativo");
-    
-    setPeriodo("");
-
-    setLink_inscricao("");
-
-    setImagemUrl("");
-
-    setImagemValida(true);
-
-    setPublicar(false);
-
-    setDraft(false);
-
-    setSaldoDetentora(
-      null
-    );
-
-    setMostrarSaldo(
-      false
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex justify-center items-center py-20">
+          <div className="text-gray-600 text-lg">
+            Carregando cronograma...
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -548,45 +745,59 @@ export default function Cronograma() {
   // ==============================
 
   return (
-    <div
-      className="
-        max-w-6xl
-        mx-auto
-        p-6
-      "
-    >
-      <h2
-        className="
-          text-2xl
-          font-semibold
-          text-center
-          mb-6
-        "
-      >
-        Criar Cronograma
-      </h2>
+    <div className="max-w-6xl mx-auto p-6">
+
+      {/* ==============================
+          TÍTULO
+      ============================== */}
+
+      <div className="mb-6">
+
+        <h2
+          className="
+            text-2xl
+            font-semibold
+            text-center
+          "
+        >
+          Editar Cronograma
+        </h2>
+
+        <p
+          className="
+            text-center
+            text-sm
+            text-gray-500
+            mt-1
+          "
+        >
+          Código: {id}
+        </p>
+
+      </div>
 
       <form
-        onSubmit={
-          handleSubmit
-        }
+        onSubmit={handleSubmit}
         className="
           grid
           grid-cols-2
           gap-4
         "
       >
+
         {/* ==============================
             BLOCO
         ============================== */}
 
         <div>
+          <label className="block text-sm font-medium mb-1">
+            Bloco
+          </label>
+
           <select
             value={bloco_id}
             onChange={(e) =>
-              setBloco(
-                e.target.value
-              )
+              setBloco(e.target.value)
             }
             className="
               w-full
@@ -607,9 +818,7 @@ export default function Cronograma() {
                   key={bloco.id}
                   value={bloco.id}
                 >
-                  {
-                    bloco.bloco_Curso
-                  }
+                  {bloco.bloco_Curso}
                 </option>
               )
             )}
@@ -617,45 +826,150 @@ export default function Cronograma() {
         </div>
 
         {/* ==============================
-    STATUS
-============================== */}
+            STATUS
+        ============================== */}
 
-<div>
-  <select
-    value={is_status}
-    onChange={(e) =>
-      setIsStatus(e.target.value)
-    }
-    className="
-      w-full
-      px-3
-      py-2
-      border
-      rounded-lg
-      bg-white
-    "
-  >
-    <option value="ativo">
-      ATIVO
-    </option>
-
-    <option value="inativo">
-      INATIVO
-    </option>
-  </select>
-</div>
-          
+        <div>
+          <label
+            htmlFor="is_status"
+            className="
+              block
+              text-sm
+              font-semibold
+              mb-1
+            "
+          >
+            Status
+          </label>
 
           <select
-            value={
-              formatura_id
+            id="is_status"
+            value={is_status}
+            onChange={(e) =>
+              setIsStatus(
+                e.target.value
+              )
             }
+            className="
+              w-full
+              px-3
+              py-2
+              border-2
+              border-blue-500
+              rounded-lg
+              bg-white
+              font-semibold
+              focus:outline-none
+              focus:ring-2
+              focus:ring-blue-300
+            "
+          >
+            <option value="ativo">
+              ATIVO
+            </option>
+
+            <option value="inativo">
+              INATIVO
+            </option>
+
+            <option value="cancelado">
+              CANCELADO
+            </option>
+
+            <option value="concluido">
+              CONCLUÍDO
+            </option>
+          </select>
+
+          <div className="mt-1">
+            {is_status === "ativo" && (
+              <span
+                className="
+                  inline-block
+                  px-2
+                  py-1
+                  text-xs
+                  font-bold
+                  rounded-full
+                  bg-green-100
+                  text-green-700
+                "
+              >
+                ATIVO
+              </span>
+            )}
+
+            {is_status === "inativo" && (
+              <span
+                className="
+                  inline-block
+                  px-2
+                  py-1
+                  text-xs
+                  font-bold
+                  rounded-full
+                  bg-gray-200
+                  text-gray-700
+                "
+              >
+                INATIVO
+              </span>
+            )}
+
+            {is_status === "cancelado" && (
+              <span
+                className="
+                  inline-block
+                  px-2
+                  py-1
+                  text-xs
+                  font-bold
+                  rounded-full
+                  bg-red-100
+                  text-red-700
+                "
+              >
+                CANCELADO
+              </span>
+            )}
+
+            {is_status === "concluido" && (
+              <span
+                className="
+                  inline-block
+                  px-2
+                  py-1
+                  text-xs
+                  font-bold
+                  rounded-full
+                  bg-blue-100
+                  text-blue-700
+                "
+              >
+                CONCLUÍDO
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ==============================
+            DATA FORMATURA
+        ============================== */}
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Data da formatura
+          </label>
+
+          <select
+            value={formatura_id}
             onChange={(e) =>
               setFormatura(
                 e.target.value
               )
             }
             className="
+              w-full
               px-3
               py-2
               border
@@ -668,16 +982,10 @@ export default function Cronograma() {
             </option>
 
             {formaturas.map(
-              (
-                formatura
-              ) => (
+              (formatura) => (
                 <option
-                  key={
-                    formatura.id
-                  }
-                  value={
-                    formatura.id
-                  }
+                  key={formatura.id}
+                  value={formatura.id}
                 >
                   {
                     formatura.data_formatura
@@ -686,15 +994,17 @@ export default function Cronograma() {
               )
             )}
           </select>
-        
-
-      
+        </div>
 
         {/* ==============================
             LOCAL
         ============================== */}
 
         <div>
+          <label className="block text-sm font-medium mb-1">
+            Local
+          </label>
+
           <select
             value={local_id}
             onChange={(e) =>
@@ -728,10 +1038,22 @@ export default function Cronograma() {
           </select>
         </div>
 
-       <div>
+        {/* ==============================
+            SALA
+        ============================== */}
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Sala
+          </label>
+
           <select
             value={sala_id}
-            onChange={(e) => setSala(e.target.value)}
+            onChange={(e) =>
+              setSala(
+                e.target.value
+              )
+            }
             className="
               w-full
               px-3
@@ -742,110 +1064,142 @@ export default function Cronograma() {
             "
           >
             <option value="">
-      Selecione a sala
-          </option>
+              Selecione a sala
+            </option>
 
-    {salasFiltradas.map((sala) => (
-      <option
-        key={sala.id}
-        value={sala.id}
-      >
-                {sala.numero_sala} - {sala.tipo_uso}
-              </option>
-            ))}
+            {salasFiltradas.map(
+              (sala) => (
+                <option
+                  key={sala.id}
+                  value={sala.id}
+                >
+                  {sala.numero_sala}
+                  {" - "}
+                  {sala.tipo_uso}
+                </option>
+              )
+            )}
           </select>
         </div>
-              
 
-            {/* ==============================
+        {/* ==============================
             DETENTORA / CURSO
         ============================== */}
 
         <div>
+          <label className="block text-sm font-medium mb-1">
+            Curso da Ata
+          </label>
+
           <select
             value={detentoras_id}
             onChange={async (e) => {
-              const id = e.target.value;
+              const novoId =
+                e.target.value;
 
-              setDetentoras_id(id);
+              setDetentoras_id(
+                novoId
+              );
 
-              if (!id) {
+              if (!novoId) {
                 setSaldoDetentora(null);
                 return;
               }
 
-      await carregarSaldoDetentora(id);
-    }}
-    className="
-      w-full
-      px-3
-      py-2
-      border
-      rounded-lg
-      bg-white
-    "
-  >
-    <option value="">
-      Curso da Ata
-    </option>
+              await carregarSaldoDetentora(
+                novoId
+              );
+            }}
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+              bg-white
+            "
+          >
+            <option value="">
+              Curso da Ata
+            </option>
 
-    {Array.from(
-      new Map(
-        detentoras.map((detentora) => {
-          const nomeCurso =
-            detentora.curso?.nome_curso
-              ?.trim()
-              .toUpperCase() || "SEM CURSO";
+            {Array.from(
+              new Map(
+                detentoras.map(
+                  (detentora) => {
+                    const nomeCurso =
+                      detentora.curso
+                        ?.nome_curso
+                        ?.trim()
+                        .toUpperCase() ||
+                      "SEM CURSO";
 
-          const numeroAta =
-            detentora.ata?.numero_ata
-              ?.trim()
-              .toUpperCase() || "SEM ATA";
+                    const numeroAta =
+                      detentora.ata
+                        ?.numero_ata
+                        ?.trim()
+                        .toUpperCase() ||
+                      "SEM ATA";
 
-          const chave =
-            `${nomeCurso}__${numeroAta}`;
+                    const chave =
+                      `${nomeCurso}__${numeroAta}`;
 
-          return [
-            chave,
-            detentora,
-          ];
-        })
-      ).values()
-    )
-      .sort((a, b) =>
-        (
-          a.curso?.nome_curso ?? ""
-        ).localeCompare(
-          b.curso?.nome_curso ?? "",
-          "pt-BR",
-          {
-            sensitivity: "base",
-          }
-        )
-      )
-      .map((detentora) => (
-        <option
-          key={detentora.id}
-          value={detentora.id}
-        >
-          {(
-            detentora.curso?.nome_curso ??
-            "SEM CURSO"
-          ).toUpperCase()}
-          {" - ATA "}
-          {(
-            detentora.ata?.numero_ata ??
-            "SEM ATA"
-          ).toUpperCase()}
-        </option>
-      ))}
-  </select>
-</div>
-{/* ==============================
+                    return [
+                      chave,
+                      detentora,
+                    ];
+                  }
+                )
+              ).values()
+            )
+              .sort((a, b) =>
+                (
+                  a.curso
+                    ?.nome_curso ??
+                  ""
+                ).localeCompare(
+                  b.curso
+                    ?.nome_curso ??
+                  "",
+                  "pt-BR",
+                  {
+                    sensitivity:
+                      "base",
+                  }
+                )
+              )
+              .map(
+                (detentora) => (
+                  <option
+                    key={detentora.id}
+                    value={detentora.id}
+                  >
+                    {(
+                      detentora.curso
+                        ?.nome_curso ??
+                      "SEM CURSO"
+                    ).toUpperCase()}
+                    {" - ATA "}
+                    {(
+                      detentora.ata
+                        ?.numero_ata ??
+                      "SEM ATA"
+                    ).toUpperCase()}
+                  </option>
+                )
+              )}
+          </select>
+        </div>
+
+        {/* ==============================
             TEMA
         ============================== */}
 
-        
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Tema do curso
+          </label>
+
           <input
             value={tema}
             onChange={(e) =>
@@ -862,8 +1216,7 @@ export default function Cronograma() {
               rounded-lg
             "
           />
-
-       
+        </div>
 
         {/* ==============================
             LOADING SALDO
@@ -938,22 +1291,16 @@ export default function Cronograma() {
                     rounded-full
                     text-white
                     font-bold
-
                     ${
-                      saldoDetentora.saldo <=
-                      0
+                      saldoDetentora.saldo <= 0
                         ? "bg-red-600"
-                        : saldoDetentora.saldo <=
-                          5
+                        : saldoDetentora.saldo <= 5
                         ? "bg-yellow-500"
                         : "bg-green-600"
                     }
                   `}
                 >
-                  {
-                    saldoDetentora.saldo
-                  }
-
+                  {saldoDetentora.saldo}
                   {" turma(s)"}
                 </span>
               </div>
@@ -975,12 +1322,7 @@ export default function Cronograma() {
                 "
               >
                 <div>
-                  <p
-                    className="
-                      text-gray-500
-                      text-sm
-                    "
-                  >
+                  <p className="text-gray-500 text-sm">
                     Empresa
                   </p>
 
@@ -992,12 +1334,7 @@ export default function Cronograma() {
                 </div>
 
                 <div>
-                  <p
-                    className="
-                      text-gray-500
-                      text-sm
-                    "
-                  >
+                  <p className="text-gray-500 text-sm">
                     Contratado
                   </p>
 
@@ -1014,12 +1351,7 @@ export default function Cronograma() {
                 </div>
 
                 <div>
-                  <p
-                    className="
-                      text-gray-500
-                      text-sm
-                    "
-                  >
+                  <p className="text-gray-500 text-sm">
                     Utilizadas
                   </p>
 
@@ -1040,49 +1372,6 @@ export default function Cronograma() {
         )}
 
         {/* ==============================
-            ALERTA SALDO
-        ============================== */}
-
-        {saldoDetentora &&
-          saldoDetentora.saldo <=
-            0 && (
-            <div
-              className="
-                col-span-2
-                bg-red-100
-                border
-                border-red-300
-                rounded-lg
-                p-4
-              "
-            >
-              <h2
-                className="
-                  text-red-700
-                  font-bold
-                "
-              >
-                Atenção
-              </h2>
-
-              <p
-                className="
-                  text-red-600
-                "
-              >
-                Esta detentora não
-                possui saldo
-                disponível para
-                criar novos
-                cronogramas.
-              </p>
-            </div>
-          )}
-
-        
-        
-
-        {/* ==============================
             DATAS E HORÁRIOS
         ============================== */}
 
@@ -1094,348 +1383,457 @@ export default function Cronograma() {
             gap-4
           "
         >
-          <input
-            type="date"
-            value={
-              data_inicio
-            }
-            onChange={(e) =>
-              setDataInicio(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Data inicial
+            </label>
 
-          <input
-            type="date"
-            value={
-              data_fim
-            }
-            onChange={(e) =>
-              setDataFim(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
+            <input
+              type="date"
+              value={data_inicio}
+              onChange={(e) =>
+                setDataInicio(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+              "
+            />
+          </div>
 
-          <select
-            value={periodo}
-            onChange={(e) =>
-              handlePeriodo(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Data final
+            </label>
+
+            <input
+              type="date"
+              value={data_fim}
+              onChange={(e) =>
+                setDataFim(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+              "
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
               Período
-            </option>
+            </label>
 
-            <option value="manha">
-              Manhã
-            </option>
+            <select
+              value={periodo}
+              onChange={(e) =>
+                handlePeriodo(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+                bg-white
+              "
+            >
+              <option value="">
+                Período
+              </option>
 
-            <option value="tarde">
-              Tarde
-            </option>
+              <option value="manha">
+                Manhã
+              </option>
 
-            <option value="noite">
-              Noite
-            </option>
-          </select>
+              <option value="tarde">
+                Tarde
+              </option>
 
-          <input
-            type="time"
-            value={
-              hora_inicio
-            }
-            onChange={(e) =>
-              setHorario(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
+              <option value="noite">
+                Noite
+              </option>
+            </select>
+          </div>
 
-          <input
-            type="time"
-            value={
-              hora_fim
-            }
-            onChange={(e) =>
-              setHorarioFim(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Hora início
+            </label>
+
+            <input
+              type="time"
+              value={hora_inicio}
+              onChange={(e) =>
+                setHorario(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+              "
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Hora fim
+            </label>
+
+            <input
+              type="time"
+              value={hora_fim}
+              onChange={(e) =>
+                setHorarioFim(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+              "
+            />
+          </div>
         </div>
 
         {/* ==============================
-            QUANTIDADE / FORMATURA
+            PROFESSOR + OBSERVAÇÃO
         ============================== */}
-{/* ==============================
-    PROFESSOR + OBSERVAÇÃO
-============================== */}
 
-<div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-  {/* ==============================
-      PROFESSOR
-  ============================== */}
-
-  <div>
-    <select
-      value={professor_id}
-      onChange={(e) =>
-        setProfessor(e.target.value)
-      }
-      className="
-        w-full
-        px-3
-        py-2
-        border
-        rounded-lg
-        bg-white
-      "
-    >
-      <option value="">
-        Selecione o professor
-      </option>
-
-      {professores.map((professor) => (
-        <option
-          key={professor.id}
-          value={professor.id}
+        <div
+          className="
+            col-span-2
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            gap-4
+          "
         >
-          {professor.nome_professor}
-        </option>
-      ))}
-    </select>
-  </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Professor
+            </label>
 
-  {/* ==============================
-      OBSERVAÇÃO
-  ============================== */}
+            <select
+              value={professor_id}
+              onChange={(e) =>
+                setProfessor(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+                bg-white
+              "
+            >
+              <option value="">
+                Selecione o professor
+              </option>
 
-  <textarea
-    rows={1}
-    value={especificacao}
-    onChange={(e) =>
-      setObservacao(e.target.value)
-    }
-    placeholder="Especificação / Observações"
-    className="
-      w-full
-      px-3
-      py-2
-      border
-      rounded-lg
-      resize-none
-    "
-  />
+              {professores.map(
+                (professor) => (
+                  <option
+                    key={professor.id}
+                    value={professor.id}
+                  >
+                    {
+                      professor.nome_professor
+                    }
+                  </option>
+                )
+              )}
+            </select>
+          </div>
 
-</div>
-{/* ==============================
-    LINK + IMAGEM + BOTÃO
-============================== */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Especificação / Observações
+            </label>
 
-<div
-  className="
-    col-span-2
-    flex
-    flex-col
-    md:flex-row
-    md:items-end
-    md:justify-between
-    gap-6
-  "
->
-  {/* ==============================
-      CAMPOS - LADO ESQUERDO
-  ============================== */}
+            <textarea
+              rows={1}
+              value={especificacao}
+              onChange={(e) =>
+                setObservacao(
+                  e.target.value
+                )
+              }
+              placeholder="Especificação / Observações"
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+                resize-none
+              "
+            />
+          </div>
+        </div>
 
-  <div
-    className="
-      flex
-      flex-col
-      md:flex-row
-      gap-6
-      flex-1
-    "
-  >
-    {/* LINK INSCRIÇÃO */}
+        {/* ==============================
+            PUBLICAR / RASCUNHO
+        ============================== */}
 
-    <div className="flex-1">
-      <label
-        htmlFor="link_inscricao"
-        className="
-          block
-          text-sm
-          font-medium
-          mb-1
-        "
-      >
-        Link de inscrição
-      </label>
-
-      <input
-        id="link_inscricao"
-        type="url"
-        value={link_inscricao}
-        onChange={(e) =>
-          setLink_inscricao(e.target.value)
-        }
-        placeholder="https://..."
-        className="
-          w-full
-          px-3
-          py-2
-          border
-          rounded-lg
-        "
-      />
-    </div>
-
-    {/* URL DA IMAGEM */}
-
-    <div className="flex-1">
-      <label
-        htmlFor="imagem_url"
-        className="
-          block
-          text-sm
-          font-medium
-          mb-1
-        "
-      >
-        URL da imagem do curso
-      </label>
-
-      <input
-        id="imagem_url"
-        type="url"
-        value={imagemUrl}
-        onChange={(e) => {
-          setImagemUrl(e.target.value);
-          setImagemValida(true);
-        }}
-        placeholder="https://exemplo.com/imagem.jpg"
-        className="
-          w-full
-          px-3
-          py-2
-          border
-          rounded-lg
-        "
-      />
-
-      <p
-        className="
-          mt-1
-          text-xs
-          text-gray-500
-        "
-      >
-        Informe a URL de uma imagem pública.
-      </p>
-
-      {imagemUrl.trim() !== "" &&
-        !imagemValida && (
-          <div
+        <div
+          className="
+            col-span-2
+            flex
+            gap-6
+            items-center
+          "
+        >
+          <label
             className="
-              mt-3
-              p-3
-              rounded-lg
-              border
-              border-red-300
-              bg-red-50
-              text-red-600
-              text-sm
+              flex
+              items-center
+              gap-2
+              cursor-pointer
             "
           >
-            Não foi possível carregar essa imagem.
-            Verifique se a URL está correta.
+            <input
+              type="checkbox"
+              checked={publicar}
+              onChange={(e) =>
+                setPublicar(
+                  e.target.checked
+                )
+              }
+              className="w-4 h-4"
+            />
+
+            <span className="text-sm">
+              Publicar
+            </span>
+          </label>
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              cursor-pointer
+            "
+          >
+            <input
+              type="checkbox"
+              checked={draft}
+              onChange={(e) =>
+                setDraft(
+                  e.target.checked
+                )
+              }
+              className="w-4 h-4"
+            />
+
+            <span className="text-sm">
+              Rascunho
+            </span>
+          </label>
+        </div>
+
+        {/* ==============================
+            LINK + IMAGEM
+        ============================== */}
+
+        <div
+          className="
+            col-span-2
+            flex
+            flex-col
+            md:flex-row
+            gap-6
+          "
+        >
+
+          {/* LINK */}
+
+          <div className="flex-1">
+            <label
+              htmlFor="link_inscricao"
+              className="
+                block
+                text-sm
+                font-medium
+                mb-1
+              "
+            >
+              Link de inscrição
+            </label>
+
+            <input
+              id="link_inscricao"
+              type="url"
+              value={link_inscricao}
+              onChange={(e) =>
+                setLink_inscricao(
+                  e.target.value
+                )
+              }
+              placeholder="https://..."
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+              "
+            />
           </div>
-        )}
-    </div>
-  </div>
 
-  {/* ==============================
-      BOTÃO - LADO DIREITO
-  ============================== */}
+          {/* IMAGEM */}
 
-  <div
-    className="
-      flex
-      justify-end
-      shrink-0
-    "
-  >
-    <button
-      type="submit"
-      disabled={
-        loadingSaldo ||
-        !detentoras_id ||
-        (
-          saldoDetentora !== null &&
-          saldoDetentora.saldo <= 0
-        )
-      }
-      className={`
-        px-6
-        py-3
-        rounded-lg
-        text-white
-        font-semibold
-        whitespace-nowrap
+          <div className="flex-1">
+            <label
+              htmlFor="imagem_url"
+              className="
+                block
+                text-sm
+                font-medium
+                mb-1
+              "
+            >
+              URL da imagem do curso
+            </label>
 
-        ${
-          loadingSaldo ||
-          (
-            saldoDetentora &&
-            saldoDetentora.saldo <= 0
-          )
-            ? "bg-gray-400"
-            : "bg-blue-600 hover:bg-blue-700"
-        }
-      `}
-    >
-      {loadingSaldo
-        ? "Consultando saldo..."
-        : "Salvar Cronograma"}
-    </button>
-  </div>
+            <input
+              id="imagem_url"
+              type="url"
+              value={imagemUrl}
+              onChange={(e) => {
+                setImagemUrl(
+                  e.target.value
+                );
 
-   </div>     
+                setImagemValida(
+                  true
+                );
+              }}
+              placeholder="https://exemplo.com/imagem.jpg"
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+              "
+            />
+
+            <p
+              className="
+                mt-1
+                text-xs
+                text-gray-500
+              "
+            >
+              Informe a URL de uma imagem pública.
+            </p>
+
+            {imagemUrl.trim() !== "" &&
+              !imagemValida && (
+                <div
+                  className="
+                    mt-3
+                    p-3
+                    rounded-lg
+                    border
+                    border-red-300
+                    bg-red-50
+                    text-red-600
+                    text-sm
+                  "
+                >
+                  Não foi possível carregar essa imagem.
+                </div>
+              )}
+          </div>
+        </div>
+
+        {/* ==============================
+            BOTÕES
+        ============================== */}
+
+        <div
+          className="
+            col-span-2
+            flex
+            justify-end
+            gap-3
+            mt-2
+          "
+        >
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                "/cronograma"
+              )
+            }
+            disabled={salvando}
+            className="
+              px-6
+              py-3
+              rounded-lg
+              border
+              border-gray-300
+              bg-white
+              text-gray-700
+              font-semibold
+              hover:bg-gray-50
+            "
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            disabled={
+              salvando ||
+              loadingSaldo
+            }
+            className={`
+              px-6
+              py-3
+              rounded-lg
+              text-white
+              font-semibold
+              ${
+                salvando ||
+                loadingSaldo
+                  ? "bg-gray-400"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }
+            `}
+          >
+            {salvando
+              ? "Atualizando..."
+              : "Atualizar Cronograma"}
+          </button>
+        </div>
+
       </form>
     </div>
   );
