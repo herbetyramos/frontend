@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 
+import Image from "next/image";
+
 import { api } from "@/services/api";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -155,8 +157,15 @@ export default function Cronograma() {
   const [imagemUrl, setImagemUrl] =
     useState("");
 
-  const [imagemValida, setImagemValida] =
-    useState(true);
+  
+  const [imagemArquivo, setImagemArquivo] =
+  useState<File | null>(null);
+
+  const [uploadandoImagem, setUploadandoImagem] =
+  useState(false);
+
+  const [previewImagem, setPreviewImagem] =
+  useState("");  
 
   const [mostrarSaldo, setMostrarSaldo] =
     useState(false);
@@ -328,6 +337,58 @@ export default function Cronograma() {
   }
 
   // ==============================
+// SELECIONAR IMAGEM
+// ==============================
+
+function handleSelecionarImagem(
+  e: React.ChangeEvent<HTMLInputElement>
+) {
+  const arquivo = e.target.files?.[0];
+
+  if (!arquivo) {
+    return;
+  }
+
+  const extensoesPermitidas = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
+
+  if (!extensoesPermitidas.includes(arquivo.type)) {
+    toast.error(
+      "Formato inválido. Use JPG, JPEG, PNG ou WEBP."
+    );
+
+    e.target.value = "";
+    return;
+  }
+
+  if (arquivo.size > 5 * 1024 * 1024) {
+    toast.error(
+      "A imagem não pode ultrapassar 5 MB."
+    );
+
+    e.target.value = "";
+    return;
+  }
+
+  setImagemArquivo(arquivo);
+
+  const preview = URL.createObjectURL(arquivo);
+
+  setPreviewImagem(preview);
+
+  // Como uma nova imagem foi escolhida,
+  // ainda não temos a URL definitiva do servidor.
+  setImagemUrl("");
+  
+  setImagemArquivo(null);
+  setPreviewImagem("");
+  setUploadandoImagem(false);
+}
+
+  // ==============================
   // SALVAR CRONOGRAMA
   // ==============================
 
@@ -350,6 +411,56 @@ export default function Cronograma() {
 
       return;
     }
+
+    // ==============================
+// UPLOAD DA IMAGEM
+// ==============================
+
+let imagemUrlFinal = imagemUrl.trim();
+
+if (imagemArquivo) {
+  try {
+    setUploadandoImagem(true);
+
+    const formData = new FormData();
+
+    formData.append(
+      "imagem",
+      imagemArquivo
+    );
+
+    const uploadResponse =
+      await api.post(
+        "/upload/cronograma",
+        formData
+      );
+
+    imagemUrlFinal =
+      uploadResponse.data.imagem_url;
+
+    console.log(
+      "IMAGEM ENVIADA:",
+      imagemUrlFinal
+    );
+
+    setImagemUrl(
+      imagemUrlFinal
+    );
+  } catch (error: unknown) {
+    console.error(
+      "Erro ao enviar imagem:",
+      error
+    );
+
+    toast.error(
+      "Não foi possível enviar a imagem."
+    );
+
+    return;
+  } finally {
+    setUploadandoImagem(false);
+  }
+}
 
     // ==============================
     // PAYLOAD
@@ -407,10 +518,10 @@ export default function Cronograma() {
       // ==============================
 
       imagem_url:
-        imagemUrl.trim() !== ""
-          ? imagemUrl.trim()
+        imagemUrlFinal !== ""
+          ? imagemUrlFinal
           : null,
-    };
+          };
 
     console.log(
       "================================="
@@ -524,8 +635,7 @@ export default function Cronograma() {
 
     setImagemUrl("");
 
-    setImagemValida(true);
-
+   
     setPublicar(false);
 
     setDraft(false);
@@ -1299,66 +1409,126 @@ export default function Cronograma() {
 
     {/* URL DA IMAGEM */}
 
-    <div className="flex-1">
-      <label
-        htmlFor="imagem_url"
-        className="
-          block
-          text-sm
-          font-medium
-          mb-1
-        "
-      >
-        URL da imagem do curso
-      </label>
+    {/* ==============================
+    IMAGEM DO CURSO
+============================== */}
 
-      <input
-        id="imagem_url"
-        type="url"
-        value={imagemUrl}
-        onChange={(e) => {
-          setImagemUrl(e.target.value);
-          setImagemValida(true);
-        }}
-        placeholder="https://exemplo.com/imagem.jpg"
-        className="
-          w-full
-          px-3
-          py-2
-          border
-          rounded-lg
-        "
-      />
+<div className="flex-1">
+  <label
+    htmlFor="imagem_curso"
+    className="
+      block
+      text-sm
+      font-medium
+      mb-1
+    "
+  >
+    Imagem do curso
+  </label>
 
+  <div
+    className="
+      flex
+      items-center
+      gap-3
+    "
+  >
+    <label
+      htmlFor="imagem_curso"
+      className="
+        cursor-pointer
+        px-4
+        py-2
+        rounded-lg
+        bg-blue-600
+        hover:bg-blue-700
+        text-white
+        font-semibold
+        transition
+      "
+    >
+      📁 Selecionar imagem
+    </label>
+
+    <input
+      id="imagem_curso"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      onChange={
+        handleSelecionarImagem
+      }
+      className="hidden"
+    />
+  </div>
+
+  {imagemArquivo && (
+    <p
+      className="
+        mt-2
+        text-sm
+        text-gray-600
+      "
+    >
+      Arquivo:{" "}
+      <strong>
+        {imagemArquivo.name}
+      </strong>
+    </p>
+  )}
+
+  {/* PREVIEW */}
+
+  {previewImagem && (
+    <div className="mt-4">
       <p
         className="
-          mt-1
-          text-xs
-          text-gray-500
+          text-sm
+          font-medium
+          mb-2
         "
       >
-        Informe a URL de uma imagem pública.
+        Pré-visualização
       </p>
 
-      {imagemUrl.trim() !== "" &&
-        !imagemValida && (
-          <div
-            className="
-              mt-3
-              p-3
-              rounded-lg
-              border
-              border-red-300
-              bg-red-50
-              text-red-600
-              text-sm
-            "
-          >
-            Não foi possível carregar essa imagem.
-            Verifique se a URL está correta.
-          </div>
-        )}
+      <div
+        className="
+          relative
+          w-full
+          max-w-md
+          overflow-hidden
+          rounded-xl
+          border
+          bg-gray-100
+        "
+      >
+        <Image
+          src={previewImagem}
+          alt="Pré-visualização da imagem"
+          width={600}
+          height={300}
+          unoptimized
+          className="
+            w-full
+            h-48
+            object-cover
+          "
+        />
+      </div>
     </div>
+  )}
+
+  {imagemUrl && (
+    <p
+      className="
+        mt-2
+        text-xs
+        text-green-600
+      "
+    >
+      ✓ Imagem pronta para salvar no cronograma.
+    </p>
+  )}
+</div>
   </div>
 
   {/* ==============================
@@ -1376,6 +1546,7 @@ export default function Cronograma() {
       type="submit"
       disabled={
         loadingSaldo ||
+        uploadandoImagem ||
         !detentoras_id ||
         (
           saldoDetentora !== null &&
@@ -1402,6 +1573,7 @@ export default function Cronograma() {
       `}
     >
       {loadingSaldo
+      
         ? "Consultando saldo..."
         : "Salvar Cronograma"}
     </button>
