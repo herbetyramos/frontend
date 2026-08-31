@@ -1740,25 +1740,16 @@ return ( <div className="p-0"> <div className="w-full bg-white rounded-xl p-6">
           </label>
 
           <input
-            id="imagem_url"
-            type="url"
-            value={imagemUrl}
-            onChange={(e) => {
-              setImagemUrl(
-                e.target.value
-              );
-
-              setImagemValida(true);
-            }}
-            placeholder="https://exemplo.com/imagem.jpg"
-            className="
-              w-full
-              px-3
-              py-2
-              border
-              rounded-lg
-            "
-          />
+  id="imagem_url"
+  type="text"
+  value={imagemUrl}
+  onChange={(e) => {
+    setImagemUrl(e.target.value);
+    setImagemValida(true);
+  }}
+  placeholder="/uploads/cronogramas/imagem.jpg"
+  className="w-full px-3 py-2 border rounded-lg"
+/>
 
           <p
             className="
