@@ -130,7 +130,6 @@ export default function Cronograma() {
   const [professor_id, setProfessor] =
     useState("");
 
- 
   const [formatura_id, setFormatura] =
     useState("");
 
@@ -143,7 +142,6 @@ export default function Cronograma() {
   const [draft, setDraft] =
     useState(false);
 
-  
   const [periodo, setPeriodo] =
     useState("");
 
@@ -151,23 +149,16 @@ export default function Cronograma() {
     useState("");
 
   // ==============================
-  // NOVO CAMPO: IMAGEM
+  // IMAGEM
   // ==============================
 
   const [imagemUrl, setImagemUrl] =
     useState("");
 
-  
   const [imagemArquivo, setImagemArquivo] =
-  useState<File | null>(null);
+    useState<File | null>(null);
 
-  const [uploadandoImagem, setUploadandoImagem] =
-  useState(false);
-
-  const [previewImagem, setPreviewImagem] =
-  useState("");  
-
-  const [mostrarSaldo, setMostrarSaldo] =
+  const [uploadingImagem, setUploadingImagem] =
     useState(false);
 
   // ==============================
@@ -178,6 +169,9 @@ export default function Cronograma() {
     useState<SaldoDetentora | null>(null);
 
   const [loadingSaldo, setLoadingSaldo] =
+    useState(false);
+
+  const [mostrarSaldo, setMostrarSaldo] =
     useState(false);
 
   // ==============================
@@ -204,47 +198,245 @@ export default function Cronograma() {
   }
 
   // ==============================
-  // BUSCAR SALDO DETENTORA
+  // UPLOAD DA IMAGEM
   // ==============================
 
-  async function carregarSaldoDetentora(id: string) {
-  if (!id) {
-    setSaldoDetentora(null);
-    return;
-  }
+  async function handleUploadImagem(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
 
-  try {
-    setLoadingSaldo(true);
+    if (!file) {
+      return;
+    }
 
-    console.log("ID DA DETENTORA SELECIONADA:", id);
+    // ==============================
+    // VALIDAR FORMATO
+    // ==============================
 
-    const response =
-      await api.get<SaldoDetentora>(
-        "/detentora/saldo",
-        {
-          params: {
-            id,
-          },
-        }
+    const extensoesPermitidas = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!extensoesPermitidas.includes(file.type)) {
+      toast.error(
+        "Formato não permitido. Use JPG, JPEG, PNG ou WEBP."
       );
 
-    console.log(
-      "SALDO RETORNADO:",
-      response.data
+      e.target.value = "";
+
+      return;
+    }
+
+    // ==============================
+    // VALIDAR TAMANHO
+    // ==============================
+
+    const tamanhoMaximo =
+      5 * 1024 * 1024;
+
+    if (file.size > tamanhoMaximo) {
+      toast.error(
+        "A imagem deve ter no máximo 5 MB."
+      );
+
+      e.target.value = "";
+
+      return;
+    }
+
+    // Guarda o arquivo para exibição
+    setImagemArquivo(file);
+
+    // ==============================
+    // FORM DATA
+    // ==============================
+
+    const formData = new FormData();
+
+    formData.append(
+      "imagem",
+      file
     );
 
-    setSaldoDetentora(response.data);
-  } catch (error: unknown) {
-    console.error(
-      "Erro ao buscar saldo:",
-      error
-    );
+    try {
+      setUploadingImagem(true);
 
-    setSaldoDetentora(null);
-  } finally {
-    setLoadingSaldo(false);
+      console.log(
+        "Enviando imagem:",
+        file.name
+      );
+
+      // ==============================
+      // ENVIAR PARA O BACKEND
+      // ==============================
+
+      const response =
+        await api.post(
+          "/upload/cronograma",
+          formData,
+          {
+            headers: {
+              "Content-Type":
+                "multipart/form-data",
+            },
+          }
+        );
+
+      console.log(
+        "Resposta do upload:",
+        response.data
+      );
+
+      // ==============================
+      // SALVAR URL
+      // ==============================
+
+      const url =
+        response.data?.imagem_url;
+
+      if (!url) {
+        throw new Error(
+          "O servidor não retornou a URL da imagem."
+        );
+      }
+
+      setImagemUrl(url);
+
+      toast.success(
+        "Imagem enviada com sucesso!"
+      );
+    } catch (error: unknown) {
+      console.error(
+        "Erro ao enviar imagem:",
+        error
+      );
+
+      setImagemArquivo(null);
+      setImagemUrl("");
+
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "STATUS:",
+          error.response?.status
+        );
+
+        console.error(
+          "RESPOSTA:",
+          error.response?.data
+        );
+
+        toast.error(
+          error.response?.data?.error ||
+            "Erro ao enviar imagem."
+        );
+      } else {
+        toast.error(
+          "Erro ao enviar imagem."
+        );
+      }
+
+      e.target.value = "";
+    } finally {
+      setUploadingImagem(false);
+    }
   }
-}
+
+  // ==============================
+  // REMOVER IMAGEM
+  // ==============================
+
+  function removerImagem() {
+    setImagemArquivo(null);
+    setImagemUrl("");
+
+    const input =
+      document.getElementById(
+        "imagem_cronograma"
+      ) as HTMLInputElement | null;
+
+    if (input) {
+      input.value = "";
+    }
+  }
+
+  // ==============================
+  // URL COMPLETA DA IMAGEM
+  // ==============================
+
+  function obterUrlImagem(
+    url: string
+  ) {
+    if (!url) {
+      return "";
+    }
+
+    // Se já for uma URL completa
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://")
+    ) {
+      return url;
+    }
+
+    // Usa a origem da API
+    const baseURL =
+      api.defaults.baseURL || "";
+
+    return `${baseURL}${url}`;
+  }
+
+  // ==============================
+  // BUSCAR SALDO
+  // ==============================
+
+  async function carregarSaldoDetentora(
+    id: string
+  ) {
+    if (!id) {
+      setSaldoDetentora(null);
+      return;
+    }
+
+    try {
+      setLoadingSaldo(true);
+
+      console.log(
+        "ID DA DETENTORA SELECIONADA:",
+        id
+      );
+
+      const response =
+        await api.get<SaldoDetentora>(
+          "/detentora/saldo",
+          {
+            params: {
+              id,
+            },
+          }
+        );
+
+      console.log(
+        "SALDO RETORNADO:",
+        response.data
+      );
+
+      setSaldoDetentora(
+        response.data
+      );
+    } catch (error: unknown) {
+      console.error(
+        "Erro ao buscar saldo:",
+        error
+      );
+
+      setSaldoDetentora(null);
+    } finally {
+      setLoadingSaldo(false);
+    }
+  }
 
   // ==============================
   // CARREGAR DADOS
@@ -261,11 +453,26 @@ export default function Cronograma() {
           formRes,
           detRes,
         ] = await Promise.all([
-          api.get<LocalType[]>("/local"),
-          api.get<BlocoType[]>("/bloco"),
-          api.get<SalaType[]>("/sala"),
-          api.get<ProfessorType[]>("/professor"),
-          api.get<FormaturaType[]>("/formatura"),
+          api.get<LocalType[]>(
+            "/local"
+          ),
+
+          api.get<BlocoType[]>(
+            "/bloco"
+          ),
+
+          api.get<SalaType[]>(
+            "/sala"
+          ),
+
+          api.get<ProfessorType[]>(
+            "/professor"
+          ),
+
+          api.get<FormaturaType[]>(
+            "/formatura"
+          ),
+
           api.get<DetentoraType[]>(
             "/detentora"
           ),
@@ -337,58 +544,6 @@ export default function Cronograma() {
   }
 
   // ==============================
-// SELECIONAR IMAGEM
-// ==============================
-
-function handleSelecionarImagem(
-  e: React.ChangeEvent<HTMLInputElement>
-) {
-  const arquivo = e.target.files?.[0];
-
-  if (!arquivo) {
-    return;
-  }
-
-  const extensoesPermitidas = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ];
-
-  if (!extensoesPermitidas.includes(arquivo.type)) {
-    toast.error(
-      "Formato inválido. Use JPG, JPEG, PNG ou WEBP."
-    );
-
-    e.target.value = "";
-    return;
-  }
-
-  if (arquivo.size > 5 * 1024 * 1024) {
-    toast.error(
-      "A imagem não pode ultrapassar 5 MB."
-    );
-
-    e.target.value = "";
-    return;
-  }
-
-  setImagemArquivo(arquivo);
-
-  const preview = URL.createObjectURL(arquivo);
-
-  setPreviewImagem(preview);
-
-  // Como uma nova imagem foi escolhida,
-  // ainda não temos a URL definitiva do servidor.
-  setImagemUrl("");
-  
-  setImagemArquivo(null);
-  setPreviewImagem("");
-  setUploadandoImagem(false);
-}
-
-  // ==============================
   // SALVAR CRONOGRAMA
   // ==============================
 
@@ -398,7 +553,7 @@ function handleSelecionarImagem(
     e.preventDefault();
 
     // ==============================
-    // VALIDAÇÃO SALDO
+    // VALIDAR SALDO
     // ==============================
 
     if (
@@ -413,54 +568,16 @@ function handleSelecionarImagem(
     }
 
     // ==============================
-// UPLOAD DA IMAGEM
-// ==============================
+    // VALIDAR UPLOAD
+    // ==============================
 
-let imagemUrlFinal = imagemUrl.trim();
-
-if (imagemArquivo) {
-  try {
-    setUploadandoImagem(true);
-
-    const formData = new FormData();
-
-    formData.append(
-      "imagem",
-      imagemArquivo
-    );
-
-    const uploadResponse =
-      await api.post(
-        "/upload/cronograma",
-        formData
+    if (uploadingImagem) {
+      toast.warning(
+        "Aguarde o término do upload da imagem."
       );
 
-    imagemUrlFinal =
-      uploadResponse.data.imagem_url;
-
-    console.log(
-      "IMAGEM ENVIADA:",
-      imagemUrlFinal
-    );
-
-    setImagemUrl(
-      imagemUrlFinal
-    );
-  } catch (error: unknown) {
-    console.error(
-      "Erro ao enviar imagem:",
-      error
-    );
-
-    toast.error(
-      "Não foi possível enviar a imagem."
-    );
-
-    return;
-  } finally {
-    setUploadandoImagem(false);
-  }
-}
+      return;
+    }
 
     // ==============================
     // PAYLOAD
@@ -500,13 +617,12 @@ if (imagemArquivo) {
 
       is_status: "ativo",
 
-      especificacao: especificacao.trim(),
+      especificacao:
+        especificacao.trim(),
 
       publicar,
 
       draft,
-
-      
 
       link_inscricao:
         link_inscricao.trim() !== ""
@@ -518,10 +634,10 @@ if (imagemArquivo) {
       // ==============================
 
       imagem_url:
-        imagemUrlFinal !== ""
-          ? imagemUrlFinal
+        imagemUrl.trim() !== ""
+          ? imagemUrl.trim()
           : null,
-          };
+    };
 
     console.log(
       "================================="
@@ -570,22 +686,42 @@ if (imagemArquivo) {
 
       limparFormulario();
     } catch (error: unknown) {
-    console.error("Erro ao salvar cronograma:", error);
+      console.error(
+        "Erro ao salvar cronograma:",
+        error
+      );
 
-    if (axios.isAxiosError(error)) {
-        console.error("STATUS:", error.response?.status);
-        console.error("RESPOSTA DO BACKEND:", error.response?.data);
-
-        alert(
-            error.response?.data?.message ||
-            JSON.stringify(error.response?.data) ||
-            "Erro ao salvar cronograma"
+      if (
+        axios.isAxiosError(
+          error
+        )
+      ) {
+        console.error(
+          "STATUS:",
+          error.response?.status
         );
-    } else {
-        console.error("Erro desconhecido:", error);
-        alert("Erro ao salvar cronograma");
+
+        console.error(
+          "RESPOSTA DO BACKEND:",
+          error.response?.data
+        );
+
+        toast.error(
+          error.response?.data?.error ||
+            error.response?.data?.message ||
+            "Erro ao salvar cronograma."
+        );
+      } else {
+        console.error(
+          "Erro desconhecido:",
+          error
+        );
+
+        toast.error(
+          "Erro ao salvar cronograma."
+        );
+      }
     }
-}
   }
 
   // ==============================
@@ -624,18 +760,18 @@ if (imagemArquivo) {
 
     setHorario("");
 
-    setHorarioFim("");    
+    setHorarioFim("");
 
     setObservacao("");
 
-    
     setPeriodo("");
 
     setLink_inscricao("");
 
     setImagemUrl("");
 
-   
+    setImagemArquivo(null);
+
     setPublicar(false);
 
     setDraft(false);
@@ -647,6 +783,15 @@ if (imagemArquivo) {
     setMostrarSaldo(
       false
     );
+
+    const input =
+      document.getElementById(
+        "imagem_cronograma"
+      ) as HTMLInputElement | null;
+
+    if (input) {
+      input.value = "";
+    }
   }
 
   // ==============================
@@ -723,54 +868,49 @@ if (imagemArquivo) {
         </div>
 
         {/* ==============================
-            STATUS
+            FORMATURA
         ============================== */}
-            
-          
 
-          <select
-            value={
-              formatura_id
-            }
-            onChange={(e) =>
-              setFormatura(
-                e.target.value
-              )
-            }
-            className="
-              px-3
-              py-2
-              border
-              rounded-lg
-              bg-white
-            "
-          >
-            <option value="">
-              Data da formatura
-            </option>
+        <select
+          value={
+            formatura_id
+          }
+          onChange={(e) =>
+            setFormatura(
+              e.target.value
+            )
+          }
+          className="
+            px-3
+            py-2
+            border
+            rounded-lg
+            bg-white
+          "
+        >
+          <option value="">
+            Data da formatura
+          </option>
 
-            {formaturas.map(
-              (
-                formatura
-              ) => (
-                <option
-                  key={
-                    formatura.id
-                  }
-                  value={
-                    formatura.id
-                  }
-                >
-                  {
-                    formatura.data_formatura
-                  }
-                </option>
-              )
-            )}
-          </select>
-        
-
-      
+          {formaturas.map(
+            (
+              formatura
+            ) => (
+              <option
+                key={
+                  formatura.id
+                }
+                value={
+                  formatura.id
+                }
+              >
+                {
+                  formatura.data_formatura
+                }
+              </option>
+            )
+          )}
+        </select>
 
         {/* ==============================
             LOCAL
@@ -810,10 +950,18 @@ if (imagemArquivo) {
           </select>
         </div>
 
-       <div>
+        {/* ==============================
+            SALA
+        ============================== */}
+
+        <div>
           <select
             value={sala_id}
-            onChange={(e) => setSala(e.target.value)}
+            onChange={(e) =>
+              setSala(
+                e.target.value
+              )
+            }
             className="
               w-full
               px-3
@@ -824,128 +972,164 @@ if (imagemArquivo) {
             "
           >
             <option value="">
-      Selecione a sala
-          </option>
+              Selecione a sala
+            </option>
 
-    {salasFiltradas.map((sala) => (
-      <option
-        key={sala.id}
-        value={sala.id}
-      >
-                {sala.numero_sala} - {sala.tipo_uso}
-              </option>
-            ))}
+            {salasFiltradas.map(
+              (sala) => (
+                <option
+                  key={sala.id}
+                  value={sala.id}
+                >
+                  {sala.numero_sala} -{" "}
+                  {sala.tipo_uso}
+                </option>
+              )
+            )}
           </select>
         </div>
-              
 
-            {/* ==============================
+        {/* ==============================
             DETENTORA / CURSO
         ============================== */}
 
         <div>
           <select
-            value={detentoras_id}
+            value={
+              detentoras_id
+            }
             onChange={async (e) => {
-              const id = e.target.value;
+              const id =
+                e.target.value;
 
-              setDetentoras_id(id);
+              setDetentoras_id(
+                id
+              );
 
               if (!id) {
-                setSaldoDetentora(null);
+                setSaldoDetentora(
+                  null
+                );
+
                 return;
               }
 
-      await carregarSaldoDetentora(id);
-    }}
-    className="
-      w-full
-      px-3
-      py-2
-      border
-      rounded-lg
-      bg-white
-    "
-  >
-    <option value="">
-      Curso da Ata
-    </option>
-
-    {Array.from(
-      new Map(
-        detentoras.map((detentora) => {
-          const nomeCurso =
-            detentora.curso?.nome_curso
-              ?.trim()
-              .toUpperCase() || "SEM CURSO";
-
-          const numeroAta =
-            detentora.ata?.numero_ata
-              ?.trim()
-              .toUpperCase() || "SEM ATA";
-
-          const chave =
-            `${nomeCurso}__${numeroAta}`;
-
-          return [
-            chave,
-            detentora,
-          ];
-        })
-      ).values()
-    )
-      .sort((a, b) =>
-        (
-          a.curso?.nome_curso ?? ""
-        ).localeCompare(
-          b.curso?.nome_curso ?? "",
-          "pt-BR",
-          {
-            sensitivity: "base",
-          }
-        )
-      )
-      .map((detentora) => (
-        <option
-          key={detentora.id}
-          value={detentora.id}
-        >
-          {(
-            detentora.curso?.nome_curso ??
-            "SEM CURSO"
-          ).toUpperCase()}
-          {" - ATA "}
-          {(
-            detentora.ata?.numero_ata ??
-            "SEM ATA"
-          ).toUpperCase()}
-        </option>
-      ))}
-  </select>
-</div>
-{/* ==============================
-            TEMA
-        ============================== */}
-
-        
-          <input
-            value={tema}
-            onChange={(e) =>
-              setTema(
-                e.target.value
-              )
-            }
-            placeholder="Tema do curso"
+              await carregarSaldoDetentora(
+                id
+              );
+            }}
             className="
               w-full
               px-3
               py-2
               border
               rounded-lg
+              bg-white
             "
-          />
+          >
+            <option value="">
+              Curso da Ata
+            </option>
 
-       
+            {Array.from(
+              new Map(
+                detentoras.map(
+                  (detentora) => {
+                    const nomeCurso =
+                      detentora
+                        .curso
+                        ?.nome_curso
+                        ?.trim()
+                        .toUpperCase() ||
+                      "SEM CURSO";
+
+                    const numeroAta =
+                      detentora
+                        .ata
+                        ?.numero_ata
+                        ?.trim()
+                        .toUpperCase() ||
+                      "SEM ATA";
+
+                    const chave =
+                      `${nomeCurso}__${numeroAta}`;
+
+                    return [
+                      chave,
+                      detentora,
+                    ];
+                  }
+                )
+              ).values()
+            )
+              .sort(
+                (a, b) =>
+                  (
+                    a.curso
+                      ?.nome_curso ??
+                    ""
+                  ).localeCompare(
+                    b.curso
+                      ?.nome_curso ??
+                    "",
+                    "pt-BR",
+                    {
+                      sensitivity:
+                        "base",
+                    }
+                  )
+              )
+              .map(
+                (
+                  detentora
+                ) => (
+                  <option
+                    key={
+                      detentora.id
+                    }
+                    value={
+                      detentora.id
+                    }
+                  >
+                    {(
+                      detentora
+                        .curso
+                        ?.nome_curso ??
+                      "SEM CURSO"
+                    ).toUpperCase()}
+                    {" - ATA "}
+                    {(
+                      detentora
+                        .ata
+                        ?.numero_ata ??
+                      "SEM ATA"
+                    ).toUpperCase()}
+                  </option>
+                )
+              )}
+          </select>
+        </div>
+
+        {/* ==============================
+            TEMA
+        ============================== */}
+
+        <input
+          value={tema}
+          onChange={(e) =>
+            setTema(
+              e.target.value
+            )
+          }
+          placeholder="Tema do curso"
+          className="
+            w-full
+            px-3
+            py-2
+            border
+            rounded-lg
+          "
+        />
 
         {/* ==============================
             LOADING SALDO
@@ -1161,9 +1345,6 @@ if (imagemArquivo) {
             </div>
           )}
 
-        
-        
-
         {/* ==============================
             DATAS E HORÁRIOS
         ============================== */}
@@ -1282,304 +1463,384 @@ if (imagemArquivo) {
         </div>
 
         {/* ==============================
-            QUANTIDADE / FORMATURA
+            PROFESSOR + OBSERVAÇÃO
         ============================== */}
-{/* ==============================
-    PROFESSOR + OBSERVAÇÃO
-============================== */}
 
-<div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-  {/* ==============================
-      PROFESSOR
-  ============================== */}
-
-  <div>
-    <select
-      value={professor_id}
-      onChange={(e) =>
-        setProfessor(e.target.value)
-      }
-      className="
-        w-full
-        px-3
-        py-2
-        border
-        rounded-lg
-        bg-white
-      "
-    >
-      <option value="">
-        Selecione o professor
-      </option>
-
-      {professores.map((professor) => (
-        <option
-          key={professor.id}
-          value={professor.id}
-        >
-          {professor.nome_professor}
-        </option>
-      ))}
-    </select>
-  </div>
-
-  {/* ==============================
-      OBSERVAÇÃO
-  ============================== */}
-
-  <textarea
-    rows={1}
-    value={especificacao}
-    onChange={(e) =>
-      setObservacao(e.target.value)
-    }
-    placeholder="Especificação / Observações"
-    className="
-      w-full
-      px-3
-      py-2
-      border
-      rounded-lg
-      resize-none
-    "
-  />
-
-</div>
-{/* ==============================
-    LINK + IMAGEM + BOTÃO
-============================== */}
-
-<div
-  className="
-    col-span-2
-    flex
-    flex-col
-    md:flex-row
-    md:items-end
-    md:justify-between
-    gap-6
-  "
->
-  {/* ==============================
-      CAMPOS - LADO ESQUERDO
-  ============================== */}
-
-  <div
-    className="
-      flex
-      flex-col
-      md:flex-row
-      gap-6
-      flex-1
-    "
-  >
-    {/* LINK INSCRIÇÃO */}
-
-    <div className="flex-1">
-      <label
-        htmlFor="link_inscricao"
-        className="
-          block
-          text-sm
-          font-medium
-          mb-1
-        "
-      >
-        Link de inscrição
-      </label>
-
-      <input
-        id="link_inscricao"
-        type="url"
-        value={link_inscricao}
-        onChange={(e) =>
-          setLink_inscricao(e.target.value)
-        }
-        placeholder="https://..."
-        className="
-          w-full
-          px-3
-          py-2
-          border
-          rounded-lg
-        "
-      />
-    </div>
-
-    {/* URL DA IMAGEM */}
-
-    {/* ==============================
-    IMAGEM DO CURSO
-============================== */}
-
-<div className="flex-1">
-  <label
-    htmlFor="imagem_curso"
-    className="
-      block
-      text-sm
-      font-medium
-      mb-1
-    "
-  >
-    Imagem do curso
-  </label>
-
-  <div
-    className="
-      flex
-      items-center
-      gap-3
-    "
-  >
-    <label
-      htmlFor="imagem_curso"
-      className="
-        cursor-pointer
-        px-4
-        py-2
-        rounded-lg
-        bg-blue-600
-        hover:bg-blue-700
-        text-white
-        font-semibold
-        transition
-      "
-    >
-      📁 Selecionar imagem
-    </label>
-
-    <input
-      id="imagem_curso"
-      type="file"
-      accept="image/jpeg,image/png,image/webp"
-      onChange={
-        handleSelecionarImagem
-      }
-      className="hidden"
-    />
-  </div>
-
-  {imagemArquivo && (
-    <p
-      className="
-        mt-2
-        text-sm
-        text-gray-600
-      "
-    >
-      Arquivo:{" "}
-      <strong>
-        {imagemArquivo.name}
-      </strong>
-    </p>
-  )}
-
-  {/* PREVIEW */}
-
-  {previewImagem && (
-    <div className="mt-4">
-      <p
-        className="
-          text-sm
-          font-medium
-          mb-2
-        "
-      >
-        Pré-visualização
-      </p>
-
-      <div
-        className="
-          relative
-          w-full
-          max-w-md
-          overflow-hidden
-          rounded-xl
-          border
-          bg-gray-100
-        "
-      >
-        <Image
-          src={previewImagem}
-          alt="Pré-visualização da imagem"
-          width={600}
-          height={300}
-          unoptimized
+        <div
           className="
-            w-full
-            h-48
-            object-cover
+            col-span-2
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            gap-4
           "
-        />
-      </div>
-    </div>
-  )}
+        >
+          {/* PROFESSOR */}
 
-  {imagemUrl && (
-    <p
-      className="
-        mt-2
-        text-xs
-        text-green-600
-      "
-    >
-      ✓ Imagem pronta para salvar no cronograma.
-    </p>
-  )}
-</div>
-  </div>
+          <div>
+            <select
+              value={
+                professor_id
+              }
+              onChange={(e) =>
+                setProfessor(
+                  e.target.value
+                )
+              }
+              className="
+                w-full
+                px-3
+                py-2
+                border
+                rounded-lg
+                bg-white
+              "
+            >
+              <option value="">
+                Selecione o professor
+              </option>
 
-  {/* ==============================
-      BOTÃO - LADO DIREITO
-  ============================== */}
+              {professores.map(
+                (professor) => (
+                  <option
+                    key={
+                      professor.id
+                    }
+                    value={
+                      professor.id
+                    }
+                  >
+                    {
+                      professor.nome_professor
+                    }
+                  </option>
+                )
+              )}
+            </select>
+          </div>
 
-  <div
-    className="
-      flex
-      justify-end
-      shrink-0
-    "
-  >
-    <button
-      type="submit"
-      disabled={
-        loadingSaldo ||
-        uploadandoImagem ||
-        !detentoras_id ||
-        (
-          saldoDetentora !== null &&
-          saldoDetentora.saldo <= 0
-        )
-      }
-      className={`
-        px-6
-        py-3
-        rounded-lg
-        text-white
-        font-semibold
-        whitespace-nowrap
+          {/* OBSERVAÇÃO */}
 
-        ${
-          loadingSaldo ||
-          (
-            saldoDetentora &&
-            saldoDetentora.saldo <= 0
-          )
-            ? "bg-gray-400"
-            : "bg-blue-600 hover:bg-blue-700"
-        }
-      `}
-    >
-      {loadingSaldo
-      
-        ? "Consultando saldo..."
-        : "Salvar Cronograma"}
-    </button>
-  </div>
+          <textarea
+            rows={1}
+            value={
+              especificacao
+            }
+            onChange={(e) =>
+              setObservacao(
+                e.target.value
+              )
+            }
+            placeholder="Especificação / Observações"
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+              resize-none
+            "
+          />
+        </div>
 
-   </div>     
+        {/* ==============================
+            LINK DE INSCRIÇÃO
+        ============================== */}
+
+        <div
+          className="
+            col-span-2
+          "
+        >
+          <label
+            htmlFor="link_inscricao"
+            className="
+              block
+              text-sm
+              font-medium
+              mb-1
+            "
+          >
+            Link de inscrição
+          </label>
+
+          <input
+            id="link_inscricao"
+            type="url"
+            value={
+              link_inscricao
+            }
+            onChange={(e) =>
+              setLink_inscricao(
+                e.target.value
+              )
+            }
+            placeholder="https://..."
+            className="
+              w-full
+              px-3
+              py-2
+              border
+              rounded-lg
+            "
+          />
+        </div>
+
+        {/* ==============================
+            IMAGEM DO CRONOGRAMA
+        ============================== */}
+
+        <div
+          className="
+            col-span-2
+            rounded-xl
+            border
+            border-gray-300
+            bg-gray-50
+            p-5
+          "
+        >
+          <div
+            className="
+              flex
+              flex-col
+              gap-4
+            "
+          >
+            <div>
+              <label
+                htmlFor="imagem_cronograma"
+                className="
+                  block
+                  text-sm
+                  font-semibold
+                  text-gray-700
+                  mb-2
+                "
+              >
+                Imagem do curso
+              </label>
+
+              <input
+                id="imagem_cronograma"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={
+                  handleUploadImagem
+                }
+                disabled={
+                  uploadingImagem
+                }
+                className="
+                  block
+                  w-full
+                  text-sm
+                  text-gray-700
+                  border
+                  border-gray-300
+                  rounded-lg
+                  bg-white
+                  cursor-pointer
+                  file:mr-4
+                  file:py-2
+                  file:px-4
+                  file:border-0
+                  file:rounded-l-lg
+                  file:bg-blue-600
+                  file:text-white
+                  file:font-semibold
+                  hover:file:bg-blue-700
+                "
+              />
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  text-gray-500
+                "
+              >
+                Formatos permitidos:
+                JPG, JPEG, PNG e WEBP.
+                Tamanho máximo: 5 MB.
+              </p>
+            </div>
+
+            {/* ==============================
+                UPLOAD
+            ============================== */}
+
+            {uploadingImagem && (
+              <div
+                className="
+                  rounded-lg
+                  border
+                  border-blue-200
+                  bg-blue-50
+                  p-3
+                  text-sm
+                  text-blue-700
+                "
+              >
+                Enviando imagem...
+                Aguarde.
+              </div>
+            )}
+
+            {/* ==============================
+                PRÉVIA
+            ============================== */}
+
+            {imagemArquivo &&
+              imagemUrl && (
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-green-300
+                    bg-white
+                    p-4
+                  "
+                >
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      mb-3
+                    "
+                  >
+                    <div>
+                      <p
+                        className="
+                          text-sm
+                          font-semibold
+                          text-green-700
+                        "
+                      >
+                        Imagem selecionada
+                      </p>
+
+                      <p
+                        className="
+                          text-xs
+                          text-gray-500
+                          break-all
+                        "
+                      >
+                        {
+                          imagemArquivo.name
+                        }
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={
+                        removerImagem
+                      }
+                      className="
+                        px-3
+                        py-2
+                        rounded-lg
+                        bg-red-600
+                        text-white
+                        text-sm
+                        font-semibold
+                        hover:bg-red-700
+                      "
+                    >
+                      Remover
+                    </button>
+                  </div>
+
+                  <div
+                    className="
+                      w-full
+                      max-w-md
+                      mx-auto
+                      overflow-hidden
+                      rounded-xl
+                      border
+                      bg-gray-100
+                    "
+                  >
+                    <Image
+                      src={obterUrlImagem(imagemUrl)}
+                      alt="Imagem do curso"
+                      width={500}
+                      height={300}
+                      className="object-cover rounded-lg"
+                      unoptimized
+                    />
+                  </div>
+
+                  <p
+                    className="
+                      mt-3
+                      text-xs
+                      text-gray-500
+                      break-all
+                    "
+                  >
+                    {imagemUrl}
+                  </p>
+                </div>
+              )}
+          </div>
+        </div>
+
+        {/* ==============================
+            BOTÃO SALVAR
+        ============================== */}
+
+        <div
+          className="
+            col-span-2
+            flex
+            justify-end
+          "
+        >
+          <button
+            type="submit"
+            disabled={
+              loadingSaldo ||
+              uploadingImagem ||
+              !detentoras_id ||
+              (
+                saldoDetentora !== null &&
+                saldoDetentora.saldo <=
+                  0
+              )
+            }
+            className={`
+              px-6
+              py-3
+              rounded-lg
+              text-white
+              font-semibold
+              whitespace-nowrap
+
+              ${
+                loadingSaldo ||
+                uploadingImagem ||
+                (
+                  saldoDetentora &&
+                  saldoDetentora.saldo <=
+                    0
+                )
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }
+            `}
+          >
+            {uploadingImagem
+              ? "Enviando imagem..."
+              : loadingSaldo
+              ? "Consultando saldo..."
+              : "Salvar Cronograma"}
+          </button>
+        </div>
       </form>
     </div>
   );
