@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,15 +13,14 @@ type OfertaType = {
   id: string;
   tema: string;
 
-  // Campo de especificação do cronograma
   especificacao?: string | null;
 
   data_inicio: string;
   data_fim: string;
+
   hora_inicio: string;
   hora_fim: string;
 
-  // Imagem cadastrada no cronograma
   imagem_url?: string | null;
 
   localAula: {
@@ -33,80 +31,143 @@ type OfertaType = {
 
   detentoras?: {
     curso?: {
-      banner?: string;
-      nome_curso?: string;
+      banner?: string | null;
+      nome_curso?: string | null;
     };
   };
 };
 
 // ===============================
-// FUNÇÃO PARA MONTAR URL DA IMAGEM
+// URL BASE DAS IMAGENS
 // ===============================
 
-function montarUrlImagem(imagem?: string | null) {
+const URL_BASE = "https://gestaom.com";
+
+// ===============================
+// MONTAR URL DA IMAGEM
+// ===============================
+
+function montarUrlImagem(
+  imagem?: string | null
+): string {
   if (!imagem) {
     return "";
   }
 
-  // Remove espaços
-  const valor = imagem.trim();
+  let valor = imagem.trim();
 
   if (!valor) {
     return "";
   }
 
-  // Se já for uma URL completa
-  if (
-    valor.startsWith("http://") ||
-    valor.startsWith("https://")
-  ) {
+  // Remove aspas caso tenham sido salvas junto com o caminho
+  valor = valor.replace(/^["']|["']$/g, "");
+
+  // =====================================================
+  // CORRIGIR URLs ANTIGAS COM LOCALHOST
+  // =====================================================
+
+  if (valor.startsWith("http://localhost:3000")) {
+    valor = valor.replace(
+      "http://localhost:3000",
+      URL_BASE
+    );
+  }
+
+  if (valor.startsWith("http://192.168.15.84:3000")) {
+    valor = valor.replace(
+      "http://192.168.15.84:3000",
+      URL_BASE
+    );
+  }
+
+  // =====================================================
+  // URL HTTPS COMPLETA
+  // =====================================================
+
+  if (valor.startsWith("https://")) {
     return valor;
   }
 
-  // Se já começar com /files/
-  if (valor.startsWith("/files/")) {
-    return `http://localhost:3000${valor}`;
+  // =====================================================
+  // URL HTTP
+  // Converte para HTTPS
+  // =====================================================
+
+  if (valor.startsWith("http://")) {
+    return valor.replace(
+      /^http:\/\//,
+      "https://"
+    );
   }
 
-  // Se começar com /uploads/
-  if (valor.startsWith("/uploads/")) {
-    return `http://localhost:3000${valor}`;
+  // =====================================================
+  // CAMINHO RELATIVO
+  // Exemplo:
+  // /uploads/cronogramas/imagem.jpg
+  // =====================================================
+
+  if (valor.startsWith("/")) {
+    return `${URL_BASE}${valor}`;
   }
 
-  // Caso o backend tenha retornado apenas o nome do arquivo
-  return `http://localhost:3000/files/${valor}`;
+  // =====================================================
+  // CAMINHO SEM /
+  // Exemplo:
+  // uploads/cronogramas/imagem.jpg
+  // =====================================================
+
+  return `${URL_BASE}/${valor}`;
 }
 
 // ===============================
 // FORMATAR DATA
 // ===============================
 
-function formatarData(data?: string) {
+function formatarData(
+  data?: string
+): string {
   if (!data) {
     return "";
   }
 
+  const valor = data.trim();
+
+  // ===============================
   // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}/.test(data)) {
+  // ===============================
+
+  if (
+    /^\d{4}-\d{2}-\d{2}/.test(valor)
+  ) {
     const [ano, mes, dia] =
-      data.substring(0, 10).split("-");
+      valor
+        .substring(0, 10)
+        .split("-");
 
     return `${dia}/${mes}/${ano}`;
   }
 
+  // ===============================
   // DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
-    return data;
+  // ===============================
+
+  if (
+    /^\d{2}\/\d{2}\/\d{4}$/.test(valor)
+  ) {
+    return valor;
   }
 
-  return data;
+  return valor;
 }
 
 // ===============================
 // FORMATAR HORA
 // ===============================
 
-function formatarHora(hora?: string) {
+function formatarHora(
+  hora?: string
+): string {
   if (!hora) {
     return "";
   }
@@ -119,9 +180,8 @@ function formatarHora(hora?: string) {
 // ===============================
 
 export default function OfertaCursoPage() {
-  const [ofertas, setOfertas] = useState<
-    OfertaType[]
-  >([]);
+  const [ofertas, setOfertas] =
+    useState<OfertaType[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -205,63 +265,76 @@ export default function OfertaCursoPage() {
           GRID
       =============================== */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        className="
+          grid
+          grid-cols-1
+          sm:grid-cols-2
+          lg:grid-cols-3
+          xl:grid-cols-4
+          gap-5
+        "
+      >
         {ofertas.map((o) => {
           // ===============================
-          // IMAGEM
+          // IMAGEM DO CRONOGRAMA
           // ===============================
 
-          const imagem = montarUrlImagem(
-            o.imagem_url
-          );
+          const imagemCronograma =
+            montarUrlImagem(
+              o.imagem_url
+            );
 
           // ===============================
-          // BANNER ANTIGO
-          // Usado somente como fallback
+          // BANNER DO CURSO
           // ===============================
-
-          const bannerCurso =
-            o.detentoras?.curso?.banner;
 
           const imagemBannerCurso =
-            bannerCurso
-              ? montarUrlImagem(
-                  bannerCurso
-                )
-              : "";
+            montarUrlImagem(
+              o.detentoras?.curso?.banner
+            );
 
           // ===============================
-          // IMAGEM FINAL
-          // Prioridade:
+          // PRIORIDADE DA IMAGEM
+          //
           // 1 - imagem_url do cronograma
           // 2 - banner do curso
           // ===============================
 
           const imagemFinal =
-            imagem || imagemBannerCurso;
+            imagemCronograma ||
+            imagemBannerCurso;
 
           return (
             <div
               key={o.id}
               className="
                 bg-white
-                shadow-lg
-                rounded-xl
-                overflow-hidden
-                transition
-                hover:shadow-2xl
-                hover:-translate-y-1
-                duration-300
                 border
                 border-gray-200
+                rounded-xl
+                overflow-hidden
+                shadow-md
+                hover:shadow-xl
+                transition-all
+                duration-300
+                flex
+                flex-col
               "
             >
               {/* ===============================
-                  IMAGEM DO CURSO
+                  IMAGEM
               =============================== */}
 
-              {imagemFinal ? (
-                <div className="relative w-full h-64 bg-gray-100">
+              <div
+                className="
+                  relative
+                  w-full
+                  aspect-square
+                  bg-gray-100
+                "
+              >
+                {imagemFinal ? (
                   <Image
                     src={imagemFinal}
                     alt={
@@ -272,36 +345,39 @@ export default function OfertaCursoPage() {
                     }
                     fill
                     sizes="
-                      (max-width: 768px) 100vw,
-                      50vw
+                      (max-width: 640px) 100vw,
+                      (max-width: 1024px) 50vw,
+                      (max-width: 1280px) 33vw,
+                      25vw
                     "
-                    className="object-cover"
+                    className="
+                      object-cover
+                    "
                     unoptimized
                   />
-                </div>
-              ) : (
-                <div
-                  className="
-                    w-full
-                    h-64
-                    bg-gray-200
-                    flex
-                    items-center
-                    justify-center
-                  "
-                >
-                  <span className="text-gray-500">
-                    Sem imagem disponível
-                  </span>
-                </div>
-              )}
+                ) : (
+                  <div
+                    className="
+                      absolute
+                      inset-0
+                      flex
+                      items-center
+                      justify-center
+                      bg-gray-200
+                    "
+                  >
+                    <span className="text-sm text-gray-500">
+                      Sem imagem disponível
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {/* ===============================
                   CONTEÚDO
               =============================== */}
 
-              <div className="p-5">
-
+              <div className="p-4 flex flex-col flex-1">
                 {/* ===============================
                     NOME DO CURSO
                 =============================== */}
@@ -310,9 +386,10 @@ export default function OfertaCursoPage() {
                   ?.nome_curso && (
                   <p
                     className="
-                      text-sm
-                      font-semibold
+                      text-xs
+                      font-bold
                       text-blue-600
+                      uppercase
                       mb-1
                     "
                   >
@@ -329,9 +406,10 @@ export default function OfertaCursoPage() {
 
                 <h2
                   className="
-                    text-xl
+                    text-lg
                     font-bold
                     text-gray-800
+                    leading-tight
                   "
                 >
                   {o.tema}
@@ -341,98 +419,87 @@ export default function OfertaCursoPage() {
                     ESPECIFICAÇÃO
                 =============================== */}
 
-                <div className="mt-3">
-                  <p
-                    className="
-                      text-sm
-                      font-semibold
-                      text-gray-700
-                      mb-1
-                    "
-                  >
-                    Especificação
-                  </p>
-
-                  <p
-                    className="
-                      text-sm
-                      text-gray-600
-                      whitespace-pre-line
-                    "
-                  >
-                    {o.especificacao?.trim()
-                      ? o.especificacao
-                      : "Nenhuma especificação informada."}
-                  </p>
-                </div>
-
-                {/* ===============================
-                    DATAS
-                =============================== */}
-
-                <div className="mt-4 space-y-2 text-sm">
-
-                  <p>
-                    <span
+                {o.especificacao?.trim() && (
+                  <div className="mt-3">
+                    <p
                       className="
+                        text-xs
                         font-semibold
                         text-gray-700
+                        mb-1
                       "
                     >
-                      Período:
+                      Especificação
+                    </p>
+
+                    <p
+                      className="
+                        text-sm
+                        text-gray-600
+                        whitespace-pre-line
+                        line-clamp-4
+                      "
+                    >
+                      {o.especificacao}
+                    </p>
+                  </div>
+                )}
+
+                {/* ===============================
+                    INFORMAÇÕES
+                =============================== */}
+
+                <div
+                  className="
+                    mt-4
+                    space-y-1.5
+                    text-sm
+                    text-gray-600
+                  "
+                >
+                  {/* DATA */}
+
+                  <p>
+                    <span className="font-semibold text-gray-700">
+                      Data:
                     </span>{" "}
                     {formatarData(
                       o.data_inicio
                     )}{" "}
-                    •{" "}
+                    até{" "}
                     {formatarData(
                       o.data_fim
                     )}
                   </p>
 
-                  {/* ===============================
-                      HORÁRIO
-                  =============================== */}
+                  {/* HORÁRIO */}
 
                   <p>
-                    <span
-                      className="
-                        font-semibold
-                        text-gray-700
-                      "
-                    >
+                    <span className="font-semibold text-gray-700">
                       Horário:
                     </span>{" "}
                     {formatarHora(
                       o.hora_inicio
                     )}{" "}
-                    •{" "}
+                    às{" "}
                     {formatarHora(
                       o.hora_fim
                     )}
                   </p>
 
-                  {/* ===============================
-                      LOCAL
-                  =============================== */}
+                  {/* LOCAL */}
 
                   <p>
-                    <span
-                      className="
-                        font-semibold
-                        text-gray-700
-                      "
-                    >
+                    <span className="font-semibold text-gray-700">
                       Local:
                     </span>{" "}
-                    {o.localAula?.polo ??
+                    {o.localAula?.polo ||
                       "Local não informado"}
                   </p>
-
                 </div>
 
                 {/* ===============================
-                    BOTÃO INSCRIÇÃO
+                    BOTÃO
                 =============================== */}
 
                 {o.link_inscricao && (
@@ -443,23 +510,28 @@ export default function OfertaCursoPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="
-                      mt-5
-                      w-full
-                      inline-block
-                      text-center
-                      bg-green-600
-                      text-white
-                      py-2.5
-                      rounded-lg
-                      font-semibold
-                      hover:bg-green-700
-                      transition
+                      mt-auto
+                      pt-4
                     "
                   >
-                    Fazer Inscrição
+                    <span
+                      className="
+                        block
+                        w-full
+                        text-center
+                        bg-green-600
+                        text-white
+                        py-2.5
+                        rounded-lg
+                        font-semibold
+                        hover:bg-green-700
+                        transition
+                      "
+                    >
+                      Fazer Inscrição
+                    </span>
                   </a>
                 )}
-
               </div>
             </div>
           );
@@ -468,4 +540,3 @@ export default function OfertaCursoPage() {
     </main>
   );
 }
-
