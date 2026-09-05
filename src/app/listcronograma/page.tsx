@@ -747,7 +747,7 @@ const visualizarSolicitacao = async (id: string) => {
           {item.codigo}
         </td>
 
-        <td className="border p-2 truncate">
+        <td className="border p-2 truncate uppercase">
            {item.tema}
         </td>
 
@@ -771,7 +771,7 @@ const visualizarSolicitacao = async (id: string) => {
           {item.hora_fim}
         </td>
 
-        <td className="border p-2">
+        <td className="border p-2 uppercase">
   {item.professor?.nome_professor}
 </td>
 
