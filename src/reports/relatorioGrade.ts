@@ -24,14 +24,22 @@ const COLUMN_WIDTHS = {
   horaFim: 15,
 };
 
-// Posição inicial da tabela
 const TABLE_START_X = 14;
+
+// Largura total da tabela
+const TABLE_WIDTH =
+  COLUMN_WIDTHS.codigo +
+  COLUMN_WIDTHS.tema +
+  COLUMN_WIDTHS.dataInicio +
+  COLUMN_WIDTHS.dataFim +
+  COLUMN_WIDTHS.horaInicio +
+  COLUMN_WIDTHS.horaFim;
 
 // ============================================================
 // POSIÇÃO CENTRAL DOS RÓTULOS
 // ============================================================
 
-// Centro das duas colunas de datas
+// Centro das colunas DATA INÍCIO + DATA FIM
 const PERIODO_X =
   TABLE_START_X +
   COLUMN_WIDTHS.codigo +
@@ -40,7 +48,7 @@ const PERIODO_X =
     COLUMN_WIDTHS.dataFim) /
     2;
 
-// Centro das duas colunas de horários
+// Centro das colunas HORA INÍCIO + HORA FIM
 const HORARIO_X =
   TABLE_START_X +
   COLUMN_WIDTHS.codigo +
@@ -53,7 +61,6 @@ const HORARIO_X =
 
 // ============================================================
 // COR DA SALA
-// Mantém a mesma lógica utilizada no frontend
 // ============================================================
 
 const corSala = (
@@ -66,52 +73,52 @@ const corSala = (
     texto.includes("BELEZA COM LAVATÓRIO") ||
     texto.includes("BELEZA COM MACA")
   ) {
-    return [168, 85, 247]; // Lilás #A855F7
+    return [168, 85, 247];
   }
 
   if (
     texto.includes("INFORMÁTICA") ||
     texto.includes("INFORMATICA")
   ) {
-    return [145, 145, 0]; // Amarelo aproximado
+    return [145, 145, 0];
   }
 
   if (
     texto.includes("GASTRONOMIA") ||
     texto.includes("COZINHA")
   ) {
-    return [37, 99, 235]; // Azul #2563EB
+    return [37, 99, 235];
   }
 
   if (texto.includes("ADMINISTRATIVO")) {
-    return [180, 30, 30]; // Vermelho
+    return [180, 30, 30];
   }
 
   if (texto.includes("SERVIÇOS")) {
-    return [22, 163, 74]; // Verde #16A34A
+    return [22, 163, 74];
   }
 
   if (texto.includes("COSTURA")) {
-    return [250, 204, 21]; // Amarelo #FACC15
+    return [250, 204, 21];
   }
 
   if (texto.includes("SABER")) {
-    return [180, 30, 30]; // Vermelho
+    return [180, 30, 30];
   }
 
   if (texto.includes("MULTIUSO")) {
-    return [180, 30, 30]; // Vermelho
+    return [180, 30, 30];
   }
 
   if (texto.includes("MODA")) {
-    return [250, 204, 21]; // Amarelo #FACC15
+    return [250, 204, 21];
   }
 
   if (texto.includes("CASA ROSA")) {
-    return [236, 140, 160]; // Rosa
+    return [236, 140, 160];
   }
 
-  return [0, 0, 0]; // Preto
+  return [0, 0, 0];
 };
 
 // ============================================================
@@ -134,6 +141,25 @@ const corTextoContraste = (
 };
 
 // ============================================================
+// CONVERTER TEXTO PARA MAIÚSCULO
+// ============================================================
+
+const maiusculo = (
+  valor: unknown
+): string => {
+  if (
+    valor === null ||
+    valor === undefined
+  ) {
+    return "";
+  }
+
+  return String(valor).toLocaleUpperCase(
+    "pt-BR"
+  );
+};
+
+// ============================================================
 // RELATÓRIO
 // ============================================================
 
@@ -141,15 +167,46 @@ export function relatorioGrade(
   cronogramaFull: CronogramaType[],
   filtroBloco: string
 ) {
-  const doc = new jsPDF();
+  // ==========================================================
+  // CRIAÇÃO DO PDF
+  // ==========================================================
 
-  let posY = 6;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
 
-  const agrupadoPorBloco: CronogramaGroup = {};
+  // ==========================================================
+  // DIMENSÕES DA PÁGINA
+  // ==========================================================
 
-  // ============================================================
+  const pageHeight =
+    doc.internal.pageSize.getHeight();
+
+  const pageWidth =
+    doc.internal.pageSize.getWidth();
+
+  // ==========================================================
+  // MARGENS
+  // ==========================================================
+
+  const MARGIN_TOP = 10;
+  const MARGIN_BOTTOM = 12;
+
+  let posY = MARGIN_TOP;
+
+  // ==========================================================
+  // AGRUPAMENTO
+  // BLOCO -> POLO -> SALA
+  // ==========================================================
+
+  const agrupadoPorBloco: CronogramaGroup =
+    {};
+
+  // ==========================================================
   // FILTRO
-  // ============================================================
+  // ==========================================================
 
   const listaFiltrada = filtroBloco
     ? cronogramaFull.filter(
@@ -159,10 +216,9 @@ export function relatorioGrade(
       )
     : cronogramaFull;
 
-  // ============================================================
-  // AGRUPAMENTO
-  // BLOCO -> POLO -> SALA
-  // ============================================================
+  // ==========================================================
+  // AGRUPAR
+  // ==========================================================
 
   listaFiltrada.forEach((item) => {
     const bloco =
@@ -197,31 +253,74 @@ export function relatorioGrade(
     );
   });
 
-  // ============================================================
+  // ==========================================================
+  // FUNÇÃO PARA OBTER FINAL Y
+  // ==========================================================
+
+  const obterFinalY = (): number => {
+    return (
+      doc as unknown as {
+        lastAutoTable: {
+          finalY: number;
+        };
+      }
+    ).lastAutoTable.finalY;
+  };
+
+  // ==========================================================
+  // FUNÇÃO PARA VERIFICAR ESPAÇO
+  // ==========================================================
+
+  const adicionarPaginaSeNecessario = (
+    alturaNecessaria: number
+  ) => {
+    if (
+      posY + alturaNecessaria >
+      pageHeight - MARGIN_BOTTOM
+    ) {
+      doc.addPage();
+
+      posY = MARGIN_TOP;
+    }
+  };
+
+  // ==========================================================
   // PERCORRER BLOCOS
-  // ============================================================
+  // ==========================================================
 
   Object.keys(agrupadoPorBloco).forEach(
-    (bloco) => {
-      // --------------------------------------------------------
+    (bloco, indiceBloco) => {
+      // ========================================================
       // TÍTULO DO BLOCO
-      // --------------------------------------------------------
+      // ========================================================
+
+      adicionarPaginaSeNecessario(20);
 
       doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 150);
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setTextColor(
+        0,
+        0,
+        150
+      );
 
       doc.text(
-        `Cursos da Secretaria da Mulher e da Família - ${bloco}`,
-        14,
+        `Cursos da Secretaria da Mulher e da Família - ${maiusculo(
+          bloco
+        )}`,
+        TABLE_START_X,
         posY
       );
 
-      posY += 2;
+      posY += 5;
 
-      // --------------------------------------------------------
-      // POLOS
-      // --------------------------------------------------------
+      // ========================================================
+      // POLOS / LOCAIS
+      // ========================================================
 
       Object.keys(
         agrupadoPorBloco[bloco]
@@ -229,15 +328,46 @@ export function relatorioGrade(
         const salasDoPolo =
           agrupadoPorBloco[bloco][polo];
 
-        // ------------------------------------------------------
+        // ======================================================
+        // TOTAL DE CURSOS DO POLO
+        // ======================================================
+
+        const totalCursosPolo =
+          Object.values(
+            salasDoPolo
+          ).reduce(
+            (total, registros) =>
+              total + registros.length,
+            0
+          );
+
+        // ======================================================
+        // ESPAÇO PARA O CABEÇALHO DO POLO
+        // ======================================================
+
+        adicionarPaginaSeNecessario(25);
+
+        // ======================================================
         // LINHA DO POLO
-        // ------------------------------------------------------
+        // ======================================================
 
         doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(0, 100, 0);
+        doc.setFont(
+          "helvetica",
+          "bold"
+        );
 
-        posY += 8;
+        doc.setTextColor(
+          0,
+          100,
+          0
+        );
+
+        posY += 4;
+
+        // ======================================================
+        // NOME DO POLO
+        // ======================================================
 
         doc.text(
           `Polo: ${polo}`,
@@ -245,14 +375,31 @@ export function relatorioGrade(
           posY
         );
 
-        // ------------------------------------------------------
-        // PERÍODO
-        // Centralizado sobre DATA INÍCIO + DATA FIM
-        // ------------------------------------------------------
+        // ======================================================
+        // TOTAL DE CURSOS
+        // ======================================================
 
         doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(0, 0, 0);
+        doc.setFont(
+          "helvetica",
+          "bold"
+        );
+
+        doc.setTextColor(
+          0,
+          0,
+          0
+        );
+
+        doc.text(
+          `Total de cursos: ${totalCursosPolo}`,
+          TABLE_START_X + 55,
+          posY
+        );
+
+        // ======================================================
+        // PERÍODO
+        // ======================================================
 
         doc.text(
           "Período",
@@ -263,10 +410,9 @@ export function relatorioGrade(
           }
         );
 
-        // ------------------------------------------------------
+        // ======================================================
         // HORÁRIO
-        // Centralizado sobre HORA INÍCIO + HORA FIM
-        // ------------------------------------------------------
+        // ======================================================
 
         doc.text(
           "Horário",
@@ -277,214 +423,426 @@ export function relatorioGrade(
           }
         );
 
-        posY += 2;
+        posY += 3;
 
-        // ------------------------------------------------------
+        // ======================================================
         // SALAS
-        // Ordenação numérica
-        // ------------------------------------------------------
+        // ======================================================
 
         Object.keys(salasDoPolo)
           .sort((a, b) => {
             const numeroA = parseInt(
-              a.match(/\d+/)?.[0] || "0",
+              a.match(/\d+/)?.[0] ||
+                "0",
               10
             );
 
             const numeroB = parseInt(
-              b.match(/\d+/)?.[0] || "0",
+              b.match(/\d+/)?.[0] ||
+                "0",
               10
             );
 
-            return numeroA - numeroB;
+            return (
+              numeroA - numeroB
+            );
           })
           .forEach((sala) => {
             const registros =
               salasDoPolo[sala];
 
-            // --------------------------------------------------
+            // ==================================================
             // COR DA SALA
-            // --------------------------------------------------
+            // ==================================================
 
-            const cor = corSala(sala);
+            const cor =
+              corSala(sala);
 
             const corTexto =
-              corTextoContraste(cor);
+              corTextoContraste(
+                cor
+              );
 
-            // --------------------------------------------------
-            // DADOS
-            // --------------------------------------------------
+            // ==================================================
+            // TOTAL DE CURSOS DA SALA
+            // ==================================================
 
-            const rows = registros.map(
-              (item) => [
-                item.codigo,
-                item.tema,
-                item.data_inicio,
-                item.data_fim,
-                item.hora_inicio,
-                item.hora_fim,
-              ]
+            const totalCursosSala =
+              registros.length;
+
+            // ==================================================
+            // GARANTIR ESPAÇO ANTES DA TABELA
+            // ==================================================
+
+            adicionarPaginaSeNecessario(
+              20
             );
 
-            // --------------------------------------------------
-            // TABELA
+            // ==================================================
+            // DADOS DA TABELA
             //
-            // A primeira linha é a sala.
-            // colSpan: 6 = uma única célula ocupando
-            // toda a largura da tabela.
-            // --------------------------------------------------
+            // TEMA EM MAIÚSCULO
+            // ==================================================
+
+            const rows =
+              registros.map(
+                (item) => [
+                  item.codigo ??
+                    "",
+
+                  maiusculo(
+                    item.tema
+                  ),
+
+                  item.data_inicio ??
+                    "",
+
+                  item.data_fim ??
+                    "",
+
+                  item.hora_inicio ??
+                    "",
+
+                  item.hora_fim ??
+                    "",
+                ]
+              );
+
+            // ==================================================
+            // POSIÇÃO INICIAL DA TABELA
+            // ==================================================
+
+            const tableStartY =
+              posY;
+
+            // ==================================================
+            // TABELA
+            // ==================================================
 
             autoTable(doc, {
-                  startY: posY,
+              startY:
+                tableStartY,
 
-                  head: [
-                    [
-                      {
-                        content: `Sala ${sala}`,
-                        colSpan: 6,
-                      styles: {
-                        fillColor: cor,
-                        textColor: corTexto,
-                        halign: "left",
-                        valign: "middle",
-                        fontStyle: "bold",
-                        fontSize: 9,
-                        cellPadding: {
-                          top: 1,
-                          bottom: 1,
-                          left: 2,
-                          right: 2,
-                        },
-                        minCellHeight: 5,
-                      },
-                    },
-                  ],
+              margin: {
+                left:
+                  TABLE_START_X,
+                right: 14,
+                top:
+                  MARGIN_TOP,
+                bottom:
+                  MARGIN_BOTTOM,
+              },
+
+              // =================================================
+              // CABEÇALHO DA SALA
+              // =================================================
+
+              head: [
+                [
+                  {
+                    content: `Sala ${sala}  —  ${totalCursosSala} ${
+                      totalCursosSala ===
+                      1
+                        ? "CURSO"
+                        : "CURSOS"
+                    }`,
+                    colSpan: 6,
+                  },
+                ],
+              ],
+
+              // =================================================
+              // CORPO
+              // =================================================
+
+              body: rows,
+
+              // =================================================
+              // TEMA DO RELATÓRIO
+              // =================================================
+
+              theme: "grid",
+
+              // =================================================
+              // CABEÇALHO
+              // =================================================
+
+              headStyles: {
+                fillColor:
+                  cor,
+
+                textColor:
+                  corTexto,
+
+                fontStyle:
+                  "bold",
+
+                fontSize: 9,
+
+                halign:
+                  "left",
+
+                valign:
+                  "middle",
+
+                lineColor:
+                  cor,
+
+                lineWidth:
+                  0.5,
+
+                cellPadding: {
+                  top: 1.2,
+                  bottom: 1.2,
+                  left: 2,
+                  right: 2,
+                },
+              },
+
+              // =================================================
+              // ESTILOS GERAIS
+              // =================================================
+
+              styles: {
+                font:
+                  "helvetica",
+
+                fontSize: 9,
+
+                overflow:
+                  "linebreak",
+
+                textColor: [
+                  0,
+                  0,
+                  0,
                 ],
 
-                body: rows,
-
-                theme: "grid",
-
-                headStyles: {
-                  fillColor: cor,
-                  textColor: corTexto,
-                  fontStyle: "bold",
-                  lineColor: cor,
-                  lineWidth: 0.5,
+                cellPadding: {
+                  top: 1.5,
+                  bottom: 1.5,
+                  left: 2,
+                  right: 2,
                 },
 
-                styles: {
-                  fontSize: 10,
-                  overflow: "linebreak",
-                  textColor: [0, 0, 0],
-                  cellPadding: 2,
-                  lineColor: [180, 180, 180],
-                  lineWidth: 0.2,
-                              },
+                lineColor: [
+                  180,
+                  180,
+                  180,
+                ],
 
-                columnStyles: {
-                  0: {
-                    cellWidth: COLUMN_WIDTHS.codigo,
-                  },
-                  1: {
-                    cellWidth: COLUMN_WIDTHS.tema,
-                  },
-                  2: {
-                    cellWidth: COLUMN_WIDTHS.dataInicio,
-                  },
-                  3: {
-                    cellWidth: COLUMN_WIDTHS.dataFim,
-                  },
-                  4: {
-                    cellWidth: COLUMN_WIDTHS.horaInicio,
-                  },
-                  5: {
-                    cellWidth: COLUMN_WIDTHS.horaFim,
-                  },
+                lineWidth:
+                  0.2,
+
+                valign:
+                  "middle",
+              },
+
+              // =================================================
+              // COLUNAS
+              // =================================================
+
+              columnStyles: {
+                0: {
+                  cellWidth:
+                    COLUMN_WIDTHS.codigo,
+
+                  halign:
+                    "center",
                 },
 
-                tableWidth: "wrap",
-              });
+                1: {
+                  cellWidth:
+                    COLUMN_WIDTHS.tema,
 
-                      // ==========================================================
-                      // BORDA EXTERNA DA TABELA
-                      // MESMA COR DA SALA
-                      // ==========================================================
+                  halign:
+                    "left",
+                },
 
-                      const finalY =
-                        (
-                          doc as unknown as {
-                            lastAutoTable: {
-                              finalY: number;
-                            };
-                          }
-                        ).lastAutoTable.finalY;
+                2: {
+                  cellWidth:
+                    COLUMN_WIDTHS.dataInicio,
 
-                      const tableWidth =
-                        COLUMN_WIDTHS.codigo +
-                        COLUMN_WIDTHS.tema +
-                        COLUMN_WIDTHS.dataInicio +
-                        COLUMN_WIDTHS.dataFim +
-                        COLUMN_WIDTHS.horaInicio +
-                        COLUMN_WIDTHS.horaFim;
+                  halign:
+                    "center",
+                },
 
-                                  // ==========================================================
-                  // BORDA EXTERNA DA TABELA
-                  // MESMA COR DA SALA
-                  // FINA E COM CANTOS LEVEMENTE ARREDONDADOS
-                  // ==========================================================
+                3: {
+                  cellWidth:
+                    COLUMN_WIDTHS.dataFim,
 
-                  doc.setDrawColor(
-                    cor[0],
-                    cor[1],
-                    cor[2]
-                  );
+                  halign:
+                    "center",
+                },
 
-                  doc.setLineWidth(0.5);
+                4: {
+                  cellWidth:
+                    COLUMN_WIDTHS.horaInicio,
 
-                  doc.roundedRect(
-                    TABLE_START_X,
-                    posY,
-                    tableWidth,
-                    finalY - posY,
-                    1.2,
-                    1.2
-                  );
+                  halign:
+                    "center",
+                },
 
-                  // Continua depois da tabela
-            posY = finalY + 2;
+                5: {
+                  cellWidth:
+                    COLUMN_WIDTHS.horaFim,
 
-            // --------------------------------------------------
-            // POSIÇÃO APÓS A TABELA
-            // --------------------------------------------------
+                  halign:
+                    "center",
+                },
+              },
+
+              // =================================================
+              // LARGURA DA TABELA
+              // =================================================
+
+              tableWidth:
+                TABLE_WIDTH,
+
+              // =================================================
+              // REPETIR CABEÇALHO SE A TABELA CONTINUAR
+              // =================================================
+
+              showHead:
+                "everyPage",
+
+              // =================================================
+              // CONTROLE DA QUEBRA DE PÁGINA
+              // =================================================
+
+              pageBreak:
+                "auto",
+
+              // =================================================
+              // EVITAR LINHAS PROBLEMÁTICAS
+              // =================================================
+
+              rowPageBreak:
+                "avoid",
+
+              // =================================================
+              // DESENHO DA PÁGINA
+              // =================================================
+
+              didDrawPage:
+                () => {
+                  // Não desenhar borda externa manualmente.
+                  //
+                  // O autoTable já utiliza grid.
+                  //
+                  // Isso evita que uma borda seja desenhada
+                  // incorretamente entre páginas.
+                },
+            });
+
+            // ==================================================
+            // ATUALIZAR POSIÇÃO
+            // ==================================================
 
             posY =
-              (
-                doc as unknown as {
-                  lastAutoTable: {
-                    finalY: number;
-                  };
-                }
-              ).lastAutoTable.finalY + 3;
+              obterFinalY() +
+              4;
+
+            // ==================================================
+            // SE CHEGOU AO FINAL DA PÁGINA
+            // ==================================================
+
+            if (
+              posY >
+              pageHeight -
+                MARGIN_BOTTOM
+            ) {
+              doc.addPage();
+
+              posY =
+                MARGIN_TOP;
+            }
           });
+
+        // ======================================================
+        // ESPAÇO ENTRE POLOS
+        // ======================================================
+
+        posY += 5;
       });
 
-      // --------------------------------------------------------
+      // ========================================================
       // ESPAÇO ENTRE BLOCOS
-      // --------------------------------------------------------
+      // ========================================================
 
-      posY += 5;
+      if (
+        indiceBloco <
+        Object.keys(
+          agrupadoPorBloco
+        ).length -
+          1
+      ) {
+        posY += 6;
+      }
     }
   );
+
+  // ============================================================
+  // RODAPÉ COM NÚMERO DAS PÁGINAS
+  // ============================================================
+
+  const totalPaginas =
+    doc.getNumberOfPages();
+
+  for (
+    let pagina = 1;
+    pagina <= totalPaginas;
+    pagina++
+  ) {
+    doc.setPage(pagina);
+
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
+    doc.setFontSize(8);
+
+    doc.setTextColor(
+      100,
+      100,
+      100
+    );
+
+    doc.text(
+      `Página ${pagina} de ${totalPaginas}`,
+      pageWidth - 14,
+      pageHeight - 5,
+      {
+        align: "right",
+      }
+    );
+  }
 
   // ============================================================
   // ABRIR PDF
   // ============================================================
 
-  const blob = doc.output("blob");
+  const blob =
+    doc.output("blob");
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
 
   window.open(
-    URL.createObjectURL(blob),
+    url,
     "_blank"
   );
+
+  // ============================================================
+  // LIBERAR URL
+  // ============================================================
+
+  setTimeout(() => {
+    URL.revokeObjectURL(
+      url
+    );
+  }, 10000);
 }
