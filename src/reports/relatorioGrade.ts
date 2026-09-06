@@ -1,3 +1,4 @@
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -638,6 +639,8 @@ export function relatorioGrade(
 
           // ============================================
           // ATUALIZAR POSIÇÃO
+          //
+          // MANTIDO O MESMO ESPAÇO ENTRE AS SALAS
           // ============================================
 
           posY =
@@ -670,6 +673,12 @@ export function relatorioGrade(
       );
 
       // =================================================
+      // PEQUENO ESPAÇO ANTES DO TOTAL
+      // =================================================
+
+      posY += 2;
+
+      // =================================================
       // TOTAL DO POLO À DIREITA
       // =================================================
 
@@ -696,7 +705,14 @@ export function relatorioGrade(
         }
       );
 
-      posY += 5;
+      // =================================================
+      // ESPAÇO APÓS O TOTAL DO POLO
+      //
+      // AUMENTADO UM POUCO PARA DESTACAR O TOTAL
+      // SEM ALTERAR O ESPAÇO ENTRE AS SALAS
+      // =================================================
+
+      posY += 7;
     });
 
     // ==================================================
