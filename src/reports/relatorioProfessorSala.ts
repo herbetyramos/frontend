@@ -264,6 +264,35 @@ export function visualizarRelatorioProfessorSala(
   let posY = 30;
 
   // ====================================================
+  // LARGURAS DAS COLUNAS
+  //
+  // SEM:
+  // Nº
+  // Código
+  //
+  // Ficam:
+  // Tema
+  // Data Início
+  // Data Fim
+  // Período
+  // Professor
+  // Contato
+  //
+  // O rótulo TEMA NÃO SERÁ EXIBIDO.
+  // ====================================================
+
+  const COLUMN_WIDTHS = {
+    tema: 96,
+    dataInicio: 23,
+    dataFim: 23,
+    periodo: 24,
+    professor: 70,
+    contato: 31,
+  };
+
+
+
+  // ====================================================
   // CABEÇALHO
   // ====================================================
 
@@ -417,12 +446,16 @@ export function visualizarRelatorioProfessorSala(
 
     const periodoA =
       ordemPeriodo(
-        getPeriodo(a.hora_inicio)
+        getPeriodo(
+          a.hora_inicio
+        )
       );
 
     const periodoB =
       ordemPeriodo(
-        getPeriodo(b.hora_inicio)
+        getPeriodo(
+          b.hora_inicio
+        )
       );
 
     if (periodoA !== periodoB) {
@@ -478,12 +511,8 @@ export function visualizarRelatorioProfessorSala(
     // ==============================================
     // SALA
     //
-    // IMPORTANTE:
-    // INCLUIR O TIPO DA SALA.
-    //
-    // É ISSO QUE FAZ A FUNÇÃO corSala()
-    // IDENTIFICAR INFORMÁTICA, BELEZA,
-    // GASTRONOMIA, ETC.
+    // INCLUIR O TIPO DA SALA PARA
+    // IDENTIFICAR A COR CORRETA.
     // ==============================================
 
     const sala = item.salaAula
@@ -579,6 +608,128 @@ export function visualizarRelatorioProfessorSala(
     };
 
   // ====================================================
+  // FUNÇÃO PARA DESENHAR OS RÓTULOS DO POLO
+  //
+  // OS RÓTULOS APARECEM UMA ÚNICA VEZ.
+  //
+  // NÃO APARECEM NOVAMENTE EM CADA SALA.
+  //
+  // SEM:
+  // Nº
+  // Código
+  // Tema
+  // ====================================================
+
+  const desenharRotulosPolo = () => {
+    const y = posY;
+
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.setFontSize(7.5);
+
+    doc.setTextColor(
+      0,
+      0,
+      0
+    );
+
+    // ----------------------------------------------
+    // POSIÇÕES DAS COLUNAS
+    // ----------------------------------------------
+
+    
+
+    const xDataInicio =
+      MARGIN_LEFT +
+      COLUMN_WIDTHS.tema +
+      COLUMN_WIDTHS.dataInicio / 2;
+
+    const xDataFim =
+      MARGIN_LEFT +
+      COLUMN_WIDTHS.tema +
+      COLUMN_WIDTHS.dataInicio +
+      COLUMN_WIDTHS.dataFim / 2;
+
+    const xPeriodo =
+      MARGIN_LEFT +
+      COLUMN_WIDTHS.tema +
+      COLUMN_WIDTHS.dataInicio +
+      COLUMN_WIDTHS.dataFim +
+      COLUMN_WIDTHS.periodo / 2;
+
+    const xProfessor =
+      MARGIN_LEFT +
+      COLUMN_WIDTHS.tema +
+      COLUMN_WIDTHS.dataInicio +
+      COLUMN_WIDTHS.dataFim +
+      COLUMN_WIDTHS.periodo +
+      COLUMN_WIDTHS.professor / 2;
+
+    const xContato =
+      MARGIN_LEFT +
+      COLUMN_WIDTHS.tema +
+      COLUMN_WIDTHS.dataInicio +
+      COLUMN_WIDTHS.dataFim +
+      COLUMN_WIDTHS.periodo +
+      COLUMN_WIDTHS.professor +
+      COLUMN_WIDTHS.contato / 2;
+
+    // ----------------------------------------------
+    // RÓTULOS
+    //
+    // NÃO DESENHAR "TEMA".
+    // ----------------------------------------------
+
+    doc.text(
+      "Data Início",
+      xDataInicio,
+      y,
+      {
+        align: "center",
+      }
+    );
+
+    doc.text(
+      "Data Fim",
+      xDataFim,
+      y,
+      {
+        align: "center",
+      }
+    );
+
+    doc.text(
+      "Período",
+      xPeriodo,
+      y,
+      {
+        align: "center",
+      }
+    );
+
+    doc.text(
+      "Professor",
+      xProfessor,
+      y,
+      {
+        align: "center",
+      }
+    );
+
+    doc.text(
+      "Contato",
+      xContato,
+      y,
+      {
+        align: "center",
+      }
+    );
+  };
+
+  // ====================================================
   // PERCORRER BLOCOS
   // ====================================================
 
@@ -605,7 +756,6 @@ export function visualizarRelatorioProfessorSala(
         "bold"
       );
 
-      // MESMO VERMELHO DO RELATÓRIO ANTERIOR
       doc.setTextColor(
         180,
         0,
@@ -650,7 +800,7 @@ export function visualizarRelatorioProfessorSala(
           );
 
           // ==============================================
-          // POLO
+          // LINHA DO POLO + RÓTULOS
           // ==============================================
 
           doc.setFontSize(11);
@@ -660,7 +810,6 @@ export function visualizarRelatorioProfessorSala(
             "bold"
           );
 
-          // MESMO VERDE DO RELATÓRIO GRADE
           doc.setTextColor(
             0,
             100,
@@ -673,11 +822,17 @@ export function visualizarRelatorioProfessorSala(
             posY
           );
 
+          // ----------------------------------------------
+          // RÓTULOS
+          // ----------------------------------------------
+
+          desenharRotulosPolo();
+
           // ==============================================
-          // ESPAÇO PEQUENO ENTRE POLO E TABELA
+          // PEQUENO ESPAÇO APÓS POLO/RÓTULOS
           // ==============================================
 
-          posY += 2;
+          posY += 3;
 
           // ==============================================
           // ORDENAR SALAS
@@ -726,7 +881,7 @@ export function visualizarRelatorioProfessorSala(
               // ==========================================
 
               adicionarPaginaSeNecessario(
-                20
+                15
               );
 
               // ==========================================
@@ -740,13 +895,6 @@ export function visualizarRelatorioProfessorSala(
 
               // ==========================================
               // COR DA SALA
-              //
-              // AGORA sala CONTÉM:
-              //
-              // "01 (INFORMÁTICA)"
-              //
-              // portanto corSala() CONSEGUE
-              // IDENTIFICAR A COR CORRETA.
               // ==========================================
 
               const cor =
@@ -768,18 +916,18 @@ export function visualizarRelatorioProfessorSala(
 
               // ==========================================
               // LINHAS
+              //
+              // SEM:
+              // Nº
+              // Código
+              //
+              // TEMA CONTINUA SENDO MOSTRADO,
+              // MAS SEM RÓTULO.
               // ==========================================
 
               const rows =
                 registrosOrdenados.map(
-                  (
-                    item,
-                    index
-                  ) => [
-                    index + 1,
-
-                    item.codigo,
-
+                  (item) => [
                     maiusculo(
                       item.tema
                     ),
@@ -804,17 +952,18 @@ export function visualizarRelatorioProfessorSala(
                 );
 
               // ==========================================
-              // TABELA
+              // TABELA DA SALA
+              //
+              // SOMENTE A FAIXA COLORIDA DA SALA.
+              //
+              // OS RÓTULOS FICAM NA LINHA DO POLO.
               // ==========================================
 
               autoTable(doc, {
                 startY: posY,
 
                 // ========================================
-                // DUAS LINHAS DE CABEÇALHO
-                //
-                // 1ª = SALA COLORIDA
-                // 2ª = RÓTULOS DAS COLUNAS
+                // CABEÇALHO SOMENTE DA SALA
                 // ========================================
 
                 head: [
@@ -822,7 +971,7 @@ export function visualizarRelatorioProfessorSala(
                     {
                       content: `Sala ${sala}`,
 
-                      colSpan: 8,
+                      colSpan: 6,
 
                       styles: {
                         fillColor:
@@ -842,13 +991,12 @@ export function visualizarRelatorioProfessorSala(
 
                         fontSize: 9,
 
-                        cellPadding:
-                          {
-                            top: 1,
-                            bottom: 1,
-                            left: 2,
-                            right: 2,
-                          },
+                        cellPadding: {
+                          top: 1,
+                          bottom: 1,
+                          left: 2,
+                          right: 2,
+                        },
 
                         minCellHeight:
                           5,
@@ -860,17 +1008,6 @@ export function visualizarRelatorioProfessorSala(
                           0.5,
                       },
                     },
-                  ],
-
-                  [
-                    "Nº",
-                    "Código",
-                    "Tema do Curso",
-                    "Data Início",
-                    "Data Fim",
-                    "Período",
-                    "Professor",
-                    "Contato",
                   ],
                 ],
 
@@ -887,8 +1024,7 @@ export function visualizarRelatorioProfessorSala(
                 theme: "grid",
 
                 // ========================================
-                // ESTILO DO CABEÇALHO
-                // MESMA COR DA SALA
+                // ESTILO DO CABEÇALHO DA SALA
                 // ========================================
 
                 headStyles: {
@@ -904,7 +1040,7 @@ export function visualizarRelatorioProfessorSala(
                   fontSize: 8,
 
                   halign:
-                    "center",
+                    "left",
 
                   valign:
                     "middle",
@@ -953,52 +1089,39 @@ export function visualizarRelatorioProfessorSala(
                 // ========================================
 
                 columnStyles: {
-                  // Nº
+                  // Tema
+                  //
+                  // SEM RÓTULO.
                   0: {
                     cellWidth:
-                      9,
+                      COLUMN_WIDTHS.tema,
 
                     halign:
-                      "center",
-                  },
-
-                  // Código
-                  1: {
-                    cellWidth:
-                      15,
-
-                    halign:
-                      "center",
-                  },
-
-                  // Tema
-                  2: {
-                    cellWidth:
-                      90,
+                      "left",
                   },
 
                   // Data início
-                  3: {
+                  1: {
                     cellWidth:
-                      21,
+                      COLUMN_WIDTHS.dataInicio,
 
                     halign:
                       "center",
                   },
 
                   // Data fim
-                  4: {
+                  2: {
                     cellWidth:
-                      21,
+                      COLUMN_WIDTHS.dataFim,
 
                     halign:
                       "center",
                   },
 
                   // Período
-                  5: {
+                  3: {
                     cellWidth:
-                      22,
+                      COLUMN_WIDTHS.periodo,
 
                     halign:
                       "center",
@@ -1008,15 +1131,18 @@ export function visualizarRelatorioProfessorSala(
                   },
 
                   // Professor
-                  6: {
+                  4: {
                     cellWidth:
-                      55,
+                      COLUMN_WIDTHS.professor,
+
+                    halign:
+                      "left",
                   },
 
                   // Contato
-                  7: {
+                  5: {
                     cellWidth:
-                      29,
+                      COLUMN_WIDTHS.contato,
 
                     halign:
                       "center",
@@ -1024,7 +1150,8 @@ export function visualizarRelatorioProfessorSala(
                 },
 
                 // ========================================
-                // REPETIR CABEÇALHO
+                // REPETIR SOMENTE O CABEÇALHO DA SALA
+                // SE A TABELA PASSAR DE PÁGINA.
                 // ========================================
 
                 showHead:
@@ -1126,14 +1253,6 @@ export function visualizarRelatorioProfessorSala(
             0
           );
 
-          // SOMA DAS LARGURAS:
-          //
-          // 9 + 15 + 90 + 21 + 21 + 22 + 55 + 29
-          //
-          // = 262 mm
-          //
-          // MAS O LIMITE É A LARGURA DA PÁGINA.
-          // POR ISSO USAMOS A MARGEM DIREITA.
           doc.text(
             `Qtde. no Pólo: ${totalCursosPolo}`,
             PAGE_WIDTH -
@@ -1207,3 +1326,4 @@ export function visualizarRelatorioProfessorSala(
     "_blank"
   );
 }
+
