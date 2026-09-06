@@ -28,15 +28,6 @@ function getPeriodo(hora: string) {
 // RELATÓRIO
 // BLOCO → POLO → SALA
 // ======================================================
-//
-// cronogramaFiltrado:
-// Se informado, o relatório utiliza exatamente essa lista.
-// Isso permite que o PDF respeite os filtros do ListCronograma.
-//
-// filtroBloco e filtroDataFormatura continuam disponíveis
-// como filtros adicionais.
-//
-// ======================================================
 
 export function visualizarRelatorioProfessorSala(
   cronogramaFull: CronogramaType[],
@@ -70,18 +61,8 @@ export function visualizarRelatorioProfessorSala(
     }
   );
 
-  doc.setFontSize(13);
-
   // ======================================================
-  // FILTROS
-  // ======================================================
-  //
-  // Se o ListCronograma já passou uma lista filtrada,
-  // usamos essa lista como base.
-  //
-  // Caso contrário, utilizamos cronogramaFull e aplicamos
-  // os filtros antigos de bloco e formatura.
-  //
+  // LISTA
   // ======================================================
 
   let lista: CronogramaType[];
@@ -103,10 +84,7 @@ export function visualizarRelatorioProfessorSala(
   }
 
   // ======================================================
-  // FILTROS ADICIONAIS
-  //
-  // Garante que bloco e data de formatura ainda sejam
-  // respeitados mesmo quando a lista veio filtrada.
+  // FILTROS
   // ======================================================
 
   lista = lista.filter((item) => {
@@ -212,7 +190,7 @@ export function visualizarRelatorioProfessorSala(
   let totalGeral = 0;
 
   // ======================================================
-  // PERCORRE BLOCOS
+  // BLOCOS
   // ======================================================
 
   Object.keys(grupos)
@@ -242,11 +220,11 @@ export function visualizarRelatorioProfessorSala(
         posY
       );
 
-      // Espaço menor após o título do bloco
+      // Pequeno espaço após o bloco
       posY += 4;
 
       // ==================================================
-      // PERCORRE POLOS
+      // POLOS
       // ==================================================
 
       Object.keys(grupos[bloco])
@@ -258,7 +236,7 @@ export function visualizarRelatorioProfessorSala(
           }
 
           // ==============================================
-          // TÍTULO POLO
+          // POLO
           // ==============================================
 
           doc.setFontSize(11);
@@ -280,22 +258,17 @@ export function visualizarRelatorioProfessorSala(
           );
 
           // =================================================
-          // APROXIMADO DA GRADE
+          // IMPORTANTE:
+          // NÃO aumentar posY aqui.
+          //
+          // A tabela começa exatamente na mesma posição
+          // vertical imediatamente abaixo do texto do Polo.
           // =================================================
-          //
-          // Antes:
-          // posY += 5
-          //
-          // Agora:
-          // posY += 2
-          //
-          // Isso deixa o rótulo do Polo mais próximo da
-          // primeira tabela/grade.
-          //
-          posY += 2;
+
+          posY += 1;
 
           // ==============================================
-          // PERCORRE SALAS
+          // SALAS
           // ==============================================
 
           Object.keys(grupos[bloco][polo])
@@ -305,6 +278,10 @@ export function visualizarRelatorioProfessorSala(
                 doc.addPage();
                 posY = 20;
               }
+
+              // ==========================================
+              // LINHAS
+              // ==========================================
 
               const rows =
                 grupos[bloco][polo][sala]
@@ -320,7 +297,10 @@ export function visualizarRelatorioProfessorSala(
 
                     item.data_fim,
 
+                    // ====================================
                     // SOMENTE PERÍODO
+                    // ====================================
+
                     getPeriodo(
                       item.hora_inicio
                     ),
@@ -342,24 +322,23 @@ export function visualizarRelatorioProfessorSala(
 
                 pageBreak: "avoid",
 
+                // ========================================
+                // CABEÇALHO
+                //
+                // NÃO EXISTE "HORÁRIO" AQUI
+                // ========================================
+
                 head: [[
                   "Nº",
-
                   "Código",
-
                   {
                     content:
                       `Tema do Curso - Sala ${sala}`,
                   },
-
                   "Data Início",
-
                   "Data Fim",
-
                   "Período",
-
                   "Professor",
-
                   "Contato",
                 ]],
 
@@ -369,10 +348,7 @@ export function visualizarRelatorioProfessorSala(
 
                 styles: {
                   fontSize: 8.5,
-
-                  // Espaçamento interno reduzido
                   cellPadding: 2,
-
                   valign: "middle",
                 },
 
@@ -390,43 +366,52 @@ export function visualizarRelatorioProfessorSala(
                   halign: "center",
                 },
 
+                // ========================================
+                // LARGURA DAS COLUNAS
+                // ========================================
+
                 columnStyles: {
+                  // Nº
                   0: {
                     cellWidth: 9,
                     halign: "center",
                   },
 
+                  // Código
                   1: {
                     cellWidth: 15,
                     halign: "center",
                   },
 
+                  // Tema / Sala
                   2: {
                     cellWidth: 90,
                   },
 
+                  // Data início
                   3: {
                     cellWidth: 21,
                     halign: "center",
                   },
 
+                  // Data fim
                   4: {
                     cellWidth: 21,
                     halign: "center",
                   },
 
-                  // PERÍODO
+                  // Período
                   5: {
                     cellWidth: 22,
                     halign: "center",
                   },
 
-                  // PROFESSOR
+                  // Professor
                   6: {
                     cellWidth: 55,
                   },
 
-                  // CONTATO
+                  // Contato
                   7: {
                     cellWidth: 29,
                     halign: "center",
@@ -445,24 +430,23 @@ export function visualizarRelatorioProfessorSala(
               totalGeral +=
                 grupos[bloco][polo][sala].length;
 
-              // =================================================
-              // ESPAÇO ENTRE SALAS REDUZIDO
-              // =================================================
+              // ==========================================
+              // ESPAÇO ENTRE SALAS
+              // ==========================================
 
-              posY =
-                finalY + 2;
+              posY = finalY + 2;
             });
 
-          // ==================================================
-          // ESPAÇO ENTRE POLOS REDUZIDO
-          // ==================================================
+          // ==============================================
+          // ESPAÇO ENTRE POLOS
+          // ==============================================
 
           posY += 1;
         });
 
-      // ====================================================
+      // ==================================================
       // ESPAÇO ENTRE BLOCOS
-      // ====================================================
+      // ==================================================
 
       posY += 3;
     });
@@ -496,7 +480,7 @@ export function visualizarRelatorioProfessorSala(
   );
 
   // ======================================================
-  // ABRIR PDF EM NOVA GUIA
+  // ABRIR PDF
   // ======================================================
 
   const pdfUrl =
