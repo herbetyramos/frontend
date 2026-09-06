@@ -99,6 +99,7 @@ export default function ListCronograma() {
   
   const [agrupado, setAgrupado] = useState<AgrupamentoType>({});
   const [cronogramaFull, setCronogramaFull] = useState<CronogramaType[]>([]);
+  const [cronogramaFiltrado, setCronogramaFiltrado] = useState<CronogramaType[]>([]);
   const [blocos, setBlocos] = useState<string[]>([]);
   const [filtroBloco, setFiltroBloco] = useState<string>("");
   const [busca, setBusca] = useState<string>("");
@@ -188,7 +189,10 @@ useEffect(() => {
 const aplicarFiltro = useCallback(() => {
   let filtrado = [...cronogramaFull];
 
-  // filtro por data de formatura
+  // ======================================================
+  // FILTRO POR DATA DE FORMATURA
+  // ======================================================
+
   if (filtroDataFormatura) {
     filtrado = filtrado.filter(
       (item) =>
@@ -196,48 +200,81 @@ const aplicarFiltro = useCallback(() => {
         filtroDataFormatura.trim()
     );
   }
-// filtrar por empresa
-if (filtroEmpresa) {
-  filtrado = filtrado.filter(
-    (item) =>
-      item.detentoras?.ata?.empresa?.nome_empresa === filtroEmpresa
-  );
-}
 
+  // ======================================================
+  // FILTRO POR EMPRESA
+  // ======================================================
 
-  // filtro por bloco
-  if (filtroBloco) {
+  if (filtroEmpresa) {
     filtrado = filtrado.filter(
-      (item) => item.bloco_curso?.bloco_Curso === filtroBloco
+      (item) =>
+        item.detentoras?.ata?.empresa?.nome_empresa ===
+        filtroEmpresa
     );
   }
 
-  // filtro por tema
-  if (busca.trim()) {
-  const texto = busca.toLowerCase();
+  // ======================================================
+  // FILTRO POR BLOCO
+  // ======================================================
 
-  filtrado = filtrado.filter((item) => {
-    const tema = item.tema?.toLowerCase() ?? "";
-
-    const empresa =
-      item.detentoras?.ata?.empresa?.nome_empresa?.toLowerCase() ?? "";
-
-    return (
-      tema.includes(texto) ||
-      empresa.includes(texto)
+  if (filtroBloco) {
+    filtrado = filtrado.filter(
+      (item) =>
+        item.bloco_curso?.bloco_Curso ===
+        filtroBloco
     );
-  });
-}
+  }
+
+  // ======================================================
+  // FILTRO POR TEMA / EMPRESA
+  // ======================================================
+
+  if (busca.trim()) {
+    const texto = busca.toLowerCase();
+
+    filtrado = filtrado.filter((item) => {
+      const tema =
+        item.tema?.toLowerCase() ?? "";
+
+      const empresa =
+        item.detentoras?.ata?.empresa?.nome_empresa
+          ?.toLowerCase() ?? "";
+
+      return (
+        tema.includes(texto) ||
+        empresa.includes(texto)
+      );
+    });
+  }
+
+  // ======================================================
+  // FILTRO POR POLO
+  // ======================================================
 
   if (filtroPolo) {
-  filtrado = filtrado.filter(
-    (item) => item.localAula?.polo === filtroPolo
-  );
-}
-  
+    filtrado = filtrado.filter(
+      (item) =>
+        item.localAula?.polo ===
+        filtroPolo
+    );
+  }
 
+  // ======================================================
+  // SALVA A LISTA FILTRADA
+  // ======================================================
+  //
+  // Essa é a mesma lista utilizada na tela.
+  // O relatório utilizará exatamente essa lista.
+  //
+
+  setCronogramaFiltrado(filtrado);
+
+  // ======================================================
+  // AGRUPA A LISTA FILTRADA
+  // ======================================================
 
   agrupar(filtrado);
+
 }, [
   cronogramaFull,
   filtroPolo,
@@ -551,17 +588,18 @@ const visualizarSolicitacao = async (id: string) => {
       </button>
 
       <button
-        onClick={() =>
-          visualizarRelatorioProfessorSala(
-            cronogramaFull,
-            filtroBloco,
-            filtroDataFormatura
-          )
-        }
-        className="w-full text-left px-4 py-2 hover:bg-gray-100"
-      >
-        Professores
-      </button>
+  onClick={() =>
+    visualizarRelatorioProfessorSala(
+      cronogramaFull,
+      filtroBloco,
+      filtroDataFormatura,
+      cronogramaFiltrado
+    )
+  }
+  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+>
+  Professores
+</button>
 
       <Link
                 href={

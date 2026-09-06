@@ -448,7 +448,7 @@ export function visualizarRelatorioProfessorSala(
       // ESPAÇO ENTRE BLOCOS
       // ==================================================
 
-      posY += 3;
+      posY += 5;
     });
 
   // ======================================================
