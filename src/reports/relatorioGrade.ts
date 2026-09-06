@@ -641,7 +641,7 @@ export function relatorioGrade(
           // ============================================
 
           posY =
-            finalY + 3;
+            finalY + 5;
         });
 
       // =================================================
@@ -687,7 +687,7 @@ export function relatorioGrade(
       );
 
       doc.text(
-        `TOTAL DE CURSOS: ${totalCursosPolo}`,
+        `CURSOS NO POLO: ${totalCursosPolo}`,
         TABLE_START_X +
           TABLE_WIDTH,
         posY,
@@ -703,7 +703,7 @@ export function relatorioGrade(
     // ESPAÇO ENTRE BLOCOS
     // ==================================================
 
-    posY += 5;
+    posY += 3;
   });
 
   // ======================================================
