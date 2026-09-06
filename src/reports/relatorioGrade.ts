@@ -687,7 +687,7 @@ export function relatorioGrade(
       );
 
       doc.text(
-        `CURSOS NO POLO: ${totalCursosPolo}`,
+        `Qtde. no Pólo: ${totalCursosPolo}`,
         TABLE_START_X +
           TABLE_WIDTH,
         posY,
@@ -696,7 +696,7 @@ export function relatorioGrade(
         }
       );
 
-      posY += 7;
+      posY += 5;
     });
 
     // ==================================================
