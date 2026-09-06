@@ -1,4 +1,3 @@
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { CronogramaType } from "@/app/matricula/types";
@@ -16,12 +15,99 @@ declare module "jspdf" {
 // ======================================================
 
 function getPeriodo(hora: string) {
-  const h = parseInt(hora.split(":")[0]);
+  const h = parseInt(hora?.split(":")[0] ?? "0");
 
   if (h < 12) return "MANHÃ";
   if (h < 18) return "TARDE";
 
   return "NOITE";
+}
+
+// ======================================================
+// ORDEM DOS PERÍODOS
+// MANHÃ → TARDE → NOITE
+// ======================================================
+
+function ordemPeriodo(periodo: string) {
+  switch (periodo) {
+    case "MANHÃ":
+      return 1;
+
+    case "TARDE":
+      return 2;
+
+    case "NOITE":
+      return 3;
+
+    default:
+      return 99;
+  }
+}
+
+// ======================================================
+// ORDENAÇÃO DOS CURSOS
+//
+// 1º PERÍODO
+// 2º HORÁRIO
+// 3º PROFESSOR
+// ======================================================
+
+function ordenarCursos(
+  cursos: CronogramaType[]
+): CronogramaType[] {
+  return [...cursos].sort((a, b) => {
+    // ==============================================
+    // PERÍODO
+    // ==============================================
+
+    const periodoA = getPeriodo(
+      a.hora_inicio
+    );
+
+    const periodoB = getPeriodo(
+      b.hora_inicio
+    );
+
+    const ordemA =
+      ordemPeriodo(periodoA);
+
+    const ordemB =
+      ordemPeriodo(periodoB);
+
+    if (ordemA !== ordemB) {
+      return ordemA - ordemB;
+    }
+
+    // ==============================================
+    // HORÁRIO
+    // ==============================================
+
+    const horarioA =
+      a.hora_inicio ?? "";
+
+    const horarioB =
+      b.hora_inicio ?? "";
+
+    if (horarioA !== horarioB) {
+      return horarioA.localeCompare(
+        horarioB
+      );
+    }
+
+    // ==============================================
+    // PROFESSOR
+    // ==============================================
+
+    const professorA =
+      a.professor?.nome_professor ?? "";
+
+    const professorB =
+      b.professor?.nome_professor ?? "";
+
+    return professorA.localeCompare(
+      professorB
+    );
+  });
 }
 
 // ======================================================
@@ -35,7 +121,9 @@ export function visualizarRelatorioProfessorSala(
   filtroDataFormatura: string,
   cronogramaFiltrado?: CronogramaType[]
 ) {
-  console.log("Entrou no relatório");
+  console.log(
+    "Entrou no relatório de Professores/Sala"
+  );
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -50,7 +138,17 @@ export function visualizarRelatorioProfessorSala(
   // ======================================================
 
   doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setTextColor(
+    0,
+    0,
+    0
+  );
 
   doc.text(
     "SECRETARIA DA MULHER E DA FAMÍLIA",
@@ -63,57 +161,75 @@ export function visualizarRelatorioProfessorSala(
 
   // ======================================================
   // LISTA
+  //
+  // Se cronogramaFiltrado foi enviado pelo
+  // ListCronograma, usamos EXATAMENTE essa lista.
+  //
+  // Assim o relatório respeita:
+  // - Bloco
+  // - Polo
+  // - Formatura
+  // - Empresa
+  // - Busca
+  // - demais filtros da tela
   // ======================================================
 
   let lista: CronogramaType[];
 
   if (cronogramaFiltrado) {
-    lista = [...cronogramaFiltrado];
+    lista = [
+      ...cronogramaFiltrado,
+    ];
   } else {
-    lista = cronogramaFull.filter((item) => {
-      const atendeBloco =
-        !filtroBloco ||
-        item.bloco_curso?.bloco_Curso === filtroBloco;
+    lista = cronogramaFull.filter(
+      (item) => {
+        const atendeBloco =
+          !filtroBloco ||
+          item.bloco_curso
+            ?.bloco_Curso ===
+            filtroBloco;
 
-      const atendeFormatura =
-        !filtroDataFormatura ||
-        item.formatura?.data_formatura === filtroDataFormatura;
+        const atendeFormatura =
+          !filtroDataFormatura ||
+          item.formatura
+            ?.data_formatura ===
+            filtroDataFormatura;
 
-      return atendeBloco && atendeFormatura;
-    });
+        return (
+          atendeBloco &&
+          atendeFormatura
+        );
+      }
+    );
   }
 
   // ======================================================
-  // FILTROS
-  // ======================================================
-
-  lista = lista.filter((item) => {
-    const atendeBloco =
-      !filtroBloco ||
-      item.bloco_curso?.bloco_Curso === filtroBloco;
-
-    const atendeFormatura =
-      !filtroDataFormatura ||
-      item.formatura?.data_formatura === filtroDataFormatura;
-
-    return atendeBloco && atendeFormatura;
-  });
-
-  // ======================================================
-  // ORDENAÇÃO
-  // BLOCO → POLO → SALA → PROFESSOR
+  // ORDENAÇÃO GERAL
+  // BLOCO → POLO → SALA
   // ======================================================
 
   lista.sort((a, b) => {
+    // ==============================================
+    // BLOCO
+    // ==============================================
+
     const blocoA =
-      a.bloco_curso?.bloco_Curso ?? "";
+      a.bloco_curso
+        ?.bloco_Curso ?? "";
 
     const blocoB =
-      b.bloco_curso?.bloco_Curso ?? "";
+      b.bloco_curso
+        ?.bloco_Curso ?? "";
 
     if (blocoA !== blocoB) {
-      return blocoA.localeCompare(blocoB);
+      return blocoA.localeCompare(
+        blocoB
+      );
     }
+
+    // ==============================================
+    // POLO
+    // ==============================================
 
     const poloA =
       a.localAula?.polo ?? "";
@@ -122,23 +238,62 @@ export function visualizarRelatorioProfessorSala(
       b.localAula?.polo ?? "";
 
     if (poloA !== poloB) {
-      return poloA.localeCompare(poloB);
+      return poloA.localeCompare(
+        poloB
+      );
     }
+
+    // ==============================================
+    // SALA
+    // ==============================================
 
     const salaA =
-      a.salaAula?.numero_sala ?? "";
+      a.salaAula
+        ?.numero_sala ?? "";
 
     const salaB =
-      b.salaAula?.numero_sala ?? "";
+      b.salaAula
+        ?.numero_sala ?? "";
 
     if (salaA !== salaB) {
-      return salaA.localeCompare(salaB);
+      return salaA.localeCompare(
+        salaB
+      );
     }
 
+    // ==============================================
+    // PERÍODO
+    //
+    // Também ordena aqui para garantir a
+    // sequência antes do agrupamento.
+    // ==============================================
+
+    const periodoA =
+      ordemPeriodo(
+        getPeriodo(
+          a.hora_inicio
+        )
+      );
+
+    const periodoB =
+      ordemPeriodo(
+        getPeriodo(
+          b.hora_inicio
+        )
+      );
+
+    if (periodoA !== periodoB) {
+      return periodoA - periodoB;
+    }
+
+    // ==============================================
+    // HORÁRIO
+    // ==============================================
+
     return (
-      a.professor?.nome_professor ?? ""
+      a.hora_inicio ?? ""
     ).localeCompare(
-      b.professor?.nome_professor ?? ""
+      b.hora_inicio ?? ""
     );
   });
 
@@ -151,13 +306,17 @@ export function visualizarRelatorioProfessorSala(
     string,
     Record<
       string,
-      Record<string, CronogramaType[]>
+      Record<
+        string,
+        CronogramaType[]
+      >
     >
   > = {};
 
   lista.forEach((item) => {
     const bloco =
-      item.bloco_curso?.bloco_Curso ??
+      item.bloco_curso
+        ?.bloco_Curso ??
       "SEM BLOCO";
 
     const polo =
@@ -165,7 +324,8 @@ export function visualizarRelatorioProfessorSala(
       "SEM POLO";
 
     const sala =
-      item.salaAula?.numero_sala ??
+      item.salaAula
+        ?.numero_sala ??
       "SEM SALA";
 
     if (!grupos[bloco]) {
@@ -176,11 +336,15 @@ export function visualizarRelatorioProfessorSala(
       grupos[bloco][polo] = {};
     }
 
-    if (!grupos[bloco][polo][sala]) {
+    if (
+      !grupos[bloco][polo][sala]
+    ) {
       grupos[bloco][polo][sala] = [];
     }
 
-    grupos[bloco][polo][sala].push(item);
+    grupos[bloco][polo][sala].push(
+      item
+    );
   });
 
   // ======================================================
@@ -196,17 +360,25 @@ export function visualizarRelatorioProfessorSala(
   Object.keys(grupos)
     .sort()
     .forEach((bloco) => {
+      // ==============================================
+      // QUEBRA DE PÁGINA
+      // ==============================================
+
       if (posY > 170) {
         doc.addPage();
         posY = 20;
       }
 
-      // ==================================================
-      // TÍTULO BLOCO
-      // ==================================================
+      // ==============================================
+      // TÍTULO DO BLOCO
+      // ==============================================
 
       doc.setFontSize(13);
-      doc.setFont("helvetica", "bold");
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
 
       doc.setTextColor(
         180,
@@ -220,26 +392,36 @@ export function visualizarRelatorioProfessorSala(
         posY
       );
 
-      // Pequeno espaço após o bloco
-      posY += 4;
+      // ==============================================
+      // ESPAÇO ENTRE GRADE E POLO
+      // ==============================================
 
-      // ==================================================
+      posY += 5;
+
+      // ==============================================
       // POLOS
-      // ==================================================
+      // ==============================================
 
-      Object.keys(grupos[bloco])
+      Object.keys(
+        grupos[bloco]
+      )
         .sort()
         .forEach((polo) => {
+          // ==========================================
+          // QUEBRA DE PÁGINA
+          // ==========================================
+
           if (posY > 170) {
             doc.addPage();
             posY = 20;
           }
 
-          // ==============================================
+          // ==========================================
           // POLO
-          // ==============================================
+          // ==========================================
 
           doc.setFontSize(11);
+
           doc.setFont(
             "helvetica",
             "bold"
@@ -257,100 +439,148 @@ export function visualizarRelatorioProfessorSala(
             posY
           );
 
-          // =================================================
-          // IMPORTANTE:
-          // NÃO aumentar posY aqui.
-          //
-          // A tabela começa exatamente na mesma posição
-          // vertical imediatamente abaixo do texto do Polo.
-          // =================================================
+          // ==========================================
+          // ESPAÇO MÍNIMO ENTRE POLO E TABELA
+          // ==========================================
 
-          posY += 1;
+          posY += 2;
 
-          // ==============================================
+          // ==========================================
           // SALAS
-          // ==============================================
+          // ==========================================
 
-          Object.keys(grupos[bloco][polo])
+          Object.keys(
+            grupos[bloco][polo]
+          )
             .sort()
             .forEach((sala) => {
+              // ========================================
+              // QUEBRA DE PÁGINA
+              // ========================================
+
               if (posY > 170) {
                 doc.addPage();
                 posY = 20;
               }
 
-              // ==========================================
+              // ========================================
+              // CURSOS DA SALA
+              //
+              // MANHÃ
+              // TARDE
+              // NOITE
+              //
+              // E dentro de cada período:
+              // horário crescente.
+              // ========================================
+
+              const cursos =
+                ordenarCursos(
+                  grupos[bloco][polo][sala]
+                );
+
+              // ========================================
               // LINHAS
-              // ==========================================
+              // ========================================
 
               const rows =
-                grupos[bloco][polo][sala]
-                  .map((item, index) => [
+                cursos.map(
+                  (item, index) => [
                     index + 1,
 
                     item.codigo,
 
                     item.tema
-                      ?.toUpperCase() ?? "",
+                      ?.toUpperCase() ??
+                      "",
 
                     item.data_inicio,
 
                     item.data_fim,
 
-                    // ====================================
-                    // SOMENTE PERÍODO
-                    // ====================================
+                    // ==================================
+                    // PERÍODO
+                    // ==================================
 
                     getPeriodo(
                       item.hora_inicio
                     ),
 
+                    // ==================================
+                    // PROFESSOR
+                    // ==================================
+
                     item.professor
                       ?.nome_professor
-                      ?.toUpperCase() ?? "",
+                      ?.toUpperCase() ??
+                      "",
+
+                    // ==================================
+                    // TELEFONE
+                    // ==================================
 
                     item.professor
-                      ?.telefone ?? "",
-                  ]);
+                      ?.telefone ??
+                      "",
+                  ]
+                );
 
-              // ==========================================
+              // ========================================
               // TABELA
-              // ==========================================
+              // ========================================
 
               autoTable(doc, {
                 startY: posY,
 
                 pageBreak: "avoid",
 
-                // ========================================
+                // ======================================
                 // CABEÇALHO
-                //
-                // NÃO EXISTE "HORÁRIO" AQUI
-                // ========================================
+                // ======================================
 
-                head: [[
-                  "Nº",
-                  "Código",
-                  {
-                    content:
-                      `Tema do Curso - Sala ${sala}`,
-                  },
-                  "Data Início",
-                  "Data Fim",
-                  "Período",
-                  "Professor",
-                  "Contato",
-                ]],
+                head: [
+                  [
+                    "Nº",
+
+                    "Código",
+
+                    {
+                      content:
+                        `Tema do Curso - Sala ${sala}`,
+                    },
+
+                    "Data Início",
+
+                    "Data Fim",
+
+                    "Período",
+
+                    "Professor",
+
+                    "Contato",
+                  ],
+                ],
 
                 body: rows,
 
                 theme: "grid",
 
+                // ======================================
+                // ESTILOS
+                // ======================================
+
                 styles: {
                   fontSize: 8.5,
+
                   cellPadding: 2,
-                  valign: "middle",
+
+                  valign:
+                    "middle",
                 },
+
+                // ======================================
+                // CABEÇALHO
+                // ======================================
 
                 headStyles: {
                   fillColor: [
@@ -361,26 +591,32 @@ export function visualizarRelatorioProfessorSala(
 
                   textColor: 255,
 
-                  fontStyle: "bold",
+                  fontStyle:
+                    "bold",
 
-                  halign: "center",
+                  halign:
+                    "center",
                 },
 
-                // ========================================
+                // ======================================
                 // LARGURA DAS COLUNAS
-                // ========================================
+                // ======================================
 
                 columnStyles: {
                   // Nº
                   0: {
                     cellWidth: 9,
-                    halign: "center",
+
+                    halign:
+                      "center",
                   },
 
                   // Código
                   1: {
                     cellWidth: 15,
-                    halign: "center",
+
+                    halign:
+                      "center",
                   },
 
                   // Tema / Sala
@@ -391,19 +627,25 @@ export function visualizarRelatorioProfessorSala(
                   // Data início
                   3: {
                     cellWidth: 21,
-                    halign: "center",
+
+                    halign:
+                      "center",
                   },
 
                   // Data fim
                   4: {
                     cellWidth: 21,
-                    halign: "center",
+
+                    halign:
+                      "center",
                   },
 
                   // Período
                   5: {
                     cellWidth: 22,
-                    halign: "center",
+
+                    halign:
+                      "center",
                   },
 
                   // Professor
@@ -414,32 +656,40 @@ export function visualizarRelatorioProfessorSala(
                   // Contato
                   7: {
                     cellWidth: 29,
-                    halign: "center",
+
+                    halign:
+                      "center",
                   },
                 },
               });
 
-              // ==========================================
-              // POSIÇÃO APÓS TABELA
-              // ==========================================
+              // ========================================
+              // POSIÇÃO APÓS A TABELA
+              // ========================================
 
               const finalY =
-                doc.lastAutoTable?.finalY ??
+                doc.lastAutoTable
+                  ?.finalY ??
                 posY;
 
+              // ========================================
+              // TOTAL GERAL
+              // ========================================
+
               totalGeral +=
-                grupos[bloco][polo][sala].length;
+                cursos.length;
 
-              // ==========================================
+              // ========================================
               // ESPAÇO ENTRE SALAS
-              // ==========================================
+              // ========================================
 
-              posY = finalY + 2;
+              posY =
+                finalY + 2;
             });
 
-          // ==============================================
+          // ============================================
           // ESPAÇO ENTRE POLOS
-          // ==============================================
+          // ============================================
 
           posY += 1;
         });
@@ -491,4 +741,3 @@ export function visualizarRelatorioProfessorSala(
     "_blank"
   );
 }
-
