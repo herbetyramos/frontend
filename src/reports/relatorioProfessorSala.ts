@@ -28,11 +28,21 @@ function getPeriodo(hora: string) {
 // RELATÓRIO
 // BLOCO → POLO → SALA
 // ======================================================
+//
+// cronogramaFiltrado:
+// Se informado, o relatório utiliza exatamente essa lista.
+// Isso permite que o PDF respeite os filtros do ListCronograma.
+//
+// filtroBloco e filtroDataFormatura continuam disponíveis
+// como filtros adicionais.
+//
+// ======================================================
 
 export function visualizarRelatorioProfessorSala(
   cronogramaFull: CronogramaType[],
   filtroBloco: string,
-  filtroDataFormatura: string
+  filtroDataFormatura: string,
+  cronogramaFiltrado?: CronogramaType[]
 ) {
   console.log("Entrou no relatório");
 
@@ -65,8 +75,41 @@ export function visualizarRelatorioProfessorSala(
   // ======================================================
   // FILTROS
   // ======================================================
+  //
+  // Se o ListCronograma já passou uma lista filtrada,
+  // usamos essa lista como base.
+  //
+  // Caso contrário, utilizamos cronogramaFull e aplicamos
+  // os filtros antigos de bloco e formatura.
+  //
+  // ======================================================
 
-  const lista = cronogramaFull.filter((item) => {
+  let lista: CronogramaType[];
+
+  if (cronogramaFiltrado) {
+    lista = [...cronogramaFiltrado];
+  } else {
+    lista = cronogramaFull.filter((item) => {
+      const atendeBloco =
+        !filtroBloco ||
+        item.bloco_curso?.bloco_Curso === filtroBloco;
+
+      const atendeFormatura =
+        !filtroDataFormatura ||
+        item.formatura?.data_formatura === filtroDataFormatura;
+
+      return atendeBloco && atendeFormatura;
+    });
+  }
+
+  // ======================================================
+  // FILTROS ADICIONAIS
+  //
+  // Garante que bloco e data de formatura ainda sejam
+  // respeitados mesmo quando a lista veio filtrada.
+  // ======================================================
+
+  lista = lista.filter((item) => {
     const atendeBloco =
       !filtroBloco ||
       item.bloco_curso?.bloco_Curso === filtroBloco;
@@ -199,6 +242,7 @@ export function visualizarRelatorioProfessorSala(
         posY
       );
 
+      // Espaço menor após o título do bloco
       posY += 4;
 
       // ==================================================
@@ -235,7 +279,20 @@ export function visualizarRelatorioProfessorSala(
             posY
           );
 
-          posY += 5;
+          // =================================================
+          // APROXIMADO DA GRADE
+          // =================================================
+          //
+          // Antes:
+          // posY += 5
+          //
+          // Agora:
+          // posY += 2
+          //
+          // Isso deixa o rótulo do Polo mais próximo da
+          // primeira tabela/grade.
+          //
+          posY += 2;
 
           // ==============================================
           // PERCORRE SALAS
@@ -263,11 +320,10 @@ export function visualizarRelatorioProfessorSala(
 
                     item.data_fim,
 
+                    // SOMENTE PERÍODO
                     getPeriodo(
                       item.hora_inicio
                     ),
-
-                    `${item.hora_inicio} às ${item.hora_fim}`,
 
                     item.professor
                       ?.nome_professor
@@ -302,8 +358,6 @@ export function visualizarRelatorioProfessorSala(
 
                   "Período",
 
-                  "Horário",
-
                   "Professor",
 
                   "Contato",
@@ -316,6 +370,7 @@ export function visualizarRelatorioProfessorSala(
                 styles: {
                   fontSize: 8.5,
 
+                  // Espaçamento interno reduzido
                   cellPadding: 2,
 
                   valign: "middle",
@@ -347,7 +402,7 @@ export function visualizarRelatorioProfessorSala(
                   },
 
                   2: {
-                    cellWidth: 82,
+                    cellWidth: 90,
                   },
 
                   3: {
@@ -360,21 +415,19 @@ export function visualizarRelatorioProfessorSala(
                     halign: "center",
                   },
 
+                  // PERÍODO
                   5: {
-                    cellWidth: 20,
+                    cellWidth: 22,
                     halign: "center",
                   },
 
+                  // PROFESSOR
                   6: {
-                    cellWidth: 28,
-                    halign: "center",
+                    cellWidth: 55,
                   },
 
+                  // CONTATO
                   7: {
-                    cellWidth: 51,
-                  },
-
-                  8: {
                     cellWidth: 29,
                     halign: "center",
                   },
@@ -392,16 +445,26 @@ export function visualizarRelatorioProfessorSala(
               totalGeral +=
                 grupos[bloco][polo][sala].length;
 
+              // =================================================
+              // ESPAÇO ENTRE SALAS REDUZIDO
+              // =================================================
+
               posY =
-                finalY + 4;
+                finalY + 2;
             });
 
-          // Pequeno espaço entre salas
-          posY += 2;
+          // ==================================================
+          // ESPAÇO ENTRE POLOS REDUZIDO
+          // ==================================================
+
+          posY += 1;
         });
 
-      // Espaço entre blocos
-      posY += 4;
+      // ====================================================
+      // ESPAÇO ENTRE BLOCOS
+      // ====================================================
+
+      posY += 3;
     });
 
   // ======================================================
@@ -444,3 +507,4 @@ export function visualizarRelatorioProfessorSala(
     "_blank"
   );
 }
+
