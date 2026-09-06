@@ -3,6 +3,10 @@ import autoTable from "jspdf-autotable";
 
 import { CronogramaType } from "@/app/matricula/types";
 
+// ======================================================
+// TIPAGEM
+// ======================================================
+
 interface CronogramaGroup {
   [bloco: string]: {
     [polo: string]: {
@@ -11,9 +15,9 @@ interface CronogramaGroup {
   };
 }
 
-// ============================================================
-// CONFIGURAÇÃO DAS COLUNAS
-// ============================================================
+// ======================================================
+// CONFIGURAÇÕES
+// ======================================================
 
 const COLUMN_WIDTHS = {
   codigo: 18,
@@ -26,7 +30,6 @@ const COLUMN_WIDTHS = {
 
 const TABLE_START_X = 14;
 
-// Largura total da tabela
 const TABLE_WIDTH =
   COLUMN_WIDTHS.codigo +
   COLUMN_WIDTHS.tema +
@@ -35,11 +38,10 @@ const TABLE_WIDTH =
   COLUMN_WIDTHS.horaInicio +
   COLUMN_WIDTHS.horaFim;
 
-// ============================================================
-// POSIÇÃO CENTRAL DOS RÓTULOS
-// ============================================================
+// ======================================================
+// POSIÇÕES DE PERÍODO E HORÁRIO
+// ======================================================
 
-// Centro das colunas DATA INÍCIO + DATA FIM
 const PERIODO_X =
   TABLE_START_X +
   COLUMN_WIDTHS.codigo +
@@ -48,7 +50,6 @@ const PERIODO_X =
     COLUMN_WIDTHS.dataFim) /
     2;
 
-// Centro das colunas HORA INÍCIO + HORA FIM
 const HORARIO_X =
   TABLE_START_X +
   COLUMN_WIDTHS.codigo +
@@ -59,9 +60,9 @@ const HORARIO_X =
     COLUMN_WIDTHS.horaFim) /
     2;
 
-// ============================================================
-// COR DA SALA
-// ============================================================
+// ======================================================
+// CORES DAS SALAS
+// ======================================================
 
 const corSala = (
   sala: string
@@ -121,9 +122,9 @@ const corSala = (
   return [0, 0, 0];
 };
 
-// ============================================================
-// COR DE CONTRASTE
-// ============================================================
+// ======================================================
+// COR DO TEXTO DE ACORDO COM A COR DA SALA
+// ======================================================
 
 const corTextoContraste = (
   cor: [number, number, number]
@@ -140,9 +141,9 @@ const corTextoContraste = (
   return [255, 255, 255];
 };
 
-// ============================================================
+// ======================================================
 // CONVERTER TEXTO PARA MAIÚSCULO
-// ============================================================
+// ======================================================
 
 const maiusculo = (
   valor: unknown
@@ -154,59 +155,41 @@ const maiusculo = (
     return "";
   }
 
-  return String(valor).toLocaleUpperCase(
-    "pt-BR"
-  );
+  return String(valor).toLocaleUpperCase("pt-BR");
 };
 
-// ============================================================
+// ======================================================
 // RELATÓRIO
-// ============================================================
+// ======================================================
 
 export function relatorioGrade(
   cronogramaFull: CronogramaType[],
   filtroBloco: string
 ) {
-  // ==========================================================
-  // CRIAÇÃO DO PDF
-  // ==========================================================
-
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
   });
 
-  // ==========================================================
-  // DIMENSÕES DA PÁGINA
-  // ==========================================================
+  // ====================================================
+  // CONFIGURAÇÕES DA PÁGINA
+  // ====================================================
 
-  const pageHeight =
+  const PAGE_HEIGHT =
     doc.internal.pageSize.getHeight();
 
-  const pageWidth =
-    doc.internal.pageSize.getWidth();
-
-  // ==========================================================
-  // MARGENS
-  // ==========================================================
-
   const MARGIN_TOP = 10;
-  const MARGIN_BOTTOM = 12;
+  const MARGIN_BOTTOM = 15;
 
-  let posY = MARGIN_TOP;
+  let posY = 6;
 
-  // ==========================================================
+  // ====================================================
   // AGRUPAMENTO
-  // BLOCO -> POLO -> SALA
-  // ==========================================================
+  // ====================================================
 
   const agrupadoPorBloco: CronogramaGroup =
     {};
-
-  // ==========================================================
-  // FILTRO
-  // ==========================================================
 
   const listaFiltrada = filtroBloco
     ? cronogramaFull.filter(
@@ -216,9 +199,16 @@ export function relatorioGrade(
       )
     : cronogramaFull;
 
-  // ==========================================================
-  // AGRUPAR
-  // ==========================================================
+  // ====================================================
+  // TOTAL GERAL
+  // ====================================================
+
+  const totalGeralCursos =
+    listaFiltrada.length;
+
+  // ====================================================
+  // AGRUPAR BLOCO / POLO / SALA
+  // ====================================================
 
   listaFiltrada.forEach((item) => {
     const bloco =
@@ -253,30 +243,16 @@ export function relatorioGrade(
     );
   });
 
-  // ==========================================================
-  // FUNÇÃO PARA OBTER FINAL Y
-  // ==========================================================
-
-  const obterFinalY = (): number => {
-    return (
-      doc as unknown as {
-        lastAutoTable: {
-          finalY: number;
-        };
-      }
-    ).lastAutoTable.finalY;
-  };
-
-  // ==========================================================
-  // FUNÇÃO PARA VERIFICAR ESPAÇO
-  // ==========================================================
+  // ====================================================
+  // FUNÇÃO PARA VERIFICAR ESPAÇO NA PÁGINA
+  // ====================================================
 
   const adicionarPaginaSeNecessario = (
     alturaNecessaria: number
   ) => {
     if (
       posY + alturaNecessaria >
-      pageHeight - MARGIN_BOTTOM
+      PAGE_HEIGHT - MARGIN_BOTTOM
     ) {
       doc.addPage();
 
@@ -284,19 +260,124 @@ export function relatorioGrade(
     }
   };
 
-  // ==========================================================
-  // PERCORRER BLOCOS
-  // ==========================================================
+  // ====================================================
+  // RODAPÉ COM NÚMERO DA PÁGINA
+  // ====================================================
 
-  Object.keys(agrupadoPorBloco).forEach(
-    (bloco, indiceBloco) => {
-      // ========================================================
-      // TÍTULO DO BLOCO
-      // ========================================================
+  const adicionarNumeracaoPaginas = () => {
+    const totalPaginas =
+      doc.getNumberOfPages();
 
-      adicionarPaginaSeNecessario(20);
+    for (
+      let pagina = 1;
+      pagina <= totalPaginas;
+      pagina++
+    ) {
+      doc.setPage(pagina);
 
-      doc.setFontSize(14);
+      const larguraPagina =
+        doc.internal.pageSize.getWidth();
+
+      const alturaPagina =
+        doc.internal.pageSize.getHeight();
+
+      doc.setFontSize(8);
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      doc.setTextColor(
+        100,
+        100,
+        100
+      );
+
+      doc.text(
+        `Página ${pagina} de ${totalPaginas}`,
+        larguraPagina - 14,
+        alturaPagina - 7,
+        {
+          align: "right",
+        }
+      );
+    }
+  };
+
+  // ====================================================
+  // PERCORRER OS BLOCOS
+  // ====================================================
+
+  Object.keys(
+    agrupadoPorBloco
+  ).forEach((bloco) => {
+    // ==================================================
+    // CABEÇALHO DO BLOCO
+    // ==================================================
+
+    adicionarPaginaSeNecessario(15);
+
+    doc.setFontSize(14);
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.setTextColor(
+      0,
+      0,
+      150
+    );
+
+    doc.text(
+      `Cursos da Secretaria da Mulher e da Família - ${bloco}`,
+      TABLE_START_X,
+      posY
+    );
+
+    posY += 2;
+
+    // ==================================================
+    // PERCORRER OS POLOS
+    // ==================================================
+
+    Object.keys(
+      agrupadoPorBloco[bloco]
+    ).forEach((polo) => {
+      const salasDoPolo =
+        agrupadoPorBloco[bloco][polo];
+
+      // =================================================
+      // CABEÇALHO DO POLO
+      // =================================================
+
+      adicionarPaginaSeNecessario(15);
+
+      doc.setFontSize(12);
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setTextColor(
+        0,
+        100,
+        0
+      );
+
+      posY += 8;
+
+      doc.text(
+        `Polo: ${polo}`,
+        TABLE_START_X,
+        posY
+      );
+
+      // =================================================
+      // PERÍODO
+      // =================================================
+
+      doc.setFontSize(10);
       doc.setFont(
         "helvetica",
         "bold"
@@ -305,544 +386,372 @@ export function relatorioGrade(
       doc.setTextColor(
         0,
         0,
-        150
+        0
       );
 
       doc.text(
-        `Cursos da Secretaria da Mulher e da Família - ${maiusculo(
-          bloco
-        )}`,
-        TABLE_START_X,
-        posY
+        "Período",
+        PERIODO_X,
+        posY,
+        {
+          align: "center",
+        }
       );
 
-      posY += 5;
+      // =================================================
+      // HORÁRIO
+      // =================================================
 
-      // ========================================================
-      // POLOS / LOCAIS
-      // ========================================================
+      doc.text(
+        "Horário",
+        HORARIO_X,
+        posY,
+        {
+          align: "center",
+        }
+      );
 
-      Object.keys(
-        agrupadoPorBloco[bloco]
-      ).forEach((polo) => {
-        const salasDoPolo =
-          agrupadoPorBloco[bloco][polo];
+      posY += 2;
 
-        // ======================================================
-        // TOTAL DE CURSOS DO POLO
-        // ======================================================
+      // =================================================
+      // ORDENAR SALAS
+      // =================================================
 
-        const totalCursosPolo =
-          Object.values(
-            salasDoPolo
-          ).reduce(
-            (total, registros) =>
-              total + registros.length,
-            0
-          );
-
-        // ======================================================
-        // ESPAÇO PARA O CABEÇALHO DO POLO
-        // ======================================================
-
-        adicionarPaginaSeNecessario(25);
-
-        // ======================================================
-        // LINHA DO POLO
-        // ======================================================
-
-        doc.setFontSize(12);
-        doc.setFont(
-          "helvetica",
-          "bold"
-        );
-
-        doc.setTextColor(
-          0,
-          100,
-          0
-        );
-
-        posY += 4;
-
-        // ======================================================
-        // NOME DO POLO
-        // ======================================================
-
-        doc.text(
-          `Polo: ${polo}`,
-          TABLE_START_X,
-          posY
-        );
-
-        // ======================================================
-        // TOTAL DE CURSOS
-        // ======================================================
-
-        doc.setFontSize(10);
-        doc.setFont(
-          "helvetica",
-          "bold"
-        );
-
-        doc.setTextColor(
-          0,
-          0,
-          0
-        );
-
-        doc.text(
-          `Total de cursos: ${totalCursosPolo}`,
-          TABLE_START_X + 55,
-          posY
-        );
-
-        // ======================================================
-        // PERÍODO
-        // ======================================================
-
-        doc.text(
-          "Período",
-          PERIODO_X,
-          posY,
-          {
-            align: "center",
-          }
-        );
-
-        // ======================================================
-        // HORÁRIO
-        // ======================================================
-
-        doc.text(
-          "Horário",
-          HORARIO_X,
-          posY,
-          {
-            align: "center",
-          }
-        );
-
-        posY += 3;
-
-        // ======================================================
-        // SALAS
-        // ======================================================
-
-        Object.keys(salasDoPolo)
-          .sort((a, b) => {
-            const numeroA = parseInt(
+      Object.keys(salasDoPolo)
+        .sort((a, b) => {
+          const numeroA =
+            parseInt(
               a.match(/\d+/)?.[0] ||
                 "0",
               10
             );
 
-            const numeroB = parseInt(
+          const numeroB =
+            parseInt(
               b.match(/\d+/)?.[0] ||
                 "0",
               10
             );
 
-            return (
-              numeroA - numeroB
+          return (
+            numeroA - numeroB
+          );
+        })
+        .forEach((sala) => {
+          const registros =
+            salasDoPolo[sala];
+
+          // ============================================
+          // COR DA SALA
+          // ============================================
+
+          const cor =
+            corSala(sala);
+
+          const corTexto =
+            corTextoContraste(cor);
+
+          // ============================================
+          // LINHAS DA TABELA
+          // ============================================
+
+          const rows =
+            registros.map(
+              (item) => [
+                item.codigo,
+                maiusculo(
+                  item.tema
+                ),
+                item.data_inicio,
+                item.data_fim,
+                item.hora_inicio,
+                item.hora_fim,
+              ]
             );
-          })
-          .forEach((sala) => {
-            const registros =
-              salasDoPolo[sala];
 
-            // ==================================================
-            // COR DA SALA
-            // ==================================================
+          // ============================================
+          // ESPAÇO ANTES DA TABELA
+          // ============================================
 
-            const cor =
-              corSala(sala);
+          adicionarPaginaSeNecessario(
+            15
+          );
 
-            const corTexto =
-              corTextoContraste(
-                cor
-              );
+          // ============================================
+          // TABELA
+          // ============================================
 
-            // ==================================================
-            // TOTAL DE CURSOS DA SALA
-            // ==================================================
+          autoTable(doc, {
+            startY: posY,
 
-            const totalCursosSala =
-              registros.length;
+            head: [
+              [
+                {
+                  content: `Sala ${sala}`,
+                  colSpan: 6,
+                  styles: {
+                    fillColor:
+                      cor,
+                    textColor:
+                      corTexto,
+                    halign:
+                      "left",
+                    valign:
+                      "middle",
+                    fontStyle:
+                      "bold",
+                    fontSize: 9,
 
-            // ==================================================
-            // GARANTIR ESPAÇO ANTES DA TABELA
-            // ==================================================
+                    cellPadding:
+                      {
+                        top: 1,
+                        bottom: 1,
+                        left: 2,
+                        right: 2,
+                      },
 
-            adicionarPaginaSeNecessario(
-              20
-            );
-
-            // ==================================================
-            // DADOS DA TABELA
-            //
-            // TEMA EM MAIÚSCULO
-            // ==================================================
-
-            const rows =
-              registros.map(
-                (item) => [
-                  item.codigo ??
-                    "",
-
-                  maiusculo(
-                    item.tema
-                  ),
-
-                  item.data_inicio ??
-                    "",
-
-                  item.data_fim ??
-                    "",
-
-                  item.hora_inicio ??
-                    "",
-
-                  item.hora_fim ??
-                    "",
-                ]
-              );
-
-            // ==================================================
-            // POSIÇÃO INICIAL DA TABELA
-            // ==================================================
-
-            const tableStartY =
-              posY;
-
-            // ==================================================
-            // TABELA
-            // ==================================================
-
-            autoTable(doc, {
-              startY:
-                tableStartY,
-
-              margin: {
-                left:
-                  TABLE_START_X,
-                right: 14,
-                top:
-                  MARGIN_TOP,
-                bottom:
-                  MARGIN_BOTTOM,
-              },
-
-              // =================================================
-              // CABEÇALHO DA SALA
-              // =================================================
-
-              head: [
-                [
-                  {
-                    content: `Sala ${sala}  —  ${totalCursosSala} ${
-                      totalCursosSala ===
-                      1
-                        ? "CURSO"
-                        : "CURSOS"
-                    }`,
-                    colSpan: 6,
+                    minCellHeight: 5,
                   },
-                ],
+                },
+              ],
+            ],
+
+            body: rows,
+
+            theme: "grid",
+
+            headStyles: {
+              fillColor:
+                cor,
+
+              textColor:
+                corTexto,
+
+              fontStyle:
+                "bold",
+
+              lineColor:
+                cor,
+
+              lineWidth: 0.5,
+            },
+
+            styles: {
+              fontSize: 10,
+
+              overflow:
+                "linebreak",
+
+              textColor: [
+                0,
+                0,
+                0,
               ],
 
-              // =================================================
-              // CORPO
-              // =================================================
+              cellPadding: 2,
 
-              body: rows,
+              lineColor: [
+                180,
+                180,
+                180,
+              ],
 
-              // =================================================
-              // TEMA DO RELATÓRIO
-              // =================================================
+              lineWidth: 0.2,
+            },
 
-              theme: "grid",
-
-              // =================================================
-              // CABEÇALHO
-              // =================================================
-
-              headStyles: {
-                fillColor:
-                  cor,
-
-                textColor:
-                  corTexto,
-
-                fontStyle:
-                  "bold",
-
-                fontSize: 9,
-
-                halign:
-                  "left",
-
-                valign:
-                  "middle",
-
-                lineColor:
-                  cor,
-
-                lineWidth:
-                  0.5,
-
-                cellPadding: {
-                  top: 1.2,
-                  bottom: 1.2,
-                  left: 2,
-                  right: 2,
-                },
+            columnStyles: {
+              0: {
+                cellWidth:
+                  COLUMN_WIDTHS.codigo,
               },
 
-              // =================================================
-              // ESTILOS GERAIS
-              // =================================================
-
-              styles: {
-                font:
-                  "helvetica",
-
-                fontSize: 9,
-
-                overflow:
-                  "linebreak",
-
-                textColor: [
-                  0,
-                  0,
-                  0,
-                ],
-
-                cellPadding: {
-                  top: 1.5,
-                  bottom: 1.5,
-                  left: 2,
-                  right: 2,
-                },
-
-                lineColor: [
-                  180,
-                  180,
-                  180,
-                ],
-
-                lineWidth:
-                  0.2,
-
-                valign:
-                  "middle",
+              1: {
+                cellWidth:
+                  COLUMN_WIDTHS.tema,
               },
 
-              // =================================================
-              // COLUNAS
-              // =================================================
-
-              columnStyles: {
-                0: {
-                  cellWidth:
-                    COLUMN_WIDTHS.codigo,
-
-                  halign:
-                    "center",
-                },
-
-                1: {
-                  cellWidth:
-                    COLUMN_WIDTHS.tema,
-
-                  halign:
-                    "left",
-                },
-
-                2: {
-                  cellWidth:
-                    COLUMN_WIDTHS.dataInicio,
-
-                  halign:
-                    "center",
-                },
-
-                3: {
-                  cellWidth:
-                    COLUMN_WIDTHS.dataFim,
-
-                  halign:
-                    "center",
-                },
-
-                4: {
-                  cellWidth:
-                    COLUMN_WIDTHS.horaInicio,
-
-                  halign:
-                    "center",
-                },
-
-                5: {
-                  cellWidth:
-                    COLUMN_WIDTHS.horaFim,
-
-                  halign:
-                    "center",
-                },
+              2: {
+                cellWidth:
+                  COLUMN_WIDTHS.dataInicio,
               },
 
-              // =================================================
-              // LARGURA DA TABELA
-              // =================================================
+              3: {
+                cellWidth:
+                  COLUMN_WIDTHS.dataFim,
+              },
 
-              tableWidth:
-                TABLE_WIDTH,
+              4: {
+                cellWidth:
+                  COLUMN_WIDTHS.horaInicio,
+              },
 
-              // =================================================
-              // REPETIR CABEÇALHO SE A TABELA CONTINUAR
-              // =================================================
+              5: {
+                cellWidth:
+                  COLUMN_WIDTHS.horaFim,
+              },
+            },
 
-              showHead:
-                "everyPage",
+            tableWidth:
+              "wrap",
 
-              // =================================================
-              // CONTROLE DA QUEBRA DE PÁGINA
-              // =================================================
+            // ==========================================
+            // REPETIR CABEÇALHO DA SALA
+            // CASO A TABELA CONTINUE NA PRÓXIMA PÁGINA
+            // ==========================================
 
-              pageBreak:
-                "auto",
+            showHead:
+              "everyPage",
 
-              // =================================================
-              // EVITAR LINHAS PROBLEMÁTICAS
-              // =================================================
+            // ==========================================
+            // EVITAR QUE UMA LINHA SEJA CORTADA
+            // ==========================================
 
-              rowPageBreak:
-                "avoid",
+            rowPageBreak:
+              "avoid",
 
-              // =================================================
-              // DESENHO DA PÁGINA
-              // =================================================
+            // ==========================================
+            // MARGENS
+            // ==========================================
 
-              didDrawPage:
-                () => {
-                  // Não desenhar borda externa manualmente.
-                  //
-                  // O autoTable já utiliza grid.
-                  //
-                  // Isso evita que uma borda seja desenhada
-                  // incorretamente entre páginas.
-                },
-            });
-
-            // ==================================================
-            // ATUALIZAR POSIÇÃO
-            // ==================================================
-
-            posY =
-              obterFinalY() +
-              4;
-
-            // ==================================================
-            // SE CHEGOU AO FINAL DA PÁGINA
-            // ==================================================
-
-            if (
-              posY >
-              pageHeight -
-                MARGIN_BOTTOM
-            ) {
-              doc.addPage();
-
-              posY =
-                MARGIN_TOP;
-            }
+            margin: {
+              left:
+                TABLE_START_X,
+              right: 14,
+              bottom:
+                MARGIN_BOTTOM,
+            },
           });
 
-        // ======================================================
-        // ESPAÇO ENTRE POLOS
-        // ======================================================
+          // ============================================
+          // OBTER FINAL DA TABELA
+          // ============================================
 
-        posY += 5;
-      });
+          const finalY =
+            (
+              doc as unknown as {
+                lastAutoTable: {
+                  finalY: number;
+                };
+              }
+            ).lastAutoTable
+              .finalY;
 
-      // ========================================================
-      // ESPAÇO ENTRE BLOCOS
-      // ========================================================
+          // ============================================
+          // ATUALIZAR POSIÇÃO
+          // ============================================
 
-      if (
-        indiceBloco <
-        Object.keys(
-          agrupadoPorBloco
-        ).length -
-          1
-      ) {
-        posY += 6;
-      }
+          posY =
+            finalY + 3;
+        });
+
+      // =================================================
+      // TOTAL DE CURSOS DO POLO
+      // =================================================
+
+      const totalCursosPolo =
+        Object.values(
+          salasDoPolo
+        ).reduce(
+          (
+            total,
+            registros
+          ) =>
+            total +
+            registros.length,
+          0
+        );
+
+      // =================================================
+      // GARANTIR ESPAÇO PARA O TOTAL
+      // =================================================
+
+      adicionarPaginaSeNecessario(
+        10
+      );
+
+      // =================================================
+      // TOTAL DO POLO À DIREITA
+      // =================================================
+
+      doc.setFontSize(10);
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setTextColor(
+        0,
+        0,
+        0
+      );
+
+      doc.text(
+        `TOTAL DE CURSOS: ${totalCursosPolo}`,
+        TABLE_START_X +
+          TABLE_WIDTH,
+        posY,
+        {
+          align: "right",
+        }
+      );
+
+      posY += 7;
+    });
+
+    // ==================================================
+    // ESPAÇO ENTRE BLOCOS
+    // ==================================================
+
+    posY += 5;
+  });
+
+  // ======================================================
+  // TOTAL GERAL DE CURSOS
+  // ======================================================
+
+  adicionarPaginaSeNecessario(
+    12
+  );
+
+  doc.setFontSize(11);
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setTextColor(
+    0,
+    0,
+    0
+  );
+
+  doc.text(
+    `TOTAL GERAL DE CURSOS: ${totalGeralCursos}`,
+    TABLE_START_X +
+      TABLE_WIDTH,
+    posY,
+    {
+      align: "right",
     }
   );
 
-  // ============================================================
-  // RODAPÉ COM NÚMERO DAS PÁGINAS
-  // ============================================================
+  // ======================================================
+  // NUMERAÇÃO DAS PÁGINAS
+  // ======================================================
 
-  const totalPaginas =
-    doc.getNumberOfPages();
+  adicionarNumeracaoPaginas();
 
-  for (
-    let pagina = 1;
-    pagina <= totalPaginas;
-    pagina++
-  ) {
-    doc.setPage(pagina);
-
-    doc.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    doc.setFontSize(8);
-
-    doc.setTextColor(
-      100,
-      100,
-      100
-    );
-
-    doc.text(
-      `Página ${pagina} de ${totalPaginas}`,
-      pageWidth - 14,
-      pageHeight - 5,
-      {
-        align: "right",
-      }
-    );
-  }
-
-  // ============================================================
+  // ======================================================
   // ABRIR PDF
-  // ============================================================
+  // ======================================================
 
   const blob =
     doc.output("blob");
 
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
   window.open(
-    url,
+    URL.createObjectURL(blob),
     "_blank"
   );
-
-  // ============================================================
-  // LIBERAR URL
-  // ============================================================
-
-  setTimeout(() => {
-    URL.revokeObjectURL(
-      url
-    );
-  }, 10000);
 }
