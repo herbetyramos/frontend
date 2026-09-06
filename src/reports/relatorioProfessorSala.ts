@@ -1,3 +1,4 @@
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { CronogramaType } from "@/app/matricula/types";
@@ -10,6 +11,9 @@ declare module "jspdf" {
   }
 }
 
+// ======================================================
+// PERÍODO
+// ======================================================
 
 function getPeriodo(hora: string) {
   const h = parseInt(hora.split(":")[0]);
@@ -20,15 +24,17 @@ function getPeriodo(hora: string) {
   return "NOITE";
 }
 
+// ======================================================
+// RELATÓRIO
+// BLOCO → POLO → SALA
+// ======================================================
 
 export function visualizarRelatorioProfessorSala(
   cronogramaFull: CronogramaType[],
   filtroBloco: string,
   filtroDataFormatura: string
 ) {
-
   console.log("Entrou no relatório");
-
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -36,11 +42,12 @@ export function visualizarRelatorioProfessorSala(
     format: "a4",
   });
 
-
   let posY = 30;
 
-
+  // ======================================================
   // CABEÇALHO
+  // ======================================================
+
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
 
@@ -53,35 +60,49 @@ export function visualizarRelatorioProfessorSala(
     }
   );
 
-
   doc.setFontSize(13);
 
- 
-
+  // ======================================================
   // FILTROS
+  // ======================================================
+
   const lista = cronogramaFull.filter((item) => {
-
-
     const atendeBloco =
       !filtroBloco ||
       item.bloco_curso?.bloco_Curso === filtroBloco;
-
 
     const atendeFormatura =
       !filtroDataFormatura ||
       item.formatura?.data_formatura === filtroDataFormatura;
 
-
     return atendeBloco && atendeFormatura;
-
   });
 
-
-
+  // ======================================================
   // ORDENAÇÃO
+  // BLOCO → POLO → SALA → PROFESSOR
+  // ======================================================
 
   lista.sort((a, b) => {
+    const blocoA =
+      a.bloco_curso?.bloco_Curso ?? "";
 
+    const blocoB =
+      b.bloco_curso?.bloco_Curso ?? "";
+
+    if (blocoA !== blocoB) {
+      return blocoA.localeCompare(blocoB);
+    }
+
+    const poloA =
+      a.localAula?.polo ?? "";
+
+    const poloB =
+      b.localAula?.polo ?? "";
+
+    if (poloA !== poloB) {
+      return poloA.localeCompare(poloB);
+    }
 
     const salaA =
       a.salaAula?.numero_sala ?? "";
@@ -89,118 +110,82 @@ export function visualizarRelatorioProfessorSala(
     const salaB =
       b.salaAula?.numero_sala ?? "";
 
-
     if (salaA !== salaB) {
-
       return salaA.localeCompare(salaB);
-
     }
-
-
-
-    const blocoA =
-      a.bloco_curso?.bloco_Curso ?? "";
-
-
-    const blocoB =
-      b.bloco_curso?.bloco_Curso ?? "";
-
-
-    if (blocoA !== blocoB) {
-
-      return blocoA.localeCompare(blocoB);
-
-    }
-
-
 
     return (
       a.professor?.nome_professor ?? ""
     ).localeCompare(
       b.professor?.nome_professor ?? ""
     );
-
-
   });
 
+  // ======================================================
+  // AGRUPAMENTO
+  // BLOCO → POLO → SALA
+  // ======================================================
 
-
-  // AGRUPAMENTO BLOCO / SALA
-
-  const grupos:
-    Record<string, Record<string, CronogramaType[]>>
-    = {};
-
-
+  const grupos: Record<
+    string,
+    Record<
+      string,
+      Record<string, CronogramaType[]>
+    >
+  > = {};
 
   lista.forEach((item) => {
-
-
     const bloco =
       item.bloco_curso?.bloco_Curso ??
       "SEM BLOCO";
 
+    const polo =
+      item.localAula?.polo ??
+      "SEM POLO";
 
     const sala =
       item.salaAula?.numero_sala ??
       "SEM SALA";
 
-
-
     if (!grupos[bloco]) {
-
       grupos[bloco] = {};
-
     }
 
-
-
-    if (!grupos[bloco][sala]) {
-
-      grupos[bloco][sala] = [];
-
+    if (!grupos[bloco][polo]) {
+      grupos[bloco][polo] = {};
     }
 
+    if (!grupos[bloco][polo][sala]) {
+      grupos[bloco][polo][sala] = [];
+    }
 
-
-    grupos[bloco][sala].push(item);
-
-
+    grupos[bloco][polo][sala].push(item);
   });
 
-
+  // ======================================================
+  // TOTAL GERAL
+  // ======================================================
 
   let totalGeral = 0;
 
-
-
+  // ======================================================
   // PERCORRE BLOCOS
+  // ======================================================
 
   Object.keys(grupos)
     .sort()
     .forEach((bloco) => {
-
-
-
       if (posY > 170) {
-
         doc.addPage();
-
         posY = 20;
-
       }
 
-
-
-      // TITULO BLOCO
+      // ==================================================
+      // TÍTULO BLOCO
+      // ==================================================
 
       doc.setFontSize(13);
-
-      doc.setFont(
-        "helvetica",
-        "bold"
-      );
-
+      doc.setFont("helvetica", "bold");
 
       doc.setTextColor(
         180,
@@ -208,247 +193,225 @@ export function visualizarRelatorioProfessorSala(
         0
       );
 
-
       doc.text(
         `Grade: ${bloco}`,
         14,
         posY
       );
 
+      posY += 4;
 
-      posY += 2;
-
-
-
-      // SALAS
+      // ==================================================
+      // PERCORRE POLOS
+      // ==================================================
 
       Object.keys(grupos[bloco])
         .sort()
-        .forEach((sala) => {
-
-
-
+        .forEach((polo) => {
           if (posY > 170) {
-
             doc.addPage();
-
             posY = 20;
-
           }
 
-
+          // ==============================================
+          // TÍTULO POLO
+          // ==============================================
 
           doc.setFontSize(11);
-
           doc.setFont(
             "helvetica",
             "bold"
           );
-
 
           doc.setTextColor(
             0,
             0,
             0
           );
-         
-          posY += 4;
 
-          const rows =
-            grupos[bloco][sala]
-              .map((item, index) => [
-
-                index + 1,
-
-                item.codigo,
-
-                item.tema
-                  ?.toUpperCase() ?? "",
-
-                item.data_inicio,
-
-                item.data_fim,
-
-                getPeriodo(
-                  item.hora_inicio
-                ),
-
-                `${item.hora_inicio} às ${item.hora_fim}`,
-
-                item.professor
-                  ?.nome_professor
-                  ?.toUpperCase() ?? ""
-
-              ]);
-
-
-
-
-          autoTable(doc, {
-
-
-            startY: posY,
-
-
-            pageBreak: "avoid",
-
-
-
-            head: [[
-
-              "Nº",
-
-              "Código",
-
-              { content: `Tema do Curso - Sala ${sala}` },
-
-              "Data Início",
-
-              "Data Fim",
-
-              "Período",
-
-              "Horário",
-
-              "Professor",
-
-            ]],
-
-
-
-            body: rows,
-
-
-
-            theme: "grid",
-
-
-
-            styles: {
-
-              fontSize: 9,
-
-              cellPadding: 2,
-
-            },
-
-
-
-            headStyles: {
-
-              fillColor: [
-                200,
-                0,
-                0
-              ],
-
-              textColor: 255,
-
-            },
-
-
-
-            columnStyles: {
-
-
-              0: {
-                cellWidth: 10
-              },
-
-
-              1: {
-                cellWidth: 15
-              },
-
-
-              2: {
-                cellWidth: 95
-              },
-
-
-              3: {
-                cellWidth: 22
-              },
-
-
-              4: {
-                cellWidth: 22
-              },
-
-
-              5: {
-                cellWidth: 20
-              },
-
-
-              6: {
-                cellWidth: 28
-              },
-
-
-              7: {
-                cellWidth: 60
-              },
-
-
-            },
-
-
-          });
-
-
-
-
-          const finalY =
-  doc.lastAutoTable?.finalY ?? posY;
-
-
-
-          doc.setFontSize(10);
-
-          doc.setFont(
-            "helvetica",
-            "bold"
+          doc.text(
+            `Polo: ${polo}`,
+            14,
+            posY
           );
 
+          posY += 5;
 
+          // ==============================================
+          // PERCORRE SALAS
+          // ==============================================
 
-         
+          Object.keys(grupos[bloco][polo])
+            .sort()
+            .forEach((sala) => {
+              if (posY > 170) {
+                doc.addPage();
+                posY = 20;
+              }
 
-          totalGeral +=
-            grupos[bloco][sala].length;
+              const rows =
+                grupos[bloco][polo][sala]
+                  .map((item, index) => [
+                    index + 1,
 
+                    item.codigo,
 
+                    item.tema
+                      ?.toUpperCase() ?? "",
 
-          posY =
-            finalY + 5;
+                    item.data_inicio,
 
+                    item.data_fim,
 
+                    getPeriodo(
+                      item.hora_inicio
+                    ),
 
+                    `${item.hora_inicio} às ${item.hora_fim}`,
+
+                    item.professor
+                      ?.nome_professor
+                      ?.toUpperCase() ?? "",
+
+                    item.professor
+                      ?.telefone ?? "",
+                  ]);
+
+              // ==========================================
+              // TABELA
+              // ==========================================
+
+              autoTable(doc, {
+                startY: posY,
+
+                pageBreak: "avoid",
+
+                head: [[
+                  "Nº",
+
+                  "Código",
+
+                  {
+                    content:
+                      `Tema do Curso - Sala ${sala}`,
+                  },
+
+                  "Data Início",
+
+                  "Data Fim",
+
+                  "Período",
+
+                  "Horário",
+
+                  "Professor",
+
+                  "Contato",
+                ]],
+
+                body: rows,
+
+                theme: "grid",
+
+                styles: {
+                  fontSize: 8.5,
+
+                  cellPadding: 2,
+
+                  valign: "middle",
+                },
+
+                headStyles: {
+                  fillColor: [
+                    200,
+                    0,
+                    0,
+                  ],
+
+                  textColor: 255,
+
+                  fontStyle: "bold",
+
+                  halign: "center",
+                },
+
+                columnStyles: {
+                  0: {
+                    cellWidth: 9,
+                    halign: "center",
+                  },
+
+                  1: {
+                    cellWidth: 15,
+                    halign: "center",
+                  },
+
+                  2: {
+                    cellWidth: 82,
+                  },
+
+                  3: {
+                    cellWidth: 21,
+                    halign: "center",
+                  },
+
+                  4: {
+                    cellWidth: 21,
+                    halign: "center",
+                  },
+
+                  5: {
+                    cellWidth: 20,
+                    halign: "center",
+                  },
+
+                  6: {
+                    cellWidth: 28,
+                    halign: "center",
+                  },
+
+                  7: {
+                    cellWidth: 51,
+                  },
+
+                  8: {
+                    cellWidth: 29,
+                    halign: "center",
+                  },
+                },
+              });
+
+              // ==========================================
+              // POSIÇÃO APÓS TABELA
+              // ==========================================
+
+              const finalY =
+                doc.lastAutoTable?.finalY ??
+                posY;
+
+              totalGeral +=
+                grupos[bloco][polo][sala].length;
+
+              posY =
+                finalY + 4;
+            });
+
+          // Pequeno espaço entre salas
+          posY += 2;
         });
 
-
-
-      posY += 5;
-
-
-
+      // Espaço entre blocos
+      posY += 4;
     });
 
-
-
-
+  // ======================================================
   // TOTAL GERAL
+  // ======================================================
 
   if (posY > 170) {
-
     doc.addPage();
-
     posY = 20;
-
   }
-
-
 
   doc.setFontSize(12);
 
@@ -457,29 +420,27 @@ export function visualizarRelatorioProfessorSala(
     "bold"
   );
 
-
-  doc.text(
-
-    `TOTAL GERAL DE TURMAS: ${totalGeral}`,
-
-    14,
-
-    posY + 10
-
+  doc.setTextColor(
+    0,
+    0,
+    0
   );
 
+  doc.text(
+    `TOTAL GERAL DE TURMAS: ${totalGeral}`,
+    14,
+    posY + 10
+  );
 
-
-  // ABRIR PDF NOVA GUIA
+  // ======================================================
+  // ABRIR PDF EM NOVA GUIA
+  // ======================================================
 
   const pdfUrl =
     doc.output("bloburl");
-
 
   window.open(
     pdfUrl,
     "_blank"
   );
-
-
 }
