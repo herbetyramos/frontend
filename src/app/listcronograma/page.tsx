@@ -557,8 +557,9 @@ const visualizarSolicitacao = async (id: string) => {
       top-full
       hidden
       group-hover:block
-      bg-white
-      border
+     bg-white dark:bg-gray-800
+      border-gray-300 dark:border-gray-700
+    text-gray-900 dark:text-gray-100
       rounded-b-md
       shadow-lg
       w-56
@@ -752,10 +753,10 @@ const visualizarSolicitacao = async (id: string) => {
         
 
               {/* TABELA */}
-              <table className="w-full table-fixed bg-white shadow text-sm border-amber-200">
+              <table className="w-full table-fixed bg-white dark:bg-gray-900 shadow text-sm border-amber-200 dark:border-gray-700">
                 <thead>
                   
-                  <tr className="bg-gray-200 text-left">
+                  <tr className="bg-gray-200 dark:bg-gray-800 text-left">
                       <th className="w-10 border p-2">Código</th>
 
                       <th className="w-50 border p-2">
