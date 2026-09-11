@@ -1,16 +1,16 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-export const dynamic = "force-dynamic";
-
-
 
 // Componentes globais
 import LayoutClient from "../components/LayoutClient";
-import { ToastProvider } from "../components/ToastProvider"; // sem CSS aqui
+import { ToastProvider } from "../components/ToastProvider";
 
 // Contexto de autenticação
 import { AuthProvider } from "../contexts/AuthContext";
+
+export const dynamic = "force-dynamic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,22 +27,33 @@ export const metadata: Metadata = {
   description: "Sistema de cursos",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="pt-BR">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100`}>
+      <body
+        className={`
+          ${geistSans.variable}
+          ${geistMono.variable}
+          antialiased
+          bg-gray-100
+          text-gray-900
+          dark:bg-slate-900
+          dark:text-gray-100
+        `}
+      >
         <AuthProvider>
-
-          {/* Toast global funcionando */}
           <ToastProvider />
 
-          {/* Layout principal */}
           <LayoutClient>
-             {children}
+            {children}
           </LayoutClient>
-
         </AuthProvider>
       </body>
     </html>
   );
 }
+
