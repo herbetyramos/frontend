@@ -1,3 +1,4 @@
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { CronogramaType } from "@/app/matricula/types";
@@ -16,6 +17,7 @@ interface CronogramaRelatorio {
   hora_inicio: string;
   hora_fim: string;
   numero_ata: string;
+  professor: string;
 }
 
 interface RelatorioDetentora {
@@ -24,6 +26,35 @@ interface RelatorioDetentora {
   };
 }
 
+/**
+ * Converte texto para MAIÚSCULAS.
+ */
+function maiuscula(
+  valor: string | null | undefined
+): string {
+  return String(valor ?? "-").toLocaleUpperCase("pt-BR");
+}
+
+/**
+ * Formata data para o padrão brasileiro.
+ */
+function formatarData(
+  data: string
+): string {
+  if (!data) {
+    return "-";
+  }
+
+  // Data no formato YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    const [ano, mes, dia] =
+      data.split("-");
+
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  return data;
+}
 
 export function gerarRelatorioDetentora(
   cronogramaFull: CronogramaType[],
@@ -32,94 +63,121 @@ export function gerarRelatorioDetentora(
   filtroDataFormatura: string,
   filtroEmpresa: string
 ) {
+  /*
+   * ========================================
+   * FILTROS
+   * ========================================
+   */
 
   let lista = [...cronogramaFull];
 
-
+  // FILTRO BLOCO
   if (filtroBloco) {
     lista = lista.filter(
       (item) =>
-        item.bloco_curso?.bloco_Curso === filtroBloco
+        item.bloco_curso?.bloco_Curso ===
+        filtroBloco
     );
   }
 
-
+  // FILTRO EMPRESA
   if (filtroEmpresa) {
     lista = lista.filter(
       (item) =>
-        item.detentoras?.ata?.empresa?.nome_empresa === filtroEmpresa
+        item.detentoras?.ata?.empresa
+          ?.nome_empresa === filtroEmpresa
     );
   }
 
-
+  // FILTRO POLO
   if (filtroPolo) {
     lista = lista.filter(
       (item) =>
-        item.localAula?.polo === filtroPolo
+        item.localAula?.polo ===
+        filtroPolo
     );
   }
 
-
+  // FILTRO DATA FORMATURA
   if (filtroDataFormatura) {
     lista = lista.filter(
       (item) =>
-        item.formatura?.data_formatura === filtroDataFormatura
+        item.formatura?.data_formatura ===
+        filtroDataFormatura
     );
   }
 
-
+  /*
+   * ========================================
+   * AGRUPAMENTO
+   *
+   * DETENTORA
+   *   └── POLO
+   *        └── CURSOS
+   * ========================================
+   */
 
   const dados: RelatorioDetentora = {};
 
-
-
   lista.forEach((item) => {
-
     const empresa =
-      item.detentoras?.ata?.empresa?.nome_empresa ??
+      item.detentoras?.ata?.empresa
+        ?.nome_empresa ??
       "SEM DETENTORA";
-
 
     const polo =
       item.localAula?.polo ??
       "SEM POLO";
 
-
-
     if (!dados[empresa]) {
       dados[empresa] = {};
     }
-
 
     if (!dados[empresa][polo]) {
       dados[empresa][polo] = [];
     }
 
-
-
     dados[empresa][polo].push({
-
       codigo: item.codigo,
 
-      tema: item.tema,
+      tema: maiuscula(
+        item.tema
+      ),
 
-      data_inicio: item.data_inicio,
+      data_inicio:
+        formatarData(
+          item.data_inicio
+        ),
 
-      data_fim: item.data_fim,
+      data_fim:
+        formatarData(
+          item.data_fim
+        ),
 
-      hora_inicio: item.hora_inicio,
+      hora_inicio:
+        item.hora_inicio ?? "-",
 
-      hora_fim: item.hora_fim,
+      hora_fim:
+        item.hora_fim ?? "-",
 
       numero_ata:
-        item.detentoras?.ata?.numero_ata ?? "-"
+        item.detentoras?.ata
+          ?.numero_ata ?? "-",
 
+      professor:
+        maiuscula(
+          item.professor
+            ?.nome_professor ??
+            "NÃO INFORMADO"
+        ),
     });
-
-
   });
 
-
+  /*
+   * ========================================
+   * CRIAÇÃO DO PDF
+   * ========================================
+   */
 
   const doc =
     new jsPDF(
@@ -128,13 +186,16 @@ export function gerarRelatorioDetentora(
       "a4"
     ) as JsPDFWithAutoTable;
 
-
-
   let posY = 15;
 
-
+  /*
+   * ========================================
+   * TÍTULO
+   * ========================================
+   */
 
   doc.setFontSize(16);
+
   doc.setFont(
     "helvetica",
     "bold"
@@ -148,247 +209,423 @@ export function gerarRelatorioDetentora(
 
   posY += 12;
 
-
-
+  /*
+   * ========================================
+   * EMPRESAS / DETENTORAS
+   * ========================================
+   */
 
   Object.keys(dados)
-    .sort()
+    .sort((a, b) =>
+      a.localeCompare(
+        b,
+        "pt-BR"
+      )
+    )
     .forEach((empresa) => {
-
-
-      if (posY > 180) {
-
+      /*
+       * Verifica espaço disponível
+       */
+      if (posY > 245) {
         doc.addPage();
-
         posY = 15;
-
       }
 
-
+      const polos =
+        Object.keys(
+          dados[empresa]
+        ).sort((a, b) =>
+          a.localeCompare(
+            b,
+            "pt-BR"
+          )
+        );
 
       const primeiroPolo =
-        Object.keys(dados[empresa])[0];
-
+        polos[0];
 
       const numeroAta =
-        dados[empresa]
-          [primeiroPolo]
-          [0]
-          ?.numero_ata ?? "-";
+        primeiroPolo
+          ? dados[empresa]
+              [primeiroPolo]
+              [0]
+              ?.numero_ata ?? "-"
+          : "-";
 
+      /*
+       * ========================================
+       * DETENTORA
+       * ========================================
+       */
 
-
-      doc.setFontSize(14);
+      doc.setFontSize(13);
 
       doc.setFont(
         "helvetica",
         "bold"
       );
 
-
       doc.text(
-        `ATA Nº ${numeroAta} - ${empresa}`,
+        `DETENTORA: ${maiuscula(
+          empresa
+        )}`,
         14,
         posY
       );
 
+      posY += 6;
+
+      /*
+       * ========================================
+       * ATA
+       * ========================================
+       */
+
+      doc.setFontSize(11);
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.text(
+        `ATA Nº ${numeroAta}`,
+        14,
+        posY
+      );
 
       posY += 8;
 
+      /*
+       * ========================================
+       * POLOS
+       * ========================================
+       */
 
+      polos.forEach((polo) => {
+        /*
+         * Verifica espaço disponível
+         */
+        if (posY > 245) {
+          doc.addPage();
+          posY = 15;
+        }
 
-      Object.keys(dados[empresa])
-        .sort()
-        .forEach((polo) => {
+        /*
+         * ========================================
+         * POLO
+         * ========================================
+         */
 
+        doc.setFontSize(11);
 
-          if (posY > 180) {
+        doc.setFont(
+          "helvetica",
+          "bold"
+        );
 
-            doc.addPage();
+        doc.text(
+          `POLO: ${maiuscula(
+            polo
+          )}`,
+          14,
+          posY
+        );
 
-            posY = 15;
+        posY += 4;
 
-          }
+        /*
+         * ========================================
+         * CORPO DA TABELA
+         * ========================================
+         */
 
+        const body =
+          dados[empresa][polo]
+            .map((curso) => [
+              String(
+                curso.codigo
+              ),
 
+              curso.tema,
 
-          doc.setFontSize(12);
+              curso.data_inicio,
 
-          doc.text(
-            `POLO: ${polo}`,
-            18,
-            posY
-          );
+              curso.data_fim,
 
+              `${curso.hora_inicio} - ${curso.hora_fim}`,
 
-          posY += 4;
+              curso.professor,
+            ]);
 
+        /*
+         * ========================================
+         * TABELA
+         * ========================================
+         */
 
+        autoTable(doc, {
+          startY: posY,
 
-          const body =
-            dados[empresa][polo]
-              .map((curso) => [
+          head: [[
+            "Código",
+            "Tema",
+            "Data Início",
+            "Data Fim",
+            "Horário",
+            "Professor",
+          ]],
 
-                curso.codigo,
+          body,
 
-                curso.tema,
+          theme: "grid",
 
-                curso.data_inicio,
+          styles: {
+            fontSize: 8.5,
 
-                curso.data_fim,
+            cellPadding: 2,
 
-                curso.hora_inicio,
+            valign: "middle",
 
-                curso.hora_fim
+            lineWidth: 0.2,
+          },
 
-              ]);
+          headStyles: {
+            fillColor: [
+              180,
+              0,
+              0,
+            ],
 
+            textColor: 255,
 
+            fontStyle: "bold",
 
-          autoTable(doc, {
+            halign: "center",
 
-            startY: posY,
+            valign: "middle",
+          },
 
+          bodyStyles: {
+            textColor: 20,
+          },
 
-            head: [[
+          alternateRowStyles: {
+            fillColor: [
+              245,
+              245,
+              245,
+            ],
+          },
 
-              "Código",
+          columnStyles: {
+            0: {
+              cellWidth: 16,
 
-              "Curso",
-
-              "Data Inicial",
-
-              "Data Final",
-
-              "Hora Inicial",
-
-              "Hora Final"
-
-            ]],
-
-
-            body,
-
-
-            theme: "grid",
-
-
-            styles: {
-
-              fontSize: 9,
-
-              cellPadding: 2
-
+              halign: "center",
             },
 
-
-            headStyles: {
-
-              fillColor: [
-                180,
-                0,
-                0
-              ],
-
-              textColor: 255
-
+            1: {
+              cellWidth: 48,
             },
 
+            2: {
+              cellWidth: 22,
 
-            columnStyles: {
+              halign: "center",
+            },
 
-              0: {
-                cellWidth: 15
-              },
+            3: {
+              cellWidth: 22,
 
-              1: {
-                cellWidth: 75
-              },
+              halign: "center",
+            },
 
-              2: {
-                cellWidth: 22
-              },
+            4: {
+              cellWidth: 27,
 
-              3: {
-                cellWidth: 22
-              },
+              halign: "center",
+            },
 
-              4: {
-                cellWidth: 22
-              },
+            5: {
+              cellWidth: 52,
+            },
+          },
 
-              5: {
-                cellWidth: 22
-              }
+          margin: {
+            left: 14,
 
+            right: 14,
+
+            bottom: 20,
+          },
+
+          didParseCell: (data) => {
+            /*
+             * Garante MAIÚSCULAS
+             * no Tema e Professor.
+             */
+
+            if (
+              data.section ===
+                "body" &&
+              (
+                data.column.index ===
+                  1 ||
+                data.column.index ===
+                  5
+              )
+            ) {
+              data.cell.text =
+                data.cell.text.map(
+                  (texto) =>
+                    texto.toLocaleUpperCase(
+                      "pt-BR"
+                    )
+                );
             }
-
-          });
-
-
-
-          posY =
-            doc.lastAutoTable?.finalY ?? posY;
-
-
-          posY += 8;
-
-
-
+          },
         });
 
+        /*
+         * Atualiza posição
+         * depois da tabela
+         */
 
+        posY =
+          doc.lastAutoTable
+            ?.finalY ??
+          posY;
 
-      posY += 8;
+        posY += 8;
+      });
 
+      /*
+       * Espaço entre empresas
+       */
 
+      posY += 5;
     });
 
+  /*
+   * ========================================
+   * TOTAL DE CURSOS
+   * ========================================
+   *
+   * O total considera somente os registros
+   * que passaram pelos filtros.
+   */
 
+  const totalCursos =
+    lista.length;
 
+  /*
+   * ========================================
+   * PAGINAÇÃO
+   * ========================================
+   */
 
   const paginas =
     doc.getNumberOfPages();
-
-
 
   for (
     let i = 1;
     i <= paginas;
     i++
   ) {
-
     doc.setPage(i);
 
+    /*
+     * Fonte do rodapé
+     */
 
-    doc.setFontSize(9);
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
 
+    doc.setFontSize(8);
+
+    /*
+     * Linha superior do rodapé
+     */
+
+    doc.setDrawColor(
+      180,
+      180,
+      180
+    );
+
+    doc.line(
+      14,
+      280,
+      196,
+      280
+    );
+
+    /*
+     * ========================================
+     * TOTAL
+     * ========================================
+     */
+
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.text(
+      `TOTAL DE CURSOS: ${totalCursos}`,
+      14,
+      286
+    );
+
+    /*
+     * ========================================
+     * DATA DE EMISSÃO
+     * ========================================
+     */
+
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
+    doc.text(
+      `Emitido em ${new Date().toLocaleDateString(
+        "pt-BR"
+      )}`,
+      85,
+      286
+    );
+
+    /*
+     * ========================================
+     * PÁGINA
+     * ========================================
+     */
 
     doc.text(
       `Página ${i} de ${paginas}`,
-      170,
-      285
+      165,
+      286
     );
-
-
-    doc.text(
-      `Emitido em ${new Date().toLocaleDateString("pt-BR")}`,
-      14,
-      285
-    );
-
   }
 
-
-
+  /*
+   * ========================================
+   * ABRIR PDF
+   * ========================================
+   */
 
   const blob =
     doc.output("blob");
 
-
   window.open(
-    URL.createObjectURL(blob),
+    URL.createObjectURL(
+      blob
+    ),
     "_blank"
   );
-
 }
+
