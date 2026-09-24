@@ -3,6 +3,7 @@
 
 import {
   Suspense,
+  useEffect,
   useState,
 } from "react";
 
@@ -11,6 +12,7 @@ import { useSearchParams } from "next/navigation";
 import ListaCronogramas from "@/components/chat/atendimento/ListaCronogramas";
 import ListaConversas from "@/components/chat/ListaConversas";
 import JanelaChat from "@/components/chat/JanelaChat";
+import { socket } from "@/services/socket";
 
 // =====================================================
 // CONTEÚDO DA PÁGINA
@@ -37,6 +39,39 @@ function AtendimentoContent() {
 
   const [conversaId, setConversaId] =
     useState<string | null>(null);
+
+  // =====================================================
+  // RECEBER NOVA MENSAGEM
+  // =====================================================
+
+  useEffect(() => {
+    function novaMensagem(data: {
+      conversaId?: string;
+    }) {
+      if (!data?.conversaId) {
+        return;
+      }
+
+      console.log(
+        "📩 Nova mensagem recebida. Selecionando conversa:",
+        data.conversaId
+      );
+
+      setConversaId(data.conversaId);
+    }
+
+    socket.on(
+      "novaMensagem",
+      novaMensagem
+    );
+
+    return () => {
+      socket.off(
+        "novaMensagem",
+        novaMensagem
+      );
+    };
+  }, []);
 
   // =====================================================
   // SELECIONAR CRONOGRAMA
