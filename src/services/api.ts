@@ -13,10 +13,22 @@ export function signOutGlobal() {
 export function setupAPIClient(
   ctx?: Parameters<typeof parseCookies>[0]
 ) {
+  /**
+   * Em produção:
+   *   usa /api através do Nginx
+   *
+   * Em desenvolvimento:
+   *   usa NEXT_PUBLIC_API_URL, se definida
+   *   caso contrário, usa localhost:3000
+   */
+  const baseURL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    (typeof window !== "undefined"
+      ? "/api"
+      : "http://localhost:3000");
+
   const api = axios.create({
-    baseURL:
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://192.168.15.84:3000",
+    baseURL,
     withCredentials: true,
   });
 
