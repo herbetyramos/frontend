@@ -963,7 +963,7 @@ const visualizarSolicitacao = async (id: string) => {
               <Link
                 href={
                   `/chat/atendimento?` +
-                  `cronograma=${item.id}` +
+                  `cronogramaId=${item.id}` +
                   `&bloco=${encodeURIComponent(filtroBloco)}` +
                   `&polo=${encodeURIComponent(filtroPolo)}` +
                   `&empresa=${encodeURIComponent(filtroEmpresa)}` +

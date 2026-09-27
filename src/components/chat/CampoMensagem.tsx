@@ -20,6 +20,7 @@ export default function CampoMensagem({
   const [texto, setTexto] = useState("");
   const [arquivo, setArquivo] =
     useState<File | null>(null);
+
   const [enviando, setEnviando] =
     useState(false);
 
@@ -36,9 +37,6 @@ export default function CampoMensagem({
       return;
     }
 
-    /*
-     * Limite de 10 MB.
-     */
     const limite =
       10 * 1024 * 1024;
 
@@ -59,8 +57,7 @@ export default function CampoMensagem({
     setArquivo(null);
 
     if (inputArquivoRef.current) {
-      inputArquivoRef.current.value =
-        "";
+      inputArquivoRef.current.value = "";
     }
   }
 
@@ -68,9 +65,6 @@ export default function CampoMensagem({
     const mensagem =
       texto.trim();
 
-    /*
-     * Não permite envio completamente vazio.
-     */
     if (
       !mensagem &&
       !arquivo
@@ -81,12 +75,6 @@ export default function CampoMensagem({
     try {
       setEnviando(true);
 
-      /*
-       * Sempre usamos FormData.
-       *
-       * Isso permite continuar enviando
-       * texto normalmente e também arquivos.
-       */
       const formData =
         new FormData();
 
@@ -109,21 +97,57 @@ export default function CampoMensagem({
         );
       }
 
+      /*
+       * Envia para o backend.
+       */
       await api.post(
         "/chat/enviar",
         formData
       );
 
       /*
-       * Limpa o campo após o envio.
+       * IMPORTANTE:
+       *
+       * Dispara um evento LOCAL no navegador.
+       *
+       * A JanelaChat vai escutar esse evento
+       * e recarregar as mensagens imediatamente.
+       */
+      window.dispatchEvent(
+        new CustomEvent(
+          "chat:mensagem-enviada",
+          {
+            detail: {
+              conversaId,
+            },
+          }
+        )
+      );
+
+      /*
+       * Também atualiza a lista de conversas
+       * localmente através de outro evento.
+       */
+      window.dispatchEvent(
+        new CustomEvent(
+          "chat:conversa-atualizada",
+          {
+            detail: {
+              conversaId,
+            },
+          }
+        )
+      );
+
+      /*
+       * Limpa o campo.
        */
       setTexto("");
 
       setArquivo(null);
 
       if (inputArquivoRef.current) {
-        inputArquivoRef.current.value =
-          "";
+        inputArquivoRef.current.value = "";
       }
     } catch (error) {
       console.error(
@@ -154,14 +178,18 @@ export default function CampoMensagem({
 
   return (
     <div className="border-t bg-white p-4">
+
       {arquivo && (
         <div className="mb-3 flex items-center justify-between rounded-lg border bg-gray-50 px-3 py-2">
+
           <div className="flex min-w-0 items-center gap-2">
+
             <span className="text-xl">
               📎
             </span>
 
             <div className="min-w-0">
+
               <p className="truncate text-sm font-medium text-gray-700">
                 {arquivo.name}
               </p>
@@ -174,7 +202,9 @@ export default function CampoMensagem({
                 ).toFixed(2)}{" "}
                 MB
               </p>
+
             </div>
+
           </div>
 
           <button
@@ -187,10 +217,12 @@ export default function CampoMensagem({
           >
             ✕
           </button>
+
         </div>
       )}
 
       <div className="flex gap-2">
+
         <input
           ref={inputArquivoRef}
           type="file"
@@ -246,7 +278,9 @@ export default function CampoMensagem({
             ? "Enviando..."
             : "Enviar"}
         </button>
+
       </div>
+
     </div>
   );
 }

@@ -100,6 +100,13 @@ export default function JanelaChat({
       const { data } = await api.get(
         `/chat/${conversaId}`
       );
+      console.log(
+  "🔎 RESPOSTA DO CHAT:",
+  JSON.stringify(data, null, 2)
+);
+
+console.log("📊 TOTAL DE MENSAGENS:", data?.mensagens?.length);
+console.log("📩 ÚLTIMA MENSAGEM:", data?.mensagens?.[data.mensagens.length - 1]);
 
       if (Array.isArray(data)) {
         setMensagens(data);
@@ -1018,7 +1025,7 @@ export default function JanelaChat({
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-gray-100 min-w-0">
+    <div className="flex h-full min-h-0 w-full flex-col bg-gray-100">
       {conversa && (
         <CabecalhoChat
           nome={conversa.nome}
@@ -1037,7 +1044,7 @@ export default function JanelaChat({
         />
       )}
 
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="min-h-0 flex-1 overflow-y-auto p-5">
         {loading && (
           <div className="flex items-center justify-center py-4 text-sm text-gray-500">
             Carregando...
