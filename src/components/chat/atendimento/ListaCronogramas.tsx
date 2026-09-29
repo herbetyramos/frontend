@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,6 +28,9 @@ interface Cronograma {
   };
 
   quantidadeAlunos?: number;
+
+  // Mantido como compatibilidade caso alguma resposta antiga ainda utilize este nome.
+  quantidade_aluno?: number;
 }
 
 interface Props {
@@ -78,18 +80,17 @@ export default function ListaCronogramas({
       return null;
     }
 
-    // -------------------------------------------------------
-    // YYYY-MM-DD
-    // Trata como data LOCAL para não voltar um dia
-    // por causa do fuso horário.
-    // -------------------------------------------------------
+    // =======================================================
+    // FORMATO BRASILEIRO
+    // DD/MM/YYYY
+    // =======================================================
 
-    const somenteData = texto.match(
-      /^(\d{4})-(\d{2})-(\d{2})$/
+    const formatoBrasileiro = texto.match(
+      /^(\d{2})\/(\d{2})\/(\d{4})$/
     );
 
-    if (somenteData) {
-      const [, ano, mes, dia] = somenteData;
+    if (formatoBrasileiro) {
+      const [, dia, mes, ano] = formatoBrasileiro;
 
       const dataLocal = new Date(
         Number(ano),
@@ -102,9 +103,36 @@ export default function ListaCronogramas({
       }
     }
 
-    // -------------------------------------------------------
-    // Datas com horário
-    // -------------------------------------------------------
+    // =======================================================
+    // FORMATO ISO
+    //
+    // YYYY-MM-DD
+    // YYYY-MM-DDTHH:mm:ss
+    // YYYY-MM-DDTHH:mm:ss.sssZ
+    // YYYY-MM-DD HH:mm:ss
+    // =======================================================
+
+    const formatoISO = texto.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    );
+
+    if (formatoISO) {
+      const [, ano, mes, dia] = formatoISO;
+
+      const dataLocal = new Date(
+        Number(ano),
+        Number(mes) - 1,
+        Number(dia)
+      );
+
+      if (!Number.isNaN(dataLocal.getTime())) {
+        return dataLocal;
+      }
+    }
+
+    // =======================================================
+    // TENTATIVA FINAL
+    // =======================================================
 
     const dataNormal = new Date(texto);
 
@@ -117,6 +145,7 @@ export default function ListaCronogramas({
 
   // =========================================================
   // FORMATAR DATA
+  // DD/MM/YYYY
   // =========================================================
 
   function formatarData(
@@ -128,20 +157,22 @@ export default function ListaCronogramas({
       return "-";
     }
 
-    return data.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const dia = String(
+      data.getDate()
+    ).padStart(2, "0");
+
+    const mes = String(
+      data.getMonth() + 1
+    ).padStart(2, "0");
+
+    const ano = data.getFullYear();
+
+    return `${dia}/${mes}/${ano}`;
   }
 
   // =========================================================
   // OBTER HORA DE INÍCIO
- 
-  // 08:00 -> Manhã
-  // 13:00 -> Tarde
-  // 18:00 -> Noite
-  
+  // =========================================================
 
   function obterHoraInicio(
     valor?: string | null
@@ -156,21 +187,9 @@ export default function ListaCronogramas({
       return null;
     }
 
-    // Aceita:
-    // 08:00
-    // 08:00:00
-    // 2026-09-28T08:00:00
-    // 2026-09-28 08:00:00
+    const partes = texto.split(":");
 
-    const horario = texto.match(
-      /(?:T|\s|^)(\d{2}):(\d{2})/
-    );
-
-    if (!horario) {
-      return null;
-    }
-
-    const hora = Number(horario[1]);
+    const hora = Number(partes[0]);
 
     if (
       Number.isNaN(hora) ||
@@ -184,38 +203,31 @@ export default function ListaCronogramas({
   }
 
   // =========================================================
-  // IDENTIFICAR PERÍODO
+  // OBTER PERÍODO
   // =========================================================
 
   function obterPeriodo(
-    horaInicio?: string | null
-  ): string {
-    const hora = obterHoraInicio(horaInicio);
+    hora?: string | null
+  ): string | null {
+    const horaInicio = obterHoraInicio(hora);
 
-    if (hora === null) {
-      return "-";
+    if (horaInicio === null) {
+      return null;
     }
 
-    // 08:00 até 12:59
-    if (hora >= 8 && hora < 13) {
-      return "Manhã";
+    if (horaInicio < 12) {
+      return "MANHÃ";
     }
 
-    // 13:00 até 17:59
-    if (hora >= 13 && hora < 18) {
-      return "Tarde";
+    if (horaInicio < 18) {
+      return "TARDE";
     }
 
-    // 18:00 até 23:59
-    if (hora >= 18 && hora < 24) {
-      return "Noite";
-    }
-
-    return "-";
+    return "NOITE";
   }
 
   // =========================================================
-  // RECUPERAR CRONOGRAMA FOCADO
+  // RESTAURAR CRONOGRAMA SELECIONADO
   // =========================================================
 
   useEffect(() => {
@@ -243,7 +255,9 @@ export default function ListaCronogramas({
   // SELECIONAR CRONOGRAMA
   // =========================================================
 
-  function selecionarCronograma(id: string) {
+  function selecionarCronograma(
+    id: string
+  ) {
     sessionStorage.setItem(
       STORAGE_KEY,
       id
@@ -294,7 +308,8 @@ export default function ListaCronogramas({
         if (polo) {
           filtrados = filtrados.filter(
             (item) =>
-              item.localAula?.polo === polo
+              item.localAula?.polo ===
+              polo
           );
         }
 
@@ -352,7 +367,7 @@ export default function ListaCronogramas({
         setCronogramas(filtrados);
 
         // =====================================================
-        // RESTAURAR FOCO
+        // RESTAURAR SELEÇÃO
         // =====================================================
 
         const salvo =
@@ -390,19 +405,17 @@ export default function ListaCronogramas({
   ]);
 
   // =========================================================
-  // TELA
+  // RENDER
   // =========================================================
 
   return (
     <div className="flex h-full flex-col">
-
       {/* =====================================================
           CABEÇALHO
-          ===================================================== */}
+      ====================================================== */}
 
       <div className="border-b bg-blue-600 p-3 text-white">
         <div className="flex items-center justify-between gap-2">
-
           <h2 className="text-lg font-bold">
             Cronogramas
           </h2>
@@ -419,21 +432,27 @@ export default function ListaCronogramas({
           >
             💬 Conversas
           </button>
-
         </div>
       </div>
 
       {/* =====================================================
           LISTA
-          ===================================================== */}
+      ====================================================== */}
 
       <div className="flex-1 overflow-y-auto">
+        {/* ===================================================
+            CARREGANDO
+        ==================================================== */}
 
         {carregando && (
           <div className="p-4 text-center text-sm text-gray-500">
             Carregando cronogramas...
           </div>
         )}
+
+        {/* ===================================================
+            VAZIO
+        ==================================================== */}
 
         {!carregando &&
           cronogramas.length === 0 && (
@@ -442,21 +461,29 @@ export default function ListaCronogramas({
             </div>
           )}
 
+        {/* ===================================================
+            CRONOGRAMAS
+        ==================================================== */}
+
         {!carregando &&
           cronogramas.map((item) => {
-
             const selecionado =
               cronogramaSelecionado ===
               item.id;
-
-            // =================================================
-            // PERÍODO BASEADO NO hora_inicio
-            // =================================================
 
             const periodo =
               obterPeriodo(
                 item.hora_inicio
               );
+
+            const quantidadeAlunos =
+              typeof item.quantidadeAlunos ===
+              "number"
+                ? item.quantidadeAlunos
+                : typeof item.quantidade_aluno ===
+                    "number"
+                  ? item.quantidade_aluno
+                  : 0;
 
             return (
               <button
@@ -473,18 +500,17 @@ export default function ListaCronogramas({
                     : "bg-white"
                 }`}
               >
-
-                {/* =================================================
+                {/* =========================================
                     TEMA
-                    ================================================= */}
+                ========================================== */}
 
                 <div className="font-semibold text-gray-800">
                   📚 {item.tema}
                 </div>
 
-                {/* =================================================
+                {/* =========================================
                     BLOCO
-                    ================================================= */}
+                ========================================== */}
 
                 {item.bloco_curso
                   ?.bloco_Curso && (
@@ -497,9 +523,9 @@ export default function ListaCronogramas({
                   </div>
                 )}
 
-                {/* =================================================
+                {/* =========================================
                     POLO
-                    ================================================= */}
+                ========================================== */}
 
                 {item.localAula?.polo && (
                   <div className="text-sm text-gray-600">
@@ -508,9 +534,9 @@ export default function ListaCronogramas({
                   </div>
                 )}
 
-                {/* =================================================
+                {/* =========================================
                     EMPRESA
-                    ================================================= */}
+                ========================================== */}
 
                 {item.empresa
                   ?.nome_empresa && (
@@ -523,12 +549,11 @@ export default function ListaCronogramas({
                   </div>
                 )}
 
-                {/* =================================================
-                    DATA + PERÍODO + ALUNOS
-                    ================================================= */}
+                {/* =========================================
+                    DATA / PERÍODO / ALUNOS
+                ========================================== */}
 
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
-
                   {/* DATA */}
 
                   <span>
@@ -544,35 +569,26 @@ export default function ListaCronogramas({
 
                   {/* PERÍODO */}
 
-                  {periodo !== "-" && (
-                    <span className="font-bold ">
-                     - {periodo}
+                  {periodo && (
+                    <span className="font-medium">
+                      🕐 {periodo}
                     </span>
                   )}
 
                   {/* ALUNOS */}
- 
 
                   <span className="font-medium">
-                    {" "}
-                    {typeof item.quantidadeAlunos ===
-                    "number"
-                      ? item.quantidadeAlunos
-                      : 0}{" "}
-                    {item.quantidadeAlunos ===
-                    1
+                    👥{" "}
+                    {quantidadeAlunos}{" "}
+                    {quantidadeAlunos === 1
                       ? "aluno"
                       : "alunos"}
                   </span>
-
                 </div>
-
               </button>
             );
           })}
-
       </div>
-
     </div>
   );
 }
