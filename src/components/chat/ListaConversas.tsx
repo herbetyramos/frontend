@@ -14,6 +14,7 @@ interface Conversa {
   id: string;
   nome?: string;
   telefone: string;
+  aluno_id?: string;
   ultimaMensagem?: string;
   ultimaData?: string;
   status:
@@ -27,6 +28,16 @@ interface Aluno {
   id: string;
   nome: string;
   telefone: string;
+}
+
+interface RespostaCriarConversa {
+  id?: string;
+  conversa?: {
+    id?: string;
+  } | null;
+  data?: {
+    id?: string;
+  } | null;
 }
 
 type FiltroStatus =
@@ -61,42 +72,58 @@ export default function ListaConversas({
   const [filtroStatus, setFiltroStatus] =
     useState<FiltroStatus>("TODAS");
 
+  // =====================================================
+  // CARREGAR CONVERSAS
+  // =====================================================
+
   const carregarConversas =
     useCallback(async () => {
       try {
-        setLoading(true);
-
         const { data } =
           await api.get("/chat");
 
-        setConversas(
+        const lista: Conversa[] =
           Array.isArray(data)
             ? data
-            : []
-        );
+            : [];
+
+        setConversas(lista);
       } catch (error) {
         console.error(
           "Erro ao carregar conversas:",
           error
         );
-      } finally {
-        setLoading(false);
       }
     }, []);
+
+  // =====================================================
+  // CARREGAR ALUNOS DO CRONOGRAMA
+  // =====================================================
 
   const carregarAlunos =
     useCallback(async () => {
       if (!cronogramaId) {
+        setAlunos([]);
         return;
       }
 
       try {
         setLoading(true);
 
+        console.log(
+          "📚 Carregando alunos do cronograma:",
+          cronogramaId
+        );
+
         const { data } =
           await api.get(
             `/chat/cronograma/${cronogramaId}`
           );
+
+        console.log(
+          "👨‍🎓 Alunos recebidos:",
+          data
+        );
 
         setAlunos(
           Array.isArray(data?.alunos)
@@ -108,65 +135,256 @@ export default function ListaConversas({
           "Erro ao carregar alunos:",
           error
         );
+
+        setAlunos([]);
       } finally {
         setLoading(false);
       }
     }, [cronogramaId]);
 
-  async function selecionarAluno(
-    aluno: Aluno
-  ) {
-    try {
-      const { data } =
-        await api.post("/chat", {
-          telefone: aluno.telefone,
-          nome: aluno.nome,
-          aluno_id: aluno.id,
-        });
+  // =====================================================
+  // RECARREGAR CONVERSAS PELO SOCKET
+  // =====================================================
 
-      onSelecionar(data.id);
-    } catch (error) {
-      console.error(
-        "Erro ao abrir conversa",
-        error
+  const recarregarConversasPorSocket =
+    useCallback(() => {
+      console.log(
+        "🔄 ListaConversas: atualizando conversas pelo Socket.IO"
       );
-    }
-  }
+
+      void carregarConversas();
+    }, [carregarConversas]);
+
+  // =====================================================
+  // CARREGAMENTO INICIAL
+  // =====================================================
 
   useEffect(() => {
-    if (cronogramaId) {
-      carregarAlunos();
-      return;
-    }
+    void carregarConversas();
+  }, [carregarConversas]);
 
-    carregarConversas();
+  useEffect(() => {
+    void carregarAlunos();
+  }, [carregarAlunos]);
 
+  // =====================================================
+  // SOCKET
+  // =====================================================
+
+  useEffect(() => {
     socket.on(
       "atualizarConversas",
-      carregarConversas
+      recarregarConversasPorSocket
     );
 
     socket.on(
       "conversaAtualizada",
-      carregarConversas
+      recarregarConversasPorSocket
+    );
+
+    socket.on(
+      "novaMensagem",
+      recarregarConversasPorSocket
+    );
+
+    socket.on(
+      "mensagemAtualizada",
+      recarregarConversasPorSocket
+    );
+
+    socket.on(
+      "statusConversaAtualizado",
+      recarregarConversasPorSocket
     );
 
     return () => {
       socket.off(
         "atualizarConversas",
-        carregarConversas
+        recarregarConversasPorSocket
       );
 
       socket.off(
         "conversaAtualizada",
-        carregarConversas
+        recarregarConversasPorSocket
+      );
+
+      socket.off(
+        "novaMensagem",
+        recarregarConversasPorSocket
+      );
+
+      socket.off(
+        "mensagemAtualizada",
+        recarregarConversasPorSocket
+      );
+
+      socket.off(
+        "statusConversaAtualizado",
+        recarregarConversasPorSocket
       );
     };
   }, [
-    cronogramaId,
-    carregarAlunos,
-    carregarConversas,
+    recarregarConversasPorSocket,
   ]);
+
+  // =====================================================
+  // SELECIONAR ALUNO
+  // =====================================================
+
+  async function selecionarAluno(
+    aluno: Aluno
+  ) {
+    try {
+      setLoading(true);
+
+      console.log(
+        "👤 Aluno selecionado:",
+        aluno
+      );
+
+      const { data } =
+        await api.post<RespostaCriarConversa>(
+          "/chat",
+          {
+            telefone: aluno.telefone,
+            nome: aluno.nome,
+            aluno_id: aluno.id,
+          }
+        );
+
+      console.log(
+        "💬 Resposta do POST /chat:",
+        data
+      );
+
+      const idConversa =
+        data.id ??
+        data.conversa?.id ??
+        data.data?.id;
+
+      if (!idConversa) {
+        console.error(
+          "❌ O backend não retornou o ID da conversa:",
+          data
+        );
+
+        alert(
+          "Não foi possível abrir a conversa. O servidor não retornou o ID da conversa."
+        );
+
+        return;
+      }
+
+      console.log(
+        "✅ Conversa selecionada:",
+        idConversa
+      );
+
+      await carregarConversas();
+
+      onSelecionar(idConversa);
+    } catch (error: unknown) {
+      console.error(
+        "❌ Erro ao abrir conversa:",
+        error
+      );
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error
+      ) {
+        const erroComResposta =
+          error as {
+            response?: {
+              data?: {
+                message?: string;
+              };
+            };
+          };
+
+        console.error(
+          "Resposta do servidor:",
+          erroComResposta.response?.data
+        );
+
+        alert(
+          erroComResposta.response?.data
+            ?.message ||
+            "Não foi possível abrir a conversa."
+        );
+
+        return;
+      }
+
+      alert(
+        "Não foi possível abrir a conversa."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // =====================================================
+  // NORMALIZAR TELEFONE
+  // =====================================================
+
+  const normalizarTelefone =
+    useCallback(
+      (telefone: string) => {
+        return telefone.replace(
+          /\D/g,
+          ""
+        );
+      },
+      []
+    );
+
+  // =====================================================
+  // ENCONTRAR CONVERSA DO ALUNO
+  // =====================================================
+
+  const obterConversaDoAluno =
+    useCallback(
+      (
+        aluno: Aluno
+      ): Conversa | undefined => {
+        const telefoneAluno =
+          normalizarTelefone(
+            aluno.telefone
+          );
+
+        return conversas.find(
+          (conversa) => {
+            if (
+              conversa.aluno_id &&
+              conversa.aluno_id ===
+                aluno.id
+            ) {
+              return true;
+            }
+
+            if (!conversa.telefone) {
+              return false;
+            }
+
+            return (
+              normalizarTelefone(
+                conversa.telefone
+              ) === telefoneAluno
+            );
+          }
+        );
+      },
+      [
+        conversas,
+        normalizarTelefone,
+      ]
+    );
+
+  // =====================================================
+  // QUANTIDADE POR STATUS
+  // =====================================================
 
   const quantidadeAguardando =
     useMemo(() => {
@@ -194,6 +412,10 @@ export default function ListaConversas({
           "FINALIZADO"
       ).length;
     }, [conversas]);
+
+  // =====================================================
+  // FILTRAR CONVERSAS
+  // =====================================================
 
   const conversasFiltradas =
     useMemo(() => {
@@ -238,6 +460,10 @@ export default function ListaConversas({
       filtroStatus,
     ]);
 
+  // =====================================================
+  // FILTRAR ALUNOS
+  // =====================================================
+
   const alunosFiltrados =
     useMemo(() => {
       if (!busca.trim()) {
@@ -262,6 +488,10 @@ export default function ListaConversas({
         }
       );
     }, [busca, alunos]);
+
+  // =====================================================
+  // FORMATAR HORA
+  // =====================================================
 
   function formatarHora(
     data?: string
@@ -290,6 +520,10 @@ export default function ListaConversas({
     );
   }
 
+  // =====================================================
+  // AVATAR
+  // =====================================================
+
   function avatar(
     nome?: string
   ) {
@@ -301,6 +535,10 @@ export default function ListaConversas({
       .charAt(0)
       .toUpperCase();
   }
+
+  // =====================================================
+  // STATUS
+  // =====================================================
 
   function obterStatus(
     status: Conversa["status"]
@@ -340,6 +578,10 @@ export default function ListaConversas({
     }
   }
 
+  // =====================================================
+  // BOTÃO DE FILTRO
+  // =====================================================
+
   function botaoFiltro(
     filtro: FiltroStatus,
     texto: string,
@@ -375,11 +617,18 @@ export default function ListaConversas({
     );
   }
 
-  return (
-    <div className="flex h-full min-h-0 w-full flex-col border-r bg-white">
+  // =====================================================
+  // RENDER
+  // =====================================================
 
-      {/* CABEÇALHO DA COLUNA */}
-      <div className="shrink-0 border-b bg-green-600 p-4 text-white">
+  return (
+    <div className="w-80 border-r bg-white flex flex-col">
+
+      {/* =================================================
+          CABEÇALHO VERDE
+      ================================================= */}
+
+      <div className="p-4 border-b bg-green-600 text-white">
 
         <h2 className="text-xl font-bold">
           {cronogramaId
@@ -426,16 +675,13 @@ export default function ListaConversas({
 
           </div>
         )}
-
       </div>
 
-      {/* LISTA COM SCROLL */}
-      <div
-        className="min-h-0 flex-1 overflow-y-auto"
-        style={{
-          scrollbarWidth: "thin",
-        }}
-      >
+      {/* =================================================
+          LISTA
+      ================================================= */}
+
+      <div className="flex-1 overflow-y-auto">
 
         {loading && (
           <div className="p-6 text-center text-gray-500">
@@ -461,43 +707,105 @@ export default function ListaConversas({
             </div>
           )}
 
-        {/* ALUNOS DO CRONOGRAMA */}
+        {/* =================================================
+            ALUNOS DO CRONOGRAMA
+        ================================================= */}
+
         {cronogramaId ? (
           alunosFiltrados.map(
-            (aluno) => (
-              <button
-                key={aluno.id}
-                type="button"
-                onClick={() =>
-                  selecionarAluno(
-                    aluno
-                  )
-                }
-                className="flex w-full items-center gap-3 border-b px-4 py-3 text-left hover:bg-gray-100"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg font-bold text-white">
-                  {avatar(
-                    aluno.nome
-                  )}
-                </div>
+            (aluno) => {
+              const conversa =
+                obterConversaDoAluno(
+                  aluno
+                );
 
-                <div className="min-w-0 text-left">
+              const selecionado =
+                conversa?.id ===
+                conversaSelecionada;
 
-                  <div className="truncate font-semibold">
-                    {aluno.nome}
+              const naoLidas =
+                conversa?.naoLidas ?? 0;
+
+              return (
+                <button
+                  key={aluno.id}
+                  type="button"
+                  onClick={() =>
+                    selecionarAluno(
+                      aluno
+                    )
+                  }
+                  disabled={loading}
+                  className={`w-full flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait ${
+                    selecionado
+                      ? "bg-green-50"
+                      : ""
+                  }`}
+                >
+
+                  <div className="relative w-12 h-12 shrink-0 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-lg">
+
+                    {avatar(
+                      aluno.nome
+                    )}
+
+                    {naoLidas > 0 && (
+                      <span className="absolute -right-1 -top-1 min-w-5 h-5 px-1 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center border-2 border-white">
+                        {naoLidas > 99
+                          ? "99+"
+                          : naoLidas}
+                      </span>
+                    )}
+
                   </div>
 
-                  <div className="truncate text-sm text-gray-500">
-                    {aluno.telefone}
+                  <div className="flex-1 min-w-0 text-left">
+
+                    <div className="flex justify-between gap-2">
+
+                      <div
+                        className={`truncate ${
+                          naoLidas > 0
+                            ? "font-bold text-gray-900"
+                            : "font-semibold"
+                        }`}
+                      >
+                        {aluno.nome}
+                      </div>
+
+                      {conversa?.ultimaData && (
+                        <div className="text-xs text-gray-400 whitespace-nowrap">
+                          {formatarHora(
+                            conversa.ultimaData
+                          )}
+                        </div>
+                      )}
+
+                    </div>
+
+                    <div
+                      className={`text-sm truncate ${
+                        naoLidas > 0
+                          ? "font-semibold text-gray-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {conversa?.ultimaMensagem ||
+                        aluno.telefone}
+                    </div>
+
                   </div>
 
-                </div>
-              </button>
-            )
+                </button>
+              );
+            }
           )
         ) : (
 
-          /* CONVERSAS */
+          /* =================================================
+             CONVERSAS
+          ================================================= */
+
           conversasFiltradas.map(
             (item) => {
               const status =
@@ -514,7 +822,7 @@ export default function ListaConversas({
                       item.id
                     )
                   }
-                  className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left transition hover:bg-gray-100 ${
+                  className={`w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-gray-100 transition ${
                     conversaSelecionada ===
                     item.id
                       ? "bg-green-50"
@@ -522,19 +830,20 @@ export default function ListaConversas({
                   }`}
                 >
 
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg font-bold text-white">
+                  <div className="w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-lg">
                     {avatar(
                       item.nome
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1">
+                  <div className="flex-1 min-w-0">
 
                     <div className="flex justify-between gap-2">
 
                       <div
                         className={`truncate ${
-                          item.naoLidas > 0
+                          item.naoLidas >
+                          0
                             ? "font-bold text-gray-900"
                             : "font-semibold"
                         }`}
@@ -543,7 +852,7 @@ export default function ListaConversas({
                           item.telefone}
                       </div>
 
-                      <div className="whitespace-nowrap text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 whitespace-nowrap">
                         {formatarHora(
                           item.ultimaData
                         )}
@@ -560,8 +869,9 @@ export default function ListaConversas({
                     <div className="flex items-center justify-between gap-2">
 
                       <div
-                        className={`truncate text-sm ${
-                          item.naoLidas > 0
+                        className={`text-sm truncate ${
+                          item.naoLidas >
+                          0
                             ? "font-semibold text-gray-700"
                             : "text-gray-500"
                         }`}
@@ -572,7 +882,7 @@ export default function ListaConversas({
 
                       {item.naoLidas >
                         0 && (
-                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-green-600 px-1 text-xs font-bold text-white">
+                        <span className="min-w-5 h-5 px-1 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center">
                           {item.naoLidas >
                           99
                             ? "99+"
@@ -591,7 +901,6 @@ export default function ListaConversas({
         )}
 
       </div>
-
     </div>
   );
 }
