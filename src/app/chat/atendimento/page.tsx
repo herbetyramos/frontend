@@ -58,10 +58,6 @@ function AtendimentoContent() {
       return;
     }
 
-    if (modo === "conversas") {
-      return;
-    }
-
     console.log(
       "📋 Cronograma recebido pela URL:",
       cronogramaIdUrl
@@ -74,17 +70,10 @@ function AtendimentoContent() {
 
       return cronogramaIdUrl;
     });
-  }, [cronogramaIdUrl, modo]);
+  }, [cronogramaIdUrl]);
 
   // =========================================================
   // SELECIONAR CRONOGRAMA
-  // =========================================================
-  //
-  // IMPORTANTE:
-  // useCallback mantém a mesma referência da função.
-  //
-  // Isso evita que a ListaCronogramas interprete cada
-  // renderização do pai como uma nova seleção de cronograma.
   // =========================================================
 
   const selecionarCronograma = useCallback(
@@ -94,8 +83,10 @@ function AtendimentoContent() {
         id
       );
 
+      // Volta para o modo normal do cronograma.
       setModo("cronograma");
 
+      // Mantém o cronograma selecionado.
       setCronogramaId((atual) => {
         if (atual === id) {
           return atual;
@@ -104,33 +95,43 @@ function AtendimentoContent() {
         return id;
       });
 
+      // Ao trocar de cronograma, fecha a conversa aberta.
       setConversaId(null);
     },
     []
   );
 
   // =========================================================
-  // MOSTRAR CONVERSAS
+  // MOSTRAR TODAS AS CONVERSAS
+  // =========================================================
+  //
+  // IMPORTANTE:
+  //
+  // NÃO apagamos o cronogramaId aqui.
+  //
+  // O cronograma continua selecionado na coluna 1,
+  // mantendo o foco azul.
+  //
+  // Apenas mudamos o modo da coluna 2 para "conversas".
   // =========================================================
 
   const mostrarConversas = useCallback(() => {
     console.log(
-      "💬 Abrindo conversas iniciadas"
+      "💬 Abrindo todas as conversas"
     );
 
     setModo("conversas");
-    setCronogramaId(null);
+
+    // NÃO fazer:
+    // setCronogramaId(null);
+
+    // A conversa anteriormente selecionada deixa de ser
+    // automaticamente aberta ao entrar na lista geral.
     setConversaId(null);
   }, []);
 
   // =========================================================
   // SELECIONAR CONVERSA
-  // =========================================================
-  //
-  // Mantemos o setter do React diretamente.
-  //
-  // Ao clicar em um aluno, somente conversaId muda.
-  // O cronograma NÃO deve ser alterado.
   // =========================================================
 
   const selecionarConversa = useCallback(
@@ -148,11 +149,6 @@ function AtendimentoContent() {
   // =========================================================
   // SOCKET - NOVA MENSAGEM
   // =========================================================
-  //
-  // Uma nova mensagem NÃO deve mudar a conversa aberta.
-  //
-  // A ListaConversas é responsável pelo contador.
-  // =========================================================
 
   useEffect(() => {
     function novaMensagem(data: {
@@ -162,6 +158,9 @@ function AtendimentoContent() {
         "📩 Nova mensagem recebida pelo atendimento:",
         data
       );
+
+      // A ListaConversas controla a atualização
+      // da lista e dos contadores.
 
       // NÃO alterar conversaId aqui.
     }
@@ -197,17 +196,26 @@ function AtendimentoContent() {
           polo={polo}
           empresa={empresa}
           data={data}
+
+          /*
+           * IMPORTANTE:
+           * O cronograma continua sendo passado mesmo quando
+           * estamos no modo "conversas".
+           *
+           * Assim o foco azul permanece.
+           */
           cronogramaSelecionado={
-            modo === "cronograma"
-              ? cronogramaId
-              : null
+            cronogramaId
           }
+
           onSelecionar={
             selecionarCronograma
           }
+
           onMostrarConversas={
             mostrarConversas
           }
+
           modoConversas={
             modo === "conversas"
           }
@@ -216,22 +224,34 @@ function AtendimentoContent() {
       </aside>
 
       {/* =====================================================
-          COLUNA 2 - ALUNOS / CONVERSAS
+          COLUNA 2 - ALUNOS / TODAS AS CONVERSAS
           ===================================================== */}
 
       <aside className="h-full w-96 shrink-0 overflow-hidden border-r bg-white">
 
         <ListaConversas
+          /*
+           * O cronograma continua sendo informado mesmo
+           * no modo "conversas".
+           *
+           * O ListaConversas usará modoConversas para
+           * decidir se deve mostrar alunos ou todas as
+           * conversas.
+           */
           cronogramaId={
-            modo === "cronograma"
-              ? cronogramaId
-              : null
+            cronogramaId
           }
+
           conversaSelecionada={
             conversaId
           }
+
           onSelecionar={
             selecionarConversa
+          }
+
+          modoConversas={
+            modo === "conversas"
           }
         />
 
@@ -244,7 +264,9 @@ function AtendimentoContent() {
       <main className="h-full min-w-0 flex-1 overflow-hidden bg-white">
 
         <JanelaChat
-          conversaId={conversaId}
+          conversaId={
+            conversaId
+          }
         />
 
       </main>
@@ -272,4 +294,3 @@ export default function AtendimentoPage() {
     </Suspense>
   );
 }
-

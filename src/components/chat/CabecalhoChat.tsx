@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -80,10 +81,6 @@ export default function CabecalhoChat({
   async function alterarStatus(
     novoStatus: StatusConversa
   ) {
-    /**
-     * Não faz nova requisição se o status
-     * selecionado já for o atual.
-     */
     if (novoStatus === status) {
       return;
     }
@@ -96,10 +93,6 @@ export default function CabecalhoChat({
         }
       );
 
-      /**
-       * Atualiza o estado local somente
-       * depois que o backend confirmou.
-       */
       onStatusAlterado(novoStatus);
     } catch (error) {
       console.error(
@@ -158,99 +151,124 @@ export default function CabecalhoChat({
    * CONSULTAR STATUS DO WHATSAPP
    * =========================================================
    */
-  async function consultarStatusWhatsApp() {
-    try {
-      const response =
-        await api.get<StatusWhatsApp>(
-          "/whatsapp/status"
+  const consultarStatusWhatsApp =
+    useCallback(async () => {
+      try {
+        const response =
+          await api.get<StatusWhatsApp>(
+            "/whatsapp/status"
+          );
+
+        setWhatsappConectado(
+          response.data.conectado
         );
 
-      setWhatsappConectado(
-        response.data.conectado
-      );
+        setQrCode(
+          response.data.qrCode
+        );
 
-      setQrCode(
-        response.data.qrCode
-      );
+        return response.data;
+      } catch (error) {
+        console.error(
+          "Erro ao consultar status do WhatsApp:",
+          error
+        );
 
-      return response.data;
-    } catch (error) {
-      console.error(
-        "Erro ao consultar status do WhatsApp:",
-        error
-      );
-
-      return null;
-    }
-  }
+        return null;
+      }
+    }, []);
 
   /**
    * =========================================================
    * TROCAR WHATSAPP
    * =========================================================
    */
-  async function trocarWhatsApp() {
-    const confirmar =
-      window.confirm(
-        "Deseja realmente trocar o WhatsApp conectado?\n\n" +
-        "O WhatsApp atual será desconectado e será necessário " +
-        "ler um novo QR Code com o telefone que deseja conectar."
-      );
+  const trocarWhatsApp =
+    useCallback(async () => {
+      const confirmar =
+        window.confirm(
+          "Deseja realmente trocar o WhatsApp conectado?\n\n" +
+          "O WhatsApp atual será desconectado e será necessário " +
+          "ler um novo QR Code com o telefone que deseja conectar."
+        );
 
-    if (!confirmar) {
-      return;
-    }
-
-    try {
-      setErroWhatsApp(null);
-      setQrCode(null);
-      setWhatsappConectado(false);
-      setTrocandoWhatsApp(true);
-      setModalWhatsAppAberto(true);
-
-      await api.post(
-        "/whatsapp/trocar"
-      );
-
-      /**
-       * Consulta imediatamente para tentar
-       * obter o primeiro QR Code.
-       */
-      await consultarStatusWhatsApp();
-    } catch (error: unknown) {
-      console.error(
-        "Erro ao trocar WhatsApp:",
-        error
-      );
-
-      let mensagem =
-        "Não foi possível trocar o WhatsApp.";
-
-      /**
-       * Trata o erro do Axios sem utilizar any.
-       */
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error
-      ) {
-        const erroAxios = error as {
-          response?: {
-            data?: {
-              mensagem?: string;
-            };
-          };
-        };
-
-        mensagem =
-          erroAxios.response?.data?.mensagem ||
-          mensagem;
+      if (!confirmar) {
+        return;
       }
 
-      setErroWhatsApp(mensagem);
-      setTrocandoWhatsApp(false);
+      try {
+        setErroWhatsApp(null);
+        setQrCode(null);
+        setWhatsappConectado(false);
+        setTrocandoWhatsApp(true);
+        setModalWhatsAppAberto(true);
+
+        await api.post(
+          "/whatsapp/trocar"
+        );
+
+        /**
+         * Consulta imediatamente para tentar
+         * obter o primeiro QR Code.
+         */
+        await consultarStatusWhatsApp();
+      } catch (error: unknown) {
+        console.error(
+          "Erro ao trocar WhatsApp:",
+          error
+        );
+
+        let mensagem =
+          "Não foi possível trocar o WhatsApp.";
+
+        /**
+         * Trata o erro do Axios sem utilizar any.
+         */
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "response" in error
+        ) {
+          const erroAxios = error as {
+            response?: {
+              data?: {
+                mensagem?: string;
+              };
+            };
+          };
+
+          mensagem =
+            erroAxios.response?.data?.mensagem ||
+            mensagem;
+        }
+
+        setErroWhatsApp(mensagem);
+        setTrocandoWhatsApp(false);
+      }
+    }, [consultarStatusWhatsApp]);
+
+  /**
+   * =========================================================
+   * ABRIR TROCA DE WHATSAPP A PARTIR DA LISTA DE ALUNOS
+   * =========================================================
+   */
+  useEffect(() => {
+    function handleAbrirTrocarWhatsApp() {
+      void trocarWhatsApp();
     }
-  }
+
+    window.addEventListener(
+      "abrirTrocarWhatsApp",
+      handleAbrirTrocarWhatsApp
+    );
+
+    return () => {
+      window.removeEventListener(
+        "abrirTrocarWhatsApp",
+        handleAbrirTrocarWhatsApp
+      );
+    };
+  }, [trocarWhatsApp]);
 
   /**
    * =========================================================
@@ -294,7 +312,10 @@ export default function CabecalhoChat({
       ativo = false;
       clearInterval(intervalo);
     };
-  }, [modalWhatsAppAberto]);
+  }, [
+    modalWhatsAppAberto,
+    consultarStatusWhatsApp,
+  ]);
 
   /**
    * =========================================================
@@ -349,25 +370,6 @@ export default function CabecalhoChat({
 
         </div>
 
-         {/* ================================================= */}
-          {/* TROCAR WHATSAPP                                  */}
-          {/* ================================================= */}
-
-          <button
-            type="button"
-            onClick={trocarWhatsApp}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 transition"
-            title="Trocar WhatsApp conectado"
-          >
-            <FiRefreshCw
-              size={18}
-            />
-
-            <span className="hidden xl:inline">
-              Trocar WhatsApp
-            </span>
-          </button>
-
         {/* =================================================== */}
         {/* AÇÕES DA CONVERSA                                  */}
         {/* =================================================== */}
@@ -400,10 +402,6 @@ export default function CabecalhoChat({
               Finalizado
             </option>
           </select>
-
-         
-
-                 
 
           {/* ================================================= */}
           {/* ENVIAR CERTIFICADO                               */}

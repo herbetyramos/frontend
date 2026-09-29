@@ -50,12 +50,14 @@ interface Props {
   cronogramaId: string | null;
   conversaSelecionada: string | null;
   onSelecionar(id: string): void;
+  modoConversas: boolean;
 }
 
 export default function ListaConversas({
   cronogramaId,
   conversaSelecionada,
   onSelecionar,
+  modoConversas,
 }: Props) {
   const [conversas, setConversas] =
     useState<Conversa[]>([]);
@@ -66,6 +68,9 @@ export default function ListaConversas({
   const [loading, setLoading] =
     useState(false);
 
+  const [whatsappConectado, setWhatsappConectado] =
+    useState(false);
+
   const [busca, setBusca] =
     useState("");
 
@@ -73,7 +78,7 @@ export default function ListaConversas({
     useState<FiltroStatus>("TODAS");
 
   // =====================================================
-  // CARREGAR CONVERSAS
+  // CARREGAR TODAS AS CONVERSAS
   // =====================================================
 
   const carregarConversas =
@@ -154,6 +159,56 @@ export default function ListaConversas({
 
       void carregarConversas();
     }, [carregarConversas]);
+
+  // =====================================================
+  // STATUS DO WHATSAPP
+  // =====================================================
+
+  const consultarStatusWhatsApp =
+    useCallback(async () => {
+      try {
+        const { data } =
+          await api.get<{
+            conectado: boolean;
+          }>("/whatsapp/status");
+
+        setWhatsappConectado(
+          Boolean(data?.conectado)
+        );
+      } catch (error) {
+        console.error(
+          "Erro ao consultar status do WhatsApp:",
+          error
+        );
+
+        setWhatsappConectado(false);
+      }
+    }, []);
+
+  useEffect(() => {
+    void consultarStatusWhatsApp();
+
+    const intervalo =
+      setInterval(() => {
+        void consultarStatusWhatsApp();
+      }, 5000);
+
+    return () => {
+      clearInterval(intervalo);
+    };
+  }, [consultarStatusWhatsApp]);
+
+  // =====================================================
+  // TROCAR WHATSAPP
+  // =====================================================
+
+  function abrirTrocarWhatsApp() {
+    window.dispatchEvent(
+      new CustomEvent(
+        "abrirTrocarWhatsApp"
+      )
+    );
+  }
 
   // =====================================================
   // CARREGAMENTO INICIAL
@@ -383,7 +438,7 @@ export default function ListaConversas({
     );
 
   // =====================================================
-  // QUANTIDADE POR STATUS
+  // QUANTIDADES POR STATUS
   // =====================================================
 
   const quantidadeAguardando =
@@ -414,7 +469,7 @@ export default function ListaConversas({
     }, [conversas]);
 
   // =====================================================
-  // FILTRAR CONVERSAS
+  // FILTRAR TODAS AS CONVERSAS
   // =====================================================
 
   const conversasFiltradas =
@@ -602,7 +657,9 @@ export default function ListaConversas({
             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
         }`}
       >
-        <div>{texto}</div>
+        <div>
+          {texto}
+        </div>
 
         <div
           className={`mt-0.5 text-[11px] ${
@@ -622,23 +679,70 @@ export default function ListaConversas({
   // =====================================================
 
   return (
-    <div className="w-80 border-r bg-white flex flex-col">
+    <div className="flex h-full w-96 flex-col border-r bg-white">
 
       {/* =================================================
-          CABEÇALHO VERDE
+          CABEÇALHO
       ================================================= */}
 
-      <div className="p-4 border-b bg-green-600 text-white">
+      <div
+        className={`border-b p-4 text-white ${
+          modoConversas
+            ? "bg-green-600"
+            : "bg-green-600"
+        }`}
+      >
 
-        <h2 className="text-xl font-bold">
-          {cronogramaId
-            ? "Alunos"
-            : "Conversas"}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+
+          <h2 className="text-xl font-bold">
+            {modoConversas
+              ? "Conversas"
+              : "Alunos"}
+          </h2>
+
+          <div className="flex items-center gap-2">
+
+  <button
+    type="button"
+    onClick={abrirTrocarWhatsApp}
+    className="flex items-center gap-1.5 rounded-md border border-white/70 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+    title="Trocar WhatsApp conectado"
+  >
+    <span>
+      Trocar WhatsApp
+    </span>
+  </button>
+
+  <span
+    className={`h-2.5 w-2.5 rounded-full ${
+      whatsappConectado
+        ? "bg-green-300"
+        : "bg-red-300"
+    }`}
+    title={
+      whatsappConectado
+        ? "WhatsApp conectado"
+        : "WhatsApp desconectado"
+    }
+    aria-label={
+      whatsappConectado
+        ? "WhatsApp conectado"
+        : "WhatsApp desconectado"
+    }
+  />
+
+</div>
+
+        </div>
 
         <input
           type="text"
-          placeholder="Pesquisar..."
+          placeholder={
+            modoConversas
+              ? "Pesquisar conversas..."
+              : "Pesquisar aluno..."
+          }
           value={busca}
           onChange={(e) =>
             setBusca(e.target.value)
@@ -646,7 +750,11 @@ export default function ListaConversas({
           className="mt-3 w-full rounded-lg border px-3 py-2 text-black outline-none"
         />
 
-        {!cronogramaId && (
+        {/* =================================================
+            FILTROS SOMENTE NO MODO CONVERSAS
+        ================================================= */}
+
+        {modoConversas && (
           <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg bg-white p-1">
 
             {botaoFiltro(
@@ -675,6 +783,7 @@ export default function ListaConversas({
 
           </div>
         )}
+
       </div>
 
       {/* =================================================
@@ -683,14 +792,23 @@ export default function ListaConversas({
 
       <div className="flex-1 overflow-y-auto">
 
-        {loading && (
-          <div className="p-6 text-center text-gray-500">
-            Carregando...
-          </div>
-        )}
+        {/* =================================================
+            CARREGANDO ALUNOS
+        ================================================= */}
+
+        {loading &&
+          !modoConversas && (
+            <div className="p-6 text-center text-gray-500">
+              Carregando...
+            </div>
+          )}
+
+        {/* =================================================
+            NENHUM ALUNO
+        ================================================= */}
 
         {!loading &&
-          cronogramaId &&
+          !modoConversas &&
           alunosFiltrados.length ===
             0 && (
             <div className="p-6 text-center text-gray-500">
@@ -698,8 +816,12 @@ export default function ListaConversas({
             </div>
           )}
 
+        {/* =================================================
+            NENHUMA CONVERSA
+        ================================================= */}
+
         {!loading &&
-          !cronogramaId &&
+          modoConversas &&
           conversasFiltradas.length ===
             0 && (
             <div className="p-6 text-center text-gray-500">
@@ -708,10 +830,11 @@ export default function ListaConversas({
           )}
 
         {/* =================================================
-            ALUNOS DO CRONOGRAMA
+            MODO CRONOGRAMA
+            SOMENTE ALUNOS MATRICULADOS
         ================================================= */}
 
-        {cronogramaId ? (
+        {!modoConversas &&
           alunosFiltrados.map(
             (aluno) => {
               const conversa =
@@ -736,21 +859,21 @@ export default function ListaConversas({
                     )
                   }
                   disabled={loading}
-                  className={`w-full flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait ${
+                  className={`flex w-full items-center gap-3 border-b px-4 py-3 transition hover:bg-gray-100 disabled:cursor-wait disabled:opacity-50 ${
                     selecionado
                       ? "bg-green-50"
                       : ""
                   }`}
                 >
 
-                  <div className="relative w-12 h-12 shrink-0 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-lg">
+                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg font-bold text-white">
 
                     {avatar(
                       aluno.nome
                     )}
 
                     {naoLidas > 0 && (
-                      <span className="absolute -right-1 -top-1 min-w-5 h-5 px-1 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center border-2 border-white">
+                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-green-600 px-1 text-xs font-bold text-white">
                         {naoLidas > 99
                           ? "99+"
                           : naoLidas}
@@ -759,7 +882,7 @@ export default function ListaConversas({
 
                   </div>
 
-                  <div className="flex-1 min-w-0 text-left">
+                  <div className="min-w-0 flex-1 text-left">
 
                     <div className="flex justify-between gap-2">
 
@@ -774,7 +897,7 @@ export default function ListaConversas({
                       </div>
 
                       {conversa?.ultimaData && (
-                        <div className="text-xs text-gray-400 whitespace-nowrap">
+                        <div className="whitespace-nowrap text-xs text-gray-400">
                           {formatarHora(
                             conversa.ultimaData
                           )}
@@ -784,7 +907,7 @@ export default function ListaConversas({
                     </div>
 
                     <div
-                      className={`text-sm truncate ${
+                      className={`truncate text-sm ${
                         naoLidas > 0
                           ? "font-semibold text-gray-700"
                           : "text-gray-500"
@@ -799,19 +922,23 @@ export default function ListaConversas({
                 </button>
               );
             }
-          )
-        ) : (
+          )}
 
-          /* =================================================
-             CONVERSAS
-          ================================================= */
+        {/* =================================================
+            MODO TODAS AS CONVERSAS
+        ================================================= */}
 
+        {modoConversas &&
           conversasFiltradas.map(
             (item) => {
               const status =
                 obterStatus(
                   item.status
                 );
+
+              const selecionado =
+                conversaSelecionada ===
+                item.id;
 
               return (
                 <button
@@ -822,21 +949,26 @@ export default function ListaConversas({
                       item.id
                     )
                   }
-                  className={`w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-gray-100 transition ${
-                    conversaSelecionada ===
-                    item.id
+                  className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left transition hover:bg-gray-100 ${
+                    selecionado
                       ? "bg-green-50"
                       : ""
                   }`}
                 >
 
-                  <div className="w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-lg">
+                  {/* AVATAR */}
+
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg font-bold text-white">
                     {avatar(
                       item.nome
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  {/* CONTEÚDO */}
+
+                  <div className="min-w-0 flex-1">
+
+                    {/* NOME + HORA */}
 
                     <div className="flex justify-between gap-2">
 
@@ -845,14 +977,14 @@ export default function ListaConversas({
                           item.naoLidas >
                           0
                             ? "font-bold text-gray-900"
-                            : "font-semibold"
+                            : "font-semibold text-gray-800"
                         }`}
                       >
                         {item.nome ||
                           item.telefone}
                       </div>
 
-                      <div className="text-xs text-gray-400 whitespace-nowrap">
+                      <div className="whitespace-nowrap text-xs text-gray-400">
                         {formatarHora(
                           item.ultimaData
                         )}
@@ -860,45 +992,50 @@ export default function ListaConversas({
 
                     </div>
 
+                    {/* ÚLTIMA CONVERSA */}
+
                     <div
-                      className={`text-xs font-medium ${status.classe}`}
+                      className={`truncate text-sm ${
+                        item.naoLidas >
+                        0
+                          ? "font-semibold text-gray-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {item.ultimaMensagem ||
+                        "Sem mensagens"}
+                    </div>
+
+                    {/* STATUS LOGO ABAIXO DA ÚLTIMA CONVERSA */}
+
+                    <div
+                      className={`mt-1 text-xs font-semibold ${status.classe}`}
                     >
                       {status.texto}
                     </div>
 
-                    <div className="flex items-center justify-between gap-2">
+                    {/* CONTADOR */}
 
-                      <div
-                        className={`text-sm truncate ${
-                          item.naoLidas >
-                          0
-                            ? "font-semibold text-gray-700"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {item.ultimaMensagem ||
-                          "Sem mensagens"}
-                      </div>
+                    {item.naoLidas >
+                      0 && (
+                      <div className="mt-1">
 
-                      {item.naoLidas >
-                        0 && (
-                        <span className="min-w-5 h-5 px-1 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center">
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-xs font-bold text-white">
                           {item.naoLidas >
                           99
                             ? "99+"
                             : item.naoLidas}
                         </span>
-                      )}
 
-                    </div>
+                      </div>
+                    )}
 
                   </div>
 
                 </button>
               );
             }
-          )
-        )}
+          )}
 
       </div>
     </div>
