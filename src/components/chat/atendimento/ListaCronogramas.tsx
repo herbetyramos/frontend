@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,6 +13,9 @@ interface Cronograma {
   data_inicio: string;
   data_fim: string;
 
+  hora_inicio?: string | null;
+  hora_fim?: string | null;
+
   bloco_curso?: {
     bloco_Curso?: string;
   };
@@ -24,7 +28,7 @@ interface Cronograma {
     nome_empresa?: string;
   };
 
-  quantidade_aluno?: number;
+  quantidadeAlunos?: number;
 }
 
 interface Props {
@@ -42,6 +46,8 @@ interface Props {
   modoConversas: boolean;
 }
 
+const STORAGE_KEY = "cronogramaSelecionadoChat";
+
 export default function ListaCronogramas({
   bloco,
   polo,
@@ -56,6 +62,197 @@ export default function ListaCronogramas({
   const [carregando, setCarregando] = useState(false);
 
   // =========================================================
+  // CRIAR DATA SEGURA
+  // =========================================================
+
+  function criarDataSegura(
+    valor?: string | null
+  ): Date | null {
+    if (!valor) {
+      return null;
+    }
+
+    const texto = String(valor).trim();
+
+    if (!texto) {
+      return null;
+    }
+
+    // -------------------------------------------------------
+    // YYYY-MM-DD
+    // Trata como data LOCAL para não voltar um dia
+    // por causa do fuso horário.
+    // -------------------------------------------------------
+
+    const somenteData = texto.match(
+      /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+    if (somenteData) {
+      const [, ano, mes, dia] = somenteData;
+
+      const dataLocal = new Date(
+        Number(ano),
+        Number(mes) - 1,
+        Number(dia)
+      );
+
+      if (!Number.isNaN(dataLocal.getTime())) {
+        return dataLocal;
+      }
+    }
+
+    // -------------------------------------------------------
+    // Datas com horário
+    // -------------------------------------------------------
+
+    const dataNormal = new Date(texto);
+
+    if (!Number.isNaN(dataNormal.getTime())) {
+      return dataNormal;
+    }
+
+    return null;
+  }
+
+  // =========================================================
+  // FORMATAR DATA
+  // =========================================================
+
+  function formatarData(
+    valor?: string | null
+  ): string {
+    const data = criarDataSegura(valor);
+
+    if (!data) {
+      return "-";
+    }
+
+    return data.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
+
+  // =========================================================
+  // OBTER HORA DE INÍCIO
+ 
+  // 08:00 -> Manhã
+  // 13:00 -> Tarde
+  // 18:00 -> Noite
+  
+
+  function obterHoraInicio(
+    valor?: string | null
+  ): number | null {
+    if (!valor) {
+      return null;
+    }
+
+    const texto = String(valor).trim();
+
+    if (!texto) {
+      return null;
+    }
+
+    // Aceita:
+    // 08:00
+    // 08:00:00
+    // 2026-09-28T08:00:00
+    // 2026-09-28 08:00:00
+
+    const horario = texto.match(
+      /(?:T|\s|^)(\d{2}):(\d{2})/
+    );
+
+    if (!horario) {
+      return null;
+    }
+
+    const hora = Number(horario[1]);
+
+    if (
+      Number.isNaN(hora) ||
+      hora < 0 ||
+      hora > 23
+    ) {
+      return null;
+    }
+
+    return hora;
+  }
+
+  // =========================================================
+  // IDENTIFICAR PERÍODO
+  // =========================================================
+
+  function obterPeriodo(
+    horaInicio?: string | null
+  ): string {
+    const hora = obterHoraInicio(horaInicio);
+
+    if (hora === null) {
+      return "-";
+    }
+
+    // 08:00 até 12:59
+    if (hora >= 8 && hora < 13) {
+      return "Manhã";
+    }
+
+    // 13:00 até 17:59
+    if (hora >= 13 && hora < 18) {
+      return "Tarde";
+    }
+
+    // 18:00 até 23:59
+    if (hora >= 18 && hora < 24) {
+      return "Noite";
+    }
+
+    return "-";
+  }
+
+  // =========================================================
+  // RECUPERAR CRONOGRAMA FOCADO
+  // =========================================================
+
+  useEffect(() => {
+    if (cronogramaSelecionado) {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        cronogramaSelecionado
+      );
+
+      return;
+    }
+
+    const salvo =
+      sessionStorage.getItem(STORAGE_KEY);
+
+    if (salvo) {
+      onSelecionar(salvo);
+    }
+  }, [
+    cronogramaSelecionado,
+    onSelecionar,
+  ]);
+
+  // =========================================================
+  // SELECIONAR CRONOGRAMA
+  // =========================================================
+
+  function selecionarCronograma(id: string) {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      id
+    );
+
+    onSelecionar(id);
+  }
+
+  // =========================================================
   // CARREGAR CRONOGRAMAS
   // =========================================================
 
@@ -64,32 +261,35 @@ export default function ListaCronogramas({
       try {
         setCarregando(true);
 
-        const { data: resposta } = await api.get(
-          "/listcronograma"
-        );
+        const { data: resposta } =
+          await api.get("/listcronograma");
 
-        const lista: Cronograma[] = Array.isArray(resposta)
-          ? resposta
-          : Array.isArray(resposta?.cronogramas)
-            ? resposta.cronogramas
-            : [];
+        const lista: Cronograma[] =
+          Array.isArray(resposta)
+            ? resposta
+            : Array.isArray(
+                resposta?.cronogramas
+              )
+              ? resposta.cronogramas
+              : [];
 
         let filtrados = lista;
 
-        // -----------------------------------------------------
+        // =====================================================
         // FILTRO BLOCO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (bloco) {
           filtrados = filtrados.filter(
             (item) =>
-              item.bloco_curso?.bloco_Curso === bloco
+              item.bloco_curso?.bloco_Curso ===
+              bloco
           );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // FILTRO POLO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (polo) {
           filtrados = filtrados.filter(
@@ -98,36 +298,76 @@ export default function ListaCronogramas({
           );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // FILTRO EMPRESA
-        // -----------------------------------------------------
+        // =====================================================
 
         if (empresa) {
           filtrados = filtrados.filter(
             (item) =>
-              item.empresa?.nome_empresa === empresa
+              item.empresa?.nome_empresa ===
+              empresa
           );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // FILTRO DATA
-        // -----------------------------------------------------
+        // =====================================================
 
         if (data) {
-          filtrados = filtrados.filter((item) => {
-            if (!item.data_fim) {
-              return false;
+          filtrados = filtrados.filter(
+            (item) => {
+              if (!item.data_fim) {
+                return false;
+              }
+
+              const dataObj =
+                criarDataSegura(
+                  item.data_fim
+                );
+
+              if (!dataObj) {
+                return false;
+              }
+
+              const ano =
+                dataObj.getFullYear();
+
+              const mes = String(
+                dataObj.getMonth() + 1
+              ).padStart(2, "0");
+
+              const dia = String(
+                dataObj.getDate()
+              ).padStart(2, "0");
+
+              const dataItem =
+                `${ano}-${mes}-${dia}`;
+
+              return dataItem === data;
             }
-
-            const dataItem = new Date(item.data_fim)
-              .toISOString()
-              .split("T")[0];
-
-            return dataItem === data;
-          });
+          );
         }
 
         setCronogramas(filtrados);
+
+        // =====================================================
+        // RESTAURAR FOCO
+        // =====================================================
+
+        const salvo =
+          sessionStorage.getItem(
+            STORAGE_KEY
+          );
+
+        if (
+          salvo &&
+          filtrados.some(
+            (item) => item.id === salvo
+          )
+        ) {
+          onSelecionar(salvo);
+        }
       } catch (error) {
         console.error(
           "Erro ao carregar cronogramas:",
@@ -141,25 +381,13 @@ export default function ListaCronogramas({
     }
 
     carregarCronogramas();
-  }, [bloco, polo, empresa, data]);
-
-  // =========================================================
-  // FORMATAR DATA
-  // =========================================================
-
-  function formatarData(valor?: string) {
-    if (!valor) {
-      return "-";
-    }
-
-    try {
-      return new Date(valor).toLocaleDateString(
-        "pt-BR"
-      );
-    } catch {
-      return "-";
-    }
-  }
+  }, [
+    bloco,
+    polo,
+    empresa,
+    data,
+    onSelecionar,
+  ]);
 
   // =========================================================
   // TELA
@@ -173,7 +401,6 @@ export default function ListaCronogramas({
           ===================================================== */}
 
       <div className="border-b bg-blue-600 p-3 text-white">
-
         <div className="flex items-center justify-between gap-2">
 
           <h2 className="text-lg font-bold">
@@ -194,7 +421,6 @@ export default function ListaCronogramas({
           </button>
 
         </div>
-
       </div>
 
       {/* =====================================================
@@ -218,76 +444,128 @@ export default function ListaCronogramas({
 
         {!carregando &&
           cronogramas.map((item) => {
+
             const selecionado =
-              cronogramaSelecionado === item.id;
+              cronogramaSelecionado ===
+              item.id;
+
+            // =================================================
+            // PERÍODO BASEADO NO hora_inicio
+            // =================================================
+
+            const periodo =
+              obterPeriodo(
+                item.hora_inicio
+              );
 
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() =>
-                  onSelecionar(item.id)
+                  selecionarCronograma(
+                    item.id
+                  )
                 }
                 className={`w-full border-b px-4 py-3 text-left transition hover:bg-gray-100 ${
                   selecionado
-                    ? "bg-blue-50"
+                    ? "bg-blue-50 ring-2 ring-inset ring-blue-500"
                     : "bg-white"
                 }`}
               >
 
-                {/* Tema */}
+                {/* =================================================
+                    TEMA
+                    ================================================= */}
 
                 <div className="font-semibold text-gray-800">
                   📚 {item.tema}
                 </div>
 
-                {/* Bloco */}
+                {/* =================================================
+                    BLOCO
+                    ================================================= */}
 
-                {item.bloco_curso?.bloco_Curso && (
+                {item.bloco_curso
+                  ?.bloco_Curso && (
                   <div className="mt-1 text-sm text-gray-600">
                     🏢{" "}
-                    {item.bloco_curso.bloco_Curso}
+                    {
+                      item.bloco_curso
+                        .bloco_Curso
+                    }
                   </div>
                 )}
 
-                {/* Polo */}
+                {/* =================================================
+                    POLO
+                    ================================================= */}
 
                 {item.localAula?.polo && (
                   <div className="text-sm text-gray-600">
-                    📍 {item.localAula.polo}
+                    📍{" "}
+                    {item.localAula.polo}
                   </div>
                 )}
 
-                {/* Empresa */}
+                {/* =================================================
+                    EMPRESA
+                    ================================================= */}
 
-                {item.empresa?.nome_empresa && (
+                {item.empresa
+                  ?.nome_empresa && (
                   <div className="text-sm text-gray-600">
                     🏭{" "}
-                    {item.empresa.nome_empresa}
+                    {
+                      item.empresa
+                        .nome_empresa
+                    }
                   </div>
                 )}
 
-                {/* Data */}
+                {/* =================================================
+                    DATA + PERÍODO + ALUNOS
+                    ================================================= */}
 
-                <div className="mt-1 text-sm text-gray-600">
-                  📅{" "}
-                  {formatarData(item.data_inicio)}
-                  {" até "}
-                  {formatarData(item.data_fim)}
-                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
 
-                {/* Quantidade de alunos */}
+                  {/* DATA */}
 
-                {typeof item.quantidade_aluno ===
-                  "number" && (
-                  <div className="mt-1 text-sm font-medium text-gray-600">
-                    👥{" "}
-                    {item.quantidade_aluno}{" "}
-                    {item.quantidade_aluno === 1
+                  <span>
+                    📅{" "}
+                    {formatarData(
+                      item.data_inicio
+                    )}
+                    {" até "}
+                    {formatarData(
+                      item.data_fim
+                    )}
+                  </span>
+
+                  {/* PERÍODO */}
+
+                  {periodo !== "-" && (
+                    <span className="font-bold ">
+                     - {periodo}
+                    </span>
+                  )}
+
+                  {/* ALUNOS */}
+ 
+
+                  <span className="font-medium">
+                    {" "}
+                    {typeof item.quantidadeAlunos ===
+                    "number"
+                      ? item.quantidadeAlunos
+                      : 0}{" "}
+                    {item.quantidadeAlunos ===
+                    1
                       ? "aluno"
                       : "alunos"}
-                  </div>
-                )}
+                  </span>
+
+                </div>
 
               </button>
             );
