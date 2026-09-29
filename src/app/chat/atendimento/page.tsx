@@ -2,6 +2,7 @@
 
 import {
   Suspense,
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -66,30 +67,53 @@ function AtendimentoContent() {
       cronogramaIdUrl
     );
 
-    setCronogramaId(cronogramaIdUrl);
-    setConversaId(null);
+    setCronogramaId((atual) => {
+      if (atual === cronogramaIdUrl) {
+        return atual;
+      }
+
+      return cronogramaIdUrl;
+    });
   }, [cronogramaIdUrl, modo]);
 
   // =========================================================
   // SELECIONAR CRONOGRAMA
   // =========================================================
+  //
+  // IMPORTANTE:
+  // useCallback mantém a mesma referência da função.
+  //
+  // Isso evita que a ListaCronogramas interprete cada
+  // renderização do pai como uma nova seleção de cronograma.
+  // =========================================================
 
-  function selecionarCronograma(id: string) {
-    console.log(
-      "📋 Cronograma selecionado:",
-      id
-    );
+  const selecionarCronograma = useCallback(
+    (id: string) => {
+      console.log(
+        "📋 Cronograma selecionado:",
+        id
+      );
 
-    setModo("cronograma");
-    setCronogramaId(id);
-    setConversaId(null);
-  }
+      setModo("cronograma");
+
+      setCronogramaId((atual) => {
+        if (atual === id) {
+          return atual;
+        }
+
+        return id;
+      });
+
+      setConversaId(null);
+    },
+    []
+  );
 
   // =========================================================
   // MOSTRAR CONVERSAS
   // =========================================================
 
-  function mostrarConversas() {
+  const mostrarConversas = useCallback(() => {
     console.log(
       "💬 Abrindo conversas iniciadas"
     );
@@ -97,10 +121,37 @@ function AtendimentoContent() {
     setModo("conversas");
     setCronogramaId(null);
     setConversaId(null);
-  }
+  }, []);
+
+  // =========================================================
+  // SELECIONAR CONVERSA
+  // =========================================================
+  //
+  // Mantemos o setter do React diretamente.
+  //
+  // Ao clicar em um aluno, somente conversaId muda.
+  // O cronograma NÃO deve ser alterado.
+  // =========================================================
+
+  const selecionarConversa = useCallback(
+    (id: string | null) => {
+      console.log(
+        "💬 Conversa selecionada:",
+        id
+      );
+
+      setConversaId(id);
+    },
+    []
+  );
 
   // =========================================================
   // SOCKET - NOVA MENSAGEM
+  // =========================================================
+  //
+  // Uma nova mensagem NÃO deve mudar a conversa aberta.
+  //
+  // A ListaConversas é responsável pelo contador.
   // =========================================================
 
   useEffect(() => {
@@ -108,13 +159,11 @@ function AtendimentoContent() {
       conversaId?: string;
     }) {
       console.log(
-        "📩 Nova mensagem recebida:",
+        "📩 Nova mensagem recebida pelo atendimento:",
         data
       );
 
-      if (data?.conversaId) {
-        setConversaId(data.conversaId);
-      }
+      // NÃO alterar conversaId aqui.
     }
 
     socket.on(
@@ -182,7 +231,7 @@ function AtendimentoContent() {
             conversaId
           }
           onSelecionar={
-            setConversaId
+            selecionarConversa
           }
         />
 
@@ -223,3 +272,4 @@ export default function AtendimentoPage() {
     </Suspense>
   );
 }
+
