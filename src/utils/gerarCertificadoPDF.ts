@@ -45,22 +45,50 @@ function carregarImagem(url: string): Promise<string> {
 /*
  * ==========================================================
  * DATA POR EXTENSO
- *
- * Exemplo:
- * 30 de setembro de 2026
  * ==========================================================
  */
 
 function formatarDataPorExtenso(data: string): string {
-  if (!data) return "";
+  if (!data) {
+    return "";
+  }
 
-  const dataObj = new Date(data);
+  let dataObj: Date;
 
-  return dataObj.toLocaleDateString("pt-BR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  /*
+   * Trata datas no formato YYYY-MM-DD
+   * sem problemas de fuso horário.
+   */
+
+  const somenteData =
+    /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+
+  if (somenteData) {
+    const ano = Number(somenteData[1]);
+    const mes = Number(somenteData[2]);
+    const dia = Number(somenteData[3]);
+
+    dataObj = new Date(
+      ano,
+      mes - 1,
+      dia
+    );
+  } else {
+    dataObj = new Date(data);
+  }
+
+  if (Number.isNaN(dataObj.getTime())) {
+    return "";
+  }
+
+  return dataObj.toLocaleDateString(
+    "pt-BR",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
 }
 
 export async function gerarCertificados(
@@ -73,7 +101,9 @@ export async function gerarCertificados(
       );
 
     if (!data.length) {
-      alert("Nenhum aluno aprovado encontrado.");
+      alert(
+        "Nenhum aluno aprovado encontrado."
+      );
       return;
     }
 
@@ -141,7 +171,7 @@ export async function gerarCertificados(
       pdf.text(
         "da Mulher e da Família, certifica que o(a) Sr.(a)",
         largura / 2,
-        79,
+        77,
         {
           align: "center",
         }
@@ -178,22 +208,29 @@ export async function gerarCertificados(
        * =====================================================
        */
 
-      const textoAntes =
-        "concluiu o curso de";
-
       const nomeCurso =
-        `${item.cronograma.tema.toUpperCase()},`;
+        item.cronograma.tema
+          .toUpperCase()
+          .trim();
 
       const dataPorExtenso =
         formatarDataPorExtenso(
           item.cronograma.data_fim
         );
 
-      const textoDepois =
-        `em ${dataPorExtenso},`;
+      /*
+       * =====================================================
+       * TEXTOS
+       * =====================================================
+       */
 
-      const textoHoras =
-        "com carga horária de 40 horas.";
+      const textoAntes =
+        "concluiu o curso de";
+
+      const textoDepois =
+        `em ${dataPorExtenso}, com carga horária de 40 horas.`;
+
+      
 
       /*
        * =====================================================
@@ -202,370 +239,232 @@ export async function gerarCertificados(
        */
 
       const tamanhoTexto = 17;
+
+      /*
+       * Curso um pouco menor e em negrito.
+       */
+
       const tamanhoCurso = 15;
 
-      /*
-       * Largura máxima da primeira linha.
-       */
-
-      const larguraMaxima = 255;
-
-      /*
-       * =====================================================
-       * POSIÇÃO DAS DUAS LINHAS
-       *
-       * As duas começam exatamente no mesmo X.
-       * =====================================================
-       */
-
-      const posicaoX = 60;
+      const posicaoX = 50;
       const posicaoY = 115;
 
-      /*
-       * =====================================================
-       * CALCULAR LARGURAS
-       * =====================================================
-       */
+      const margemDireita = 50;
 
-      /*
-       * Texto antes do curso
-       */
-
-      pdf.setFont(
-        "helvetica",
-        "normal"
-      );
-
-      pdf.setFontSize(
-        tamanhoTexto
-      );
-
-      const larguraAntes =
-        pdf.getTextWidth(
-          `${textoAntes} `
-        );
-
-      /*
-       * Nome do curso
-       */
-
-      pdf.setFont(
-        "helvetica",
-        "bold"
-      );
-
-      pdf.setFontSize(
-        tamanhoCurso
-      );
-
-      const larguraCurso =
-        pdf.getTextWidth(
-          nomeCurso
-        );
-
-      /*
-       * Data
-       */
-
-      pdf.setFont(
-        "helvetica",
-        "normal"
-      );
-
-      pdf.setFontSize(
-        tamanhoTexto
-      );
-
-      const larguraDepois =
-        pdf.getTextWidth(
-          ` ${textoDepois}`
-        );
-
-      /*
-       * Largura total da primeira linha
-       */
-
-      const larguraTotal =
-        larguraAntes +
-        larguraCurso +
-        larguraDepois;
+      const larguraDisponivel =
+        largura -
+        posicaoX -
+        margemDireita;
 
       /*
        * =====================================================
-       * PRIMEIRA LINHA
+       * MONTA A FRASE EM PARTES
        *
-       * concluiu o curso de CURSO em DATA
+       * 1 - textoAntes
+       * 2 - nomeCurso
+       * 3 - textoDepois
+       *
+       * Isso permite deixar somente o curso em negrito.
        * =====================================================
        */
 
-      if (
-        larguraTotal <=
-        larguraMaxima
-      ) {
-        /*
-         * -----------------------------------------------
-         * TEXTO INICIAL
-         * -----------------------------------------------
-         */
-
-        pdf.setFont(
-          "helvetica",
-          "normal"
-        );
-
-        pdf.setFontSize(
-          tamanhoTexto
-        );
-
-        pdf.text(
-          `${textoAntes} `,
-          posicaoX,
-          posicaoY
-        );
-
-        /*
-         * -----------------------------------------------
-         * CURSO
-         * -----------------------------------------------
-         */
-
-        pdf.setFont(
-          "helvetica",
-          "bold"
-        );
-
-        pdf.setFontSize(
-          tamanhoCurso
-        );
-
-        pdf.text(
-          nomeCurso,
-          posicaoX +
-            larguraAntes,
-          posicaoY
-        );
-
-        /*
-         * -----------------------------------------------
-         * DATA
-         * -----------------------------------------------
-         */
-
-        pdf.setFont(
-          "helvetica",
-          "normal"
-        );
-
-        pdf.setFontSize(
-          tamanhoTexto
-        );
-
-        pdf.text(
-          ` ${textoDepois}`,
-          posicaoX +
-            larguraAntes +
-            larguraCurso,
-          posicaoY
-        );
+      interface ParteTexto {
+        texto: string;
+        negrito: boolean;
       }
 
+      const partes: ParteTexto[] = [
+        {
+          texto: `${textoAntes} `,
+          negrito: false,
+        },
+        {
+          texto: nomeCurso,
+          negrito: true,
+        },
+        {
+          texto: textoDepois,
+          negrito: false,
+        },
+      ];
+
       /*
        * =====================================================
-       * CURSO MUITO GRANDE
+       * QUEBRA AUTOMÁTICA
        *
-       * Reduz o tamanho da fonte para tentar manter
-       * toda a frase na mesma linha.
+       * Cada palavra é colocada na linha atual.
+       * Quando ultrapassar a margem, passa para a
+       * próxima linha.
        * =====================================================
        */
 
-      else {
-        let tamanhoCursoAjustado =
-          tamanhoCurso;
+      interface Palavra {
+        texto: string;
+        negrito: boolean;
+        largura: number;
+      }
 
-        let tamanhoTextoAjustado =
-          tamanhoTexto;
+      const palavras: Palavra[] = [];
 
-        let larguraAtual =
-          larguraTotal;
+      partes.forEach((parte) => {
+        const palavrasParte =
+          parte.texto.split(" ");
 
+        palavrasParte.forEach(
+          (palavra, palavraIndex) => {
+            if (
+              palavra.trim() === ""
+            ) {
+              return;
+            }
+
+            pdf.setFont(
+              "helvetica",
+              parte.negrito
+                ? "bold"
+                : "normal"
+            );
+
+            pdf.setFontSize(
+              parte.negrito
+                ? tamanhoCurso
+                : tamanhoTexto
+            );
+
+            const textoPalavra =
+              palavraIndex ===
+                palavrasParte.length - 1 &&
+              parte ===
+                partes[partes.length - 1]
+                ? palavra
+                : `${palavra} `;
+
+            const larguraPalavra =
+              pdf.getTextWidth(
+                textoPalavra
+              );
+
+            palavras.push({
+              texto: textoPalavra,
+              negrito:
+                parte.negrito,
+              largura:
+                larguraPalavra,
+            });
+          }
+        );
+      });
+
+      /*
+       * =====================================================
+       * CRIA AS LINHAS
+       * =====================================================
+       */
+
+      interface Linha {
+        palavras: Palavra[];
+        largura: number;
+      }
+
+      const linhas: Linha[] = [];
+
+      let linhaAtual: Palavra[] = [];
+      let larguraLinhaAtual = 0;
+
+      palavras.forEach((palavra) => {
         /*
-         * Reduz gradualmente a fonte.
+         * Se a palavra sozinha for maior que a margem,
+         * ela será colocada mesmo assim.
          */
 
-        while (
-          larguraAtual >
-            larguraMaxima &&
-          tamanhoCursoAjustado >
-            9
+        const ultrapassa =
+          larguraLinhaAtual +
+            palavra.largura >
+          larguraDisponivel;
+
+        if (
+          ultrapassa &&
+          linhaAtual.length > 0
         ) {
-          tamanhoCursoAjustado -= 0.5;
+          linhas.push({
+            palavras: linhaAtual,
+            largura: larguraLinhaAtual,
+          });
 
-          tamanhoTextoAjustado =
-            Math.max(
-              13,
-              tamanhoTextoAjustado -
-                0.25
-            );
-
-          /*
-           * Nova largura do texto inicial
-           */
-
-          pdf.setFont(
-            "helvetica",
-            "normal"
-          );
-
-          pdf.setFontSize(
-            tamanhoTextoAjustado
-          );
-
-          const novaLarguraAntes =
-            pdf.getTextWidth(
-              `${textoAntes} `
-            );
-
-          /*
-           * Nova largura do curso
-           */
-
-          pdf.setFont(
-            "helvetica",
-            "bold"
-          );
-
-          pdf.setFontSize(
-            tamanhoCursoAjustado
-          );
-
-          const novaLarguraCurso =
-            pdf.getTextWidth(
-              nomeCurso
-            );
-
-          /*
-           * Nova largura da data
-           */
-
-          pdf.setFont(
-            "helvetica",
-            "normal"
-          );
-
-          pdf.setFontSize(
-            tamanhoTextoAjustado
-          );
-
-          const novaLarguraDepois =
-            pdf.getTextWidth(
-              ` ${textoDepois}`
-            );
-
-          larguraAtual =
-            novaLarguraAntes +
-            novaLarguraCurso +
-            novaLarguraDepois;
+          linhaAtual = [];
+          larguraLinhaAtual = 0;
         }
 
-        /*
-         * -----------------------------------------------
-         * TEXTO INICIAL
-         * -----------------------------------------------
-         */
+        linhaAtual.push(palavra);
 
-        pdf.setFont(
-          "helvetica",
-          "normal"
-        );
+        larguraLinhaAtual +=
+          palavra.largura;
+      });
 
-        pdf.setFontSize(
-          tamanhoTextoAjustado
-        );
-
-        const larguraAntesAjustada =
-          pdf.getTextWidth(
-            `${textoAntes} `
-          );
-
-        pdf.text(
-          `${textoAntes} `,
-          posicaoX,
-          posicaoY
-        );
-
-        /*
-         * -----------------------------------------------
-         * CURSO
-         * -----------------------------------------------
-         */
-
-        pdf.setFont(
-          "helvetica",
-          "bold"
-        );
-
-        pdf.setFontSize(
-          tamanhoCursoAjustado
-        );
-
-        const larguraCursoAjustada =
-          pdf.getTextWidth(
-            nomeCurso
-          );
-
-        pdf.text(
-          nomeCurso,
-          posicaoX +
-            larguraAntesAjustada,
-          posicaoY
-        );
-
-        /*
-         * -----------------------------------------------
-         * DATA
-         * -----------------------------------------------
-         */
-
-        pdf.setFont(
-          "helvetica",
-          "normal"
-        );
-
-        pdf.setFontSize(
-          tamanhoTextoAjustado
-        );
-
-        pdf.text(
-          ` ${textoDepois}`,
-          posicaoX +
-            larguraAntesAjustada +
-            larguraCursoAjustada,
-          posicaoY
-        );
+      if (linhaAtual.length > 0) {
+        linhas.push({
+          palavras: linhaAtual,
+          largura: larguraLinhaAtual,
+        });
       }
 
       /*
        * =====================================================
-       * SEGUNDA LINHA
+       * DESENHA AS LINHAS
        *
-       * com carga horária de 40 horas.
-       *
-       * Alinhada exatamente com a primeira linha.
+       * Alinhamento à esquerda.
        * =====================================================
        */
 
-      pdf.setFont(
-        "helvetica",
-        "normal"
+      const alturaLinha = 7;
+
+      linhas.forEach(
+        (linha, linhaIndex) => {
+          let x = posicaoX;
+
+          const y =
+            posicaoY +
+            linhaIndex *
+              alturaLinha;
+
+          linha.palavras.forEach(
+            (palavra) => {
+              pdf.setFont(
+                "helvetica",
+                palavra.negrito
+                  ? "bold"
+                  : "normal"
+              );
+
+              pdf.setFontSize(
+                palavra.negrito
+                  ? tamanhoCurso
+                  : tamanhoTexto
+              );
+
+              pdf.text(
+                palavra.texto,
+                x,
+                y
+              );
+
+              x += palavra.largura;
+            }
+          );
+        }
       );
 
-      pdf.setFontSize(18);
+      /*
+       * =====================================================
+       * CARGA HORÁRIA
+       *
+       * Sempre fica na linha abaixo da frase.
+       * =====================================================
+       */
 
-      pdf.text(
-        textoHoras,
-        posicaoX,
-        posicaoY + 6
-      );
+      
+
+     
 
       /*
        * =====================================================
@@ -589,7 +488,7 @@ export async function gerarCertificados(
       pdf.text(
         `Certificado nº ${numero}/${new Date().getFullYear()}`,
         largura - 17,
-        altura - 3,
+        altura - 12,
         {
           align: "right",
         }
