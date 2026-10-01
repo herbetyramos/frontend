@@ -42,27 +42,40 @@ function carregarImagem(url: string): Promise<string> {
   });
 }
 
+/*
+ * ==========================================================
+ * DATA POR EXTENSO
+ *
+ * Exemplo:
+ * 30 de setembro de 2026
+ * ==========================================================
+ */
 
-function formatarData(data: string) {
+function formatarDataPorExtenso(data: string): string {
   if (!data) return "";
 
-  return new Date(data).toLocaleDateString("pt-BR");
+  const dataObj = new Date(data);
+
+  return dataObj.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-
-export async function gerarCertificados(idCronograma: string) {
+export async function gerarCertificados(
+  idCronograma: string
+) {
   try {
-
-    const { data } = await api.get<CertificadoData[]>(
-      `/certificado/cronograma/${idCronograma}`
-    );
-
+    const { data } =
+      await api.get<CertificadoData[]>(
+        `/certificado/cronograma/${idCronograma}`
+      );
 
     if (!data.length) {
       alert("Nenhum aluno aprovado encontrado.");
       return;
     }
-
 
     const pdf = new jsPDF({
       orientation: "landscape",
@@ -70,18 +83,15 @@ export async function gerarCertificados(idCronograma: string) {
       format: "a4",
     });
 
+    const moldura =
+      await carregarImagem(
+        "/imagens/moldura.png"
+      );
 
-    const moldura = await carregarImagem(
-      "/imagens/moldura.png"
-    );
-
-
-    data.forEach((item: CertificadoData, index: number) => {
-
+    data.forEach((item, index) => {
       if (index > 0) {
         pdf.addPage();
       }
-
 
       const largura =
         pdf.internal.pageSize.getWidth();
@@ -89,7 +99,11 @@ export async function gerarCertificados(idCronograma: string) {
       const altura =
         pdf.internal.pageSize.getHeight();
 
-
+      /*
+       * =====================================================
+       * MOLDURA
+       * =====================================================
+       */
 
       pdf.addImage(
         moldura,
@@ -100,14 +114,23 @@ export async function gerarCertificados(idCronograma: string) {
         altura
       );
 
+      /*
+       * =====================================================
+       * TEXTO INICIAL
+       * =====================================================
+       */
 
+      pdf.setTextColor(0, 0, 0);
 
-      pdf.setFont("times", "normal");
-      pdf.setFontSize(16);
+      pdf.setFont(
+        "times",
+        "normal"
+      );
 
+      pdf.setFontSize(20);
 
       pdf.text(
-        "Certificamos que",
+        "A Prefeitura de Santana de Parnaíba, por meio da Secretaria",
         largura / 2,
         70,
         {
@@ -115,136 +138,483 @@ export async function gerarCertificados(idCronograma: string) {
         }
       );
 
-
-
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(24);
-
-
       pdf.text(
-        item.aluno.nome.toUpperCase(),
+        "da Mulher e da Família, certifica que o(a) Sr.(a)",
         largura / 2,
-        105,
+        79,
         {
           align: "center",
         }
       );
 
+      /*
+       * =====================================================
+       * NOME DO ALUNO
+       * =====================================================
+       */
 
+      pdf.setFont(
+        "times",
+        "bold"
+      );
+
+      pdf.setFontSize(23);
+
+      const nomeAluno =
+        item.aluno.nome.toUpperCase();
+
+      pdf.text(
+        nomeAluno,
+        largura / 2,
+        102,
+        {
+          align: "center",
+        }
+      );
+
+      /*
+       * =====================================================
+       * DADOS DO CURSO
+       * =====================================================
+       */
 
       const textoAntes =
-        "concluiu com aproveitamento o curso de ";
-
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(12);
-
-
-      const larguraAntes =
-        pdf.getTextWidth(textoAntes);
-
-
+        "concluiu o curso de";
 
       const nomeCurso =
-        item.cronograma.tema;
+        `${item.cronograma.tema.toUpperCase()},`;
 
+      const dataPorExtenso =
+        formatarDataPorExtenso(
+          item.cronograma.data_fim
+        );
 
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(15);
+      const textoDepois =
+        `em ${dataPorExtenso},`;
 
+      const textoHoras =
+        "com carga horária de 40 horas.";
+
+      /*
+       * =====================================================
+       * CONFIGURAÇÕES
+       * =====================================================
+       */
+
+      const tamanhoTexto = 17;
+      const tamanhoCurso = 15;
+
+      /*
+       * Largura máxima da primeira linha.
+       */
+
+      const larguraMaxima = 255;
+
+      /*
+       * =====================================================
+       * POSIÇÃO DAS DUAS LINHAS
+       *
+       * As duas começam exatamente no mesmo X.
+       * =====================================================
+       */
+
+      const posicaoX = 60;
+      const posicaoY = 115;
+
+      /*
+       * =====================================================
+       * CALCULAR LARGURAS
+       * =====================================================
+       */
+
+      /*
+       * Texto antes do curso
+       */
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      pdf.setFontSize(
+        tamanhoTexto
+      );
+
+      const larguraAntes =
+        pdf.getTextWidth(
+          `${textoAntes} `
+        );
+
+      /*
+       * Nome do curso
+       */
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      pdf.setFontSize(
+        tamanhoCurso
+      );
 
       const larguraCurso =
-        pdf.getTextWidth(nomeCurso);
+        pdf.getTextWidth(
+          nomeCurso
+        );
 
+      /*
+       * Data
+       */
 
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      pdf.setFontSize(
+        tamanhoTexto
+      );
+
+      const larguraDepois =
+        pdf.getTextWidth(
+          ` ${textoDepois}`
+        );
+
+      /*
+       * Largura total da primeira linha
+       */
 
       const larguraTotal =
-        larguraAntes + larguraCurso;
+        larguraAntes +
+        larguraCurso +
+        larguraDepois;
 
+      /*
+       * =====================================================
+       * PRIMEIRA LINHA
+       *
+       * concluiu o curso de CURSO em DATA
+       * =====================================================
+       */
 
-      const inicioX =
-        (largura - larguraTotal) / 2;
+      if (
+        larguraTotal <=
+        larguraMaxima
+      ) {
+        /*
+         * -----------------------------------------------
+         * TEXTO INICIAL
+         * -----------------------------------------------
+         */
 
+        pdf.setFont(
+          "helvetica",
+          "normal"
+        );
 
+        pdf.setFontSize(
+          tamanhoTexto
+        );
 
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(12);
+        pdf.text(
+          `${textoAntes} `,
+          posicaoX,
+          posicaoY
+        );
 
+        /*
+         * -----------------------------------------------
+         * CURSO
+         * -----------------------------------------------
+         */
 
-      pdf.text(
-        textoAntes,
-        inicioX,
-        114
-      );
+        pdf.setFont(
+          "helvetica",
+          "bold"
+        );
 
+        pdf.setFontSize(
+          tamanhoCurso
+        );
 
+        pdf.text(
+          nomeCurso,
+          posicaoX +
+            larguraAntes,
+          posicaoY
+        );
 
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(15);
+        /*
+         * -----------------------------------------------
+         * DATA
+         * -----------------------------------------------
+         */
 
+        pdf.setFont(
+          "helvetica",
+          "normal"
+        );
 
-      pdf.text(
-        nomeCurso,
-        inicioX + larguraAntes,
-        114
-      );
+        pdf.setFontSize(
+          tamanhoTexto
+        );
 
+        pdf.text(
+          ` ${textoDepois}`,
+          posicaoX +
+            larguraAntes +
+            larguraCurso,
+          posicaoY
+        );
+      }
 
+      /*
+       * =====================================================
+       * CURSO MUITO GRANDE
+       *
+       * Reduz o tamanho da fonte para tentar manter
+       * toda a frase na mesma linha.
+       * =====================================================
+       */
 
-      pdf.setFont("times", "normal");
-      pdf.setFontSize(16);
+      else {
+        let tamanhoCursoAjustado =
+          tamanhoCurso;
 
+        let tamanhoTextoAjustado =
+          tamanhoTexto;
 
-      pdf.text(
-        `Data de encerramento: ${formatarData(
-          item.cronograma.data_fim
-        )}`,
-        largura / 2,
-        125,
-        {
-          align: "center",
+        let larguraAtual =
+          larguraTotal;
+
+        /*
+         * Reduz gradualmente a fonte.
+         */
+
+        while (
+          larguraAtual >
+            larguraMaxima &&
+          tamanhoCursoAjustado >
+            9
+        ) {
+          tamanhoCursoAjustado -= 0.5;
+
+          tamanhoTextoAjustado =
+            Math.max(
+              13,
+              tamanhoTextoAjustado -
+                0.25
+            );
+
+          /*
+           * Nova largura do texto inicial
+           */
+
+          pdf.setFont(
+            "helvetica",
+            "normal"
+          );
+
+          pdf.setFontSize(
+            tamanhoTextoAjustado
+          );
+
+          const novaLarguraAntes =
+            pdf.getTextWidth(
+              `${textoAntes} `
+            );
+
+          /*
+           * Nova largura do curso
+           */
+
+          pdf.setFont(
+            "helvetica",
+            "bold"
+          );
+
+          pdf.setFontSize(
+            tamanhoCursoAjustado
+          );
+
+          const novaLarguraCurso =
+            pdf.getTextWidth(
+              nomeCurso
+            );
+
+          /*
+           * Nova largura da data
+           */
+
+          pdf.setFont(
+            "helvetica",
+            "normal"
+          );
+
+          pdf.setFontSize(
+            tamanhoTextoAjustado
+          );
+
+          const novaLarguraDepois =
+            pdf.getTextWidth(
+              ` ${textoDepois}`
+            );
+
+          larguraAtual =
+            novaLarguraAntes +
+            novaLarguraCurso +
+            novaLarguraDepois;
         }
+
+        /*
+         * -----------------------------------------------
+         * TEXTO INICIAL
+         * -----------------------------------------------
+         */
+
+        pdf.setFont(
+          "helvetica",
+          "normal"
+        );
+
+        pdf.setFontSize(
+          tamanhoTextoAjustado
+        );
+
+        const larguraAntesAjustada =
+          pdf.getTextWidth(
+            `${textoAntes} `
+          );
+
+        pdf.text(
+          `${textoAntes} `,
+          posicaoX,
+          posicaoY
+        );
+
+        /*
+         * -----------------------------------------------
+         * CURSO
+         * -----------------------------------------------
+         */
+
+        pdf.setFont(
+          "helvetica",
+          "bold"
+        );
+
+        pdf.setFontSize(
+          tamanhoCursoAjustado
+        );
+
+        const larguraCursoAjustada =
+          pdf.getTextWidth(
+            nomeCurso
+          );
+
+        pdf.text(
+          nomeCurso,
+          posicaoX +
+            larguraAntesAjustada,
+          posicaoY
+        );
+
+        /*
+         * -----------------------------------------------
+         * DATA
+         * -----------------------------------------------
+         */
+
+        pdf.setFont(
+          "helvetica",
+          "normal"
+        );
+
+        pdf.setFontSize(
+          tamanhoTextoAjustado
+        );
+
+        pdf.text(
+          ` ${textoDepois}`,
+          posicaoX +
+            larguraAntesAjustada +
+            larguraCursoAjustada,
+          posicaoY
+        );
+      }
+
+      /*
+       * =====================================================
+       * SEGUNDA LINHA
+       *
+       * com carga horária de 40 horas.
+       *
+       * Alinhada exatamente com a primeira linha.
+       * =====================================================
+       */
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
       );
 
+      pdf.setFontSize(18);
 
+      pdf.text(
+        textoHoras,
+        posicaoX,
+        posicaoY + 6
+      );
+
+      /*
+       * =====================================================
+       * NÚMERO DO CERTIFICADO
+       * =====================================================
+       */
 
       const numero =
-        String(index + 1).padStart(4, "0");
+        String(index + 1).padStart(
+          4,
+          "0"
+        );
 
+      pdf.setFont(
+        "times",
+        "normal"
+      );
 
-      pdf.setFontSize(10);
-
+      pdf.setFontSize(9);
 
       pdf.text(
         `Certificado nº ${numero}/${new Date().getFullYear()}`,
-        largura - 15,
-        altura - 10,
+        largura - 17,
+        altura - 3,
         {
           align: "right",
         }
       );
-
     });
 
-
+    /*
+     * =====================================================
+     * ABRIR PDF
+     * =====================================================
+     */
 
     const url =
       pdf.output("bloburl");
-
 
     window.open(
       url,
       "_blank"
     );
-
-
   } catch (err: unknown) {
-
     console.error(err);
 
     alert(
       "Erro ao gerar certificados."
     );
-
   }
 }
+
