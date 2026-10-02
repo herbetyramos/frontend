@@ -53,42 +53,56 @@ function formatarDataPorExtenso(data: string): string {
     return "";
   }
 
-  let dataObj: Date;
+  // Trata datas no formato YYYY-MM-DD ou ISO
+  const dataISO = /^(\d{4})-(\d{2})-(\d{2})/.exec(data);
 
-  /*
-   * Trata datas no formato YYYY-MM-DD
-   * sem problemas de fuso horário.
-   */
+  if (dataISO) {
+    const ano = Number(dataISO[1]);
+    const mes = Number(dataISO[2]);
+    const dia = Number(dataISO[3]);
 
-  const somenteData =
-    /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+    const dataLocal = new Date(ano, mes - 1, dia);
 
-  if (somenteData) {
-    const ano = Number(somenteData[1]);
-    const mes = Number(somenteData[2]);
-    const dia = Number(somenteData[3]);
-
-    dataObj = new Date(
-      ano,
-      mes - 1,
-      dia
-    );
-  } else {
-    dataObj = new Date(data);
+    if (!Number.isNaN(dataLocal.getTime())) {
+      return dataLocal.toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
   }
 
-  if (Number.isNaN(dataObj.getTime())) {
-    return "";
+  // Trata datas no formato DD/MM/YYYY
+  const dataBR = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(data);
+
+  if (dataBR) {
+    const dia = Number(dataBR[1]);
+    const mes = Number(dataBR[2]);
+    const ano = Number(dataBR[3]);
+
+    const dataLocal = new Date(ano, mes - 1, dia);
+
+    if (!Number.isNaN(dataLocal.getTime())) {
+      return dataLocal.toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
   }
 
-  return dataObj.toLocaleDateString(
-    "pt-BR",
-    {
+  // Última tentativa para outros formatos
+  const dataObj = new Date(data);
+
+  if (!Number.isNaN(dataObj.getTime())) {
+    return dataObj.toLocaleDateString("pt-BR", {
       day: "numeric",
       month: "long",
       year: "numeric",
-    }
-  );
+    });
+  }
+
+  return "";
 }
 
 export async function gerarCertificados(
