@@ -5,7 +5,6 @@ import { api } from "@/services/api";
 import EditarCronogramaModal from "@/components/EditarCronogramaModal";
 import Image from "next/image";
 import React from "react";
-
 import { visualizarRelatorioProfessorSala } from "@/reports/relatorioProfessorSala";
 import { relatorioFormatura } from "@/reports/relatorioFormatura";
 import { visualizarRelatorioProfessores } from "@/reports/relatorioProfessores";
@@ -14,6 +13,7 @@ import { relatorioGrade } from "@/reports/relatorioGrade";
 import { gerarRelatorioDetentora } from "@/reports/relatorioDetentora";
 import { gerarRelatorioSolicitacao } from "@/reports/gerarRelatorioSolicitacao";
 import { gerarCertificados } from "@/utils/gerarCertificadoPDF";
+import { relatorioFormaturaEmpresa } from "@/reports/relatorioFormaturaEmpresa";
 
 import Link from "next/link";
 
@@ -648,6 +648,24 @@ export default function ListCronograma() {
                   >
                     Segmentos
                   </button>
+
+                  
+                                  
+                <button
+                  type="button"
+                  onClick={() =>
+                    relatorioFormaturaEmpresa(
+                      cronogramaFull,
+                      filtroDataFormatura,
+                      filtroBloco,
+                      filtroEmpresa
+                    )
+                  }
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Empresa
+                </button>
+
 
                   <button
                     type="button"
