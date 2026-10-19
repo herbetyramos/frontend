@@ -9,24 +9,24 @@ interface JsPDFWithAutoTable extends jsPDF {
   };
 }
 
-function getPeriodo(hora?: string) {
+function getPeriodo(hora?: string | null): string {
   if (!hora) return "";
 
-  const h = parseInt(hora.split(":")[0]);
+  const h = parseInt(hora.split(":")[0], 10);
 
   if (h < 12) return "MANHÃ";
   if (h < 18) return "TARDE";
   return "NOITE";
 }
 
-function formatarData(data?: string | null) {
+function formatarData(data?: string | null): string {
   if (!data) return "";
 
   const valor = String(data).trim();
 
   if (!valor) return "";
 
-  // Já está no formato brasileiro: DD/MM/YYYY
+  // Formato brasileiro: DD/MM/YYYY
   const formatoBR = valor.match(
     /^(\d{2})\/(\d{2})\/(\d{4})/
   );
@@ -83,38 +83,47 @@ export function relatorioFormatura(
     );
   }
 
+  // Filtra os cursos, excluindo os rascunhos
   const lista = cronogramaFull.filter((item) => {
+    const itemComDraft = item as CronogramaType & {
+      draft?: boolean;
+    };
+
+    // Não incluir registros marcados como rascunho
+    if (itemComDraft.draft === true) {
+      return false;
+    }
+
     const blocoOK =
       !filtroBloco ||
       item.bloco_curso?.bloco_Curso === filtroBloco;
 
+    const dataFormatura =
+      item.formatura?.data_formatura?.substring(0, 10);
+
     const formaturaOK =
       !filtroDataFormatura ||
-      item.formatura?.data_formatura?.substring(0, 10) ===
-        filtroDataFormatura;
+      dataFormatura === filtroDataFormatura;
 
     return blocoOK && formaturaOK;
   });
 
-  // ============================================================
-  // LINHAS DA TABELA
-  // ============================================================
-
+  // Linhas da tabela
   const rows = lista.map((item, index) => [
     index + 1,
-    item.codigo,
 
-    // TEMA EM MAIÚSCULO
+    // Tema em maiúsculo
     (item.tema || "").toUpperCase(),
 
-    formatarData(item.data_inicio),
+    formatarData(item.data_fim),
 
     getPeriodo(item.hora_inicio),
 
-    // LOCAL EM MAIÚSCULO
+    // Local em maiúsculo
     (item.localAula?.polo || "").toUpperCase(),
 
-    item.professor?.nome_professor || "",
+    // Professor em maiúsculo
+    (item.professor?.nome_professor || "").toUpperCase(),
   ]);
 
   autoTable(doc, {
@@ -122,9 +131,8 @@ export function relatorioFormatura(
 
     head: [[
       "Nº",
-      "Código",
       "Tema",
-      "Data Início",
+      "Término",
       "Período",
       "Local",
       "Professor",
@@ -153,42 +161,32 @@ export function relatorioFormatura(
       },
 
       1: {
-        cellWidth: 15,
+        cellWidth: 105,
       },
 
       2: {
-        cellWidth: 95,
-      },
-
-      3: {
         cellWidth: 25,
       },
 
-      4: {
+      3: {
         cellWidth: 22,
+      },
+
+      4: {
+        cellWidth: 55,
       },
 
       5: {
         cellWidth: 55,
       },
-
-      6: {
-        cellWidth: 55,
-      },
     },
   });
 
-  // ============================================================
-  // POSIÇÃO FINAL DA TABELA
-  // ============================================================
-
+  // Posição final da tabela
   const finalY =
     (doc as JsPDFWithAutoTable).lastAutoTable?.finalY ?? 0;
 
-  // ============================================================
-  // QUANTIDADE DE CURSOS POR LOCAL
-  // ============================================================
-
+  // Quantidade de cursos por local
   const quantidadePorLocal: Record<string, number> = {};
 
   lista.forEach((item) => {
@@ -205,10 +203,7 @@ export function relatorioFormatura(
     ([a], [b]) => a.localeCompare(b)
   );
 
-  // ============================================================
-  // RODAPÉ
-  // ============================================================
-
+  // Rodapé
   let rodapeY = finalY + 10;
 
   // Se faltar espaço, cria nova página
@@ -232,9 +227,7 @@ export function relatorioFormatura(
 
   locais.forEach(([local, quantidade]) => {
     doc.text(
-      `${local}: ${quantidade} curso${
-        quantidade !== 1 ? "s" : ""
-      }`,
+      `${local}: ${quantidade} curso${quantidade !== 1 ? "s" : ""}`,
       14,
       rodapeY
     );
@@ -242,10 +235,7 @@ export function relatorioFormatura(
     rodapeY += 5;
   });
 
-  // ============================================================
-  // TOTAL GERAL
-  // ============================================================
-
+  // Total geral, sem os rascunhos
   rodapeY += 3;
 
   doc.setFont("helvetica", "bold");
@@ -256,10 +246,7 @@ export function relatorioFormatura(
     rodapeY
   );
 
-  // ============================================================
-  // ABRIR PDF
-  // ============================================================
-
+  // Abrir PDF
   const pdfBlob = doc.output("blob");
 
   const pdfUrl = URL.createObjectURL(pdfBlob);
