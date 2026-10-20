@@ -136,6 +136,10 @@ export default function ListCronograma() {
   const [empresas, setEmpresas] = useState<string[]>([]);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
 
+  // Controla os menus de relatórios por toque no celular e clique no computador.
+  const [menuRelatorioAberto, setMenuRelatorioAberto] =
+    useState<"cronograma" | "formatura" | null>(null);
+
   const toggleExpandir = (id: string) => {
     setCursoExpandido((atual) => (atual === id ? null : id));
   };
@@ -425,7 +429,7 @@ export default function ListCronograma() {
   );
 
   return (
-    <div className="w-full max-w-full px-2 pt-0 pb-1 overflow-x-hidden">
+    <div className="w-full max-w-full px-2 pt-0 pb-1 overflow-x-hidden bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       {/* ======================================================
           CABEÇALHO
       ====================================================== */}
@@ -450,7 +454,7 @@ export default function ListCronograma() {
             <select
               value={filtroPolo}
               onChange={(e) => setFiltroPolo(e.target.value)}
-              className="border px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white"
+              className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">Local</option>
 
@@ -466,7 +470,7 @@ export default function ListCronograma() {
             <select
               value={filtroBloco}
               onChange={(e) => setFiltroBloco(e.target.value)}
-              className="border px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white"
+              className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">Grade</option>
 
@@ -482,7 +486,7 @@ export default function ListCronograma() {
             <select
               value={filtroEmpresa}
               onChange={(e) => setFiltroEmpresa(e.target.value)}
-              className="border px-2 py-1 text-sm rounded-md w-37.5 max-w-full h-8.5 bg-white"
+              className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm rounded-md w-37.5 max-w-full h-8.5 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">Empresa</option>
 
@@ -500,7 +504,7 @@ export default function ListCronograma() {
               onChange={(e) =>
                 setFiltroDataFormatura(e.target.value)
               }
-              className="border px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white"
+              className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">Formatura</option>
 
@@ -513,10 +517,10 @@ export default function ListCronograma() {
 
             {/* BUSCA */}
 
-            <div className="flex items-center border px-2 py-1 rounded-md shadow-sm h-8.5 w-45 max-w-full min-w-0 bg-white">
+            <div className="flex items-center border border-gray-300 dark:border-gray-700 px-2 py-1 rounded-md shadow-sm h-8.5 w-45 max-w-full min-w-0 bg-white dark:bg-gray-800">
               <Search
                 size={17}
-                className="text-gray-600 mr-1 shrink-0"
+                className="text-gray-600 dark:text-gray-300 mr-1 shrink-0"
               />
 
               <input
@@ -524,7 +528,7 @@ export default function ListCronograma() {
                 placeholder="Digite o tema..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="outline-none w-full min-w-0 text-sm"
+                className="outline-none w-full min-w-0 text-sm bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
               />
             </div>
 
@@ -538,6 +542,12 @@ export default function ListCronograma() {
               <div className="relative group">
                 <button
                   type="button"
+                  onClick={() =>
+                    setMenuRelatorioAberto((atual) =>
+                      atual === "cronograma" ? null : "cronograma"
+                    )
+                  }
+                  aria-expanded={menuRelatorioAberto === "cronograma"}
                   className="flex items-center justify-center gap-1 px-3 py-1 h-8.5 text-sm whitespace-nowrap bg-red-600 text-white rounded-md hover:bg-red-700"
                 >
                   <FileText size={15} />
@@ -545,7 +555,11 @@ export default function ListCronograma() {
                   <ChevronDown size={15} />
                 </button>
 
-                <div className="absolute left-0 top-full hidden group-hover:block bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-b-md shadow-lg w-52 max-w-[90vw] z-50">
+                <div
+                  className={`absolute left-0 top-full ${
+                    menuRelatorioAberto === "cronograma" ? "block" : "hidden"
+                  } bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-b-md shadow-lg w-52 max-w-[90vw] z-50`}
+                >
                   <button
                     type="button"
                     onClick={() =>
@@ -554,7 +568,7 @@ export default function ListCronograma() {
                         filtroBloco
                       )
                     }
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Grade
                   </button>
@@ -570,7 +584,7 @@ export default function ListCronograma() {
                         filtroEmpresa
                       )
                     }
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Empresa
                   </button>
@@ -585,7 +599,7 @@ export default function ListCronograma() {
                         cronogramaFiltrado
                       )
                     }
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Professores
                   </button>
@@ -600,7 +614,7 @@ export default function ListCronograma() {
                     }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <FileText size={15} />
                     Saldo
@@ -613,6 +627,12 @@ export default function ListCronograma() {
               <div className="relative group">
                 <button
                   type="button"
+                  onClick={() =>
+                    setMenuRelatorioAberto((atual) =>
+                      atual === "formatura" ? null : "formatura"
+                    )
+                  }
+                  aria-expanded={menuRelatorioAberto === "formatura"}
                   className="flex items-center justify-center gap-1 px-3 py-1 h-8.5 text-sm whitespace-nowrap bg-green-600 text-white rounded-md hover:bg-green-700"
                 >
                   <FileText size={15} />
@@ -620,7 +640,11 @@ export default function ListCronograma() {
                   <ChevronDown size={15} />
                 </button>
 
-                <div className="absolute left-0 top-full hidden group-hover:block bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-b-md shadow-lg w-52 max-w-[90vw] z-50">
+                <div
+                  className={`absolute left-0 top-full ${
+                    menuRelatorioAberto === "formatura" ? "block" : "hidden"
+                  } bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-b-md shadow-lg w-52 max-w-[90vw] z-50`}
+                >
                   <button
                     type="button"
                     onClick={() =>
@@ -630,7 +654,7 @@ export default function ListCronograma() {
                         filtroBloco
                       )
                     }
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Formatura
                   </button>
@@ -644,7 +668,7 @@ export default function ListCronograma() {
                         filtroDataFormatura
                       )
                     }
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Segmentos
                   </button>
@@ -676,7 +700,7 @@ export default function ListCronograma() {
                         filtroDataFormatura
                       )
                     }
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Professores
                   </button>
@@ -703,11 +727,11 @@ export default function ListCronograma() {
               {/* CABEÇALHO DO POLO */}
 
               <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h2 className="text-xl font-bold text-blue-700">
+                <h2 className="text-xl font-bold text-blue-700 dark:text-blue-300">
                   {polo}
                 </h2>
 
-                <span className="px-3 py-1 rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                <span className="px-3 py-1 rounded-full bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-200">
                   {totalCursosPolo} Cursos
                 </span>
               </div>
@@ -728,16 +752,16 @@ export default function ListCronograma() {
                   {/* TABELA */}
 
                   <div className="w-full overflow-x-auto">
-                    <table className="min-w-275 w-full table-fixed bg-white dark:bg-gray-900 shadow text-sm border-amber-200 dark:border-gray-700">
+                    <table className="min-w-275 w-full table-fixed bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 shadow text-sm border-amber-200 dark:border-gray-700">
                       <thead>
-                        <tr className="bg-gray-200 dark:bg-gray-800 text-left">
+                        <tr className="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-left">
                           <th className="w-10 border p-2">
                             Código
                           </th>
 
                           <th className="w-50 border p-2">
                             <h3>
-                              <span style={{ color: "#000" }}>
+                              <span className="text-gray-900 dark:text-gray-100">
                                 Sala:{" "}
                               </span>
 
@@ -863,7 +887,7 @@ export default function ListCronograma() {
                                 <div className="flex justify-center items-center gap-3">
                                   <button
                                     type="button"
-                                    className="text-blue-600 hover:text-blue-800"
+                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                                     onClick={() =>
                                       editar(item.id)
                                     }
@@ -923,10 +947,10 @@ export default function ListCronograma() {
 
                                 <td
                                   colSpan={8}
-                                  className="border bg-blue-50 px-2 py-2 text-sm align-top"
+                                  className="border border-blue-200 dark:border-gray-700 bg-blue-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 px-2 py-2 text-sm align-top"
                                 >
                                   <div className="space-y-3">
-                                    <h3 className="font-bold text-blue-700 text-lg">
+                                    <h3 className="font-bold text-blue-700 dark:text-blue-300 text-lg">
                                       Mais Informações
                                     </h3>
 
@@ -982,7 +1006,7 @@ export default function ListCronograma() {
                                         }
                                       </div>
 
-                                      <div className="text-xs font-semibold text-blue-700">
+                                      <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
                                         <strong>
                                           Saldo Contratado:
                                         </strong>{" "}
@@ -1002,7 +1026,7 @@ export default function ListCronograma() {
                                         }
                                       </div>
 
-                                      <div className="text-xs font-semibold text-gray-800">
+                                      <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
                                         <strong>
                                           Saldo Atual:
                                         </strong>{" "}
@@ -1082,9 +1106,9 @@ export default function ListCronograma() {
 
                                 <td
                                   colSpan={3}
-                                  className="border bg-blue-50 px-2 py-2 text-sm align-top"
+                                  className="border border-blue-200 dark:border-gray-700 bg-blue-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 px-2 py-2 text-sm align-top"
                                 >
-                                  <h2 className="font-bold text-blue-700 text-lg mb-2">
+                                  <h2 className="font-bold text-blue-700 dark:text-blue-300 text-lg mb-2">
                                     Professor
                                   </h2>
 
@@ -1168,8 +1192,8 @@ export default function ListCronograma() {
 
       {modalEditar && cronogramaEditando && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2">
-          <div className="bg-white rounded-xl shadow-xl w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-4 border-b">
+          <div className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 rounded-xl shadow-xl w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="font-bold text-xl">
                 Editar Cronograma
               </h2>
