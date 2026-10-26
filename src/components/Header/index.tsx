@@ -27,15 +27,16 @@ export default function Header({
   }
 
   return (
-   <header
+    <header
   className="
     fixed
-    top-0
+    top-[env(safe-area-inset-top,0px)]
     left-0
     right-0
     z-50
     h-12
     shadow-md
+    dark:shadow-black/30
   "
   style={{
     backgroundImage: "linear-gradient(to right, #e12afb, #9333ea)",
@@ -48,27 +49,64 @@ export default function Header({
             type="button"
             onClick={toggleSidebar}
             aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-            className="shrink-0 p-2 rounded-md text-white hover:bg-white/20 transition"
+            className="
+              shrink-0
+              p-2
+              rounded-md
+              text-white
+              hover:bg-white/20
+              transition
+            "
           >
-            {isOpen ? <X size={20} /> : <Menu size={20} />}
+            {isOpen ? (
+              <X size={20} />
+            ) : (
+              <Menu size={20} />
+            )}
           </button>
 
+          {/* Link Cadastro de cursos */}
           <Link
             href="/cronograma"
-            className="shrink-0 text-white text-xs sm:text-sm font-medium hover:bg-white/20 px-2 py-1 rounded-md transition"
+            className="
+              shrink-0
+              text-white
+              text-xs
+              sm:text-sm
+              font-medium
+              hover:bg-white/20
+              px-2
+              sm:px-3
+              py-1
+              rounded-md
+              transition
+            "
           >
             ➕ Curso
           </Link>
 
+          {/* Link Cronogramas */}
           <Link
             href="/listcronograma"
-            className="shrink-0 text-white text-xs sm:text-sm font-medium hover:bg-white/20 px-2 py-1 rounded-md transition"
+            className="
+              shrink-0
+              text-white
+              text-xs
+              sm:text-sm
+              font-medium
+              hover:bg-white/20
+              px-2
+              sm:px-3
+              py-1
+              rounded-md
+              transition
+            "
           >
             ☰ Cronogramas
           </Link>
         </div>
 
-        {/* Título: usa o espaço disponível */}
+        {/* Título: oculto em telas pequenas para liberar espaço */}
         <h1
           className="
             hidden
@@ -86,8 +124,12 @@ export default function Header({
           Cursos da SMMF
         </h1>
 
-        {/* Login/Sair: sempre visível à direita */}
+        {/* Usuário e autenticação */}
         <div className="ml-auto flex shrink-0 items-center">
+          <span className="hidden md:block text-white text-xs mr-2">
+            👤 {user?.name || "VISITANTE"}
+          </span>
+
           <button
             type="button"
             onClick={handleAuthAction}
