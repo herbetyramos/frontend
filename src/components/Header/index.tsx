@@ -28,112 +28,84 @@ export default function Header({
 
   return (
     <header
-      className="
-        fixed
-        top-[env(safe-area-inset-top,0px)]
-        left-0
-        right-0
-        z-50
-        h-12
-        .bg-gradient-to-r {
-        --tw-gradient-position: to right in oklab;
-        background-image: linear-gradient(var(--tw-gradient-stops));
-        }
-        from-fuchsia-500
-        to-purple-600
-        dark:from-slate-800
-        dark:to-purple-950
-        shadow-md
-        dark:shadow-black/30
-      "
-    >
-      <div className="h-full flex items-center justify-between px-3">
+  className="
+    fixed
+    top-0
+    left-0
+    right-0
+    z-50
+    h-12
+    shadow-md
+  "
+  style={{
+    backgroundImage: "linear-gradient(to right, #e12afb, #9333ea)",
+  }}
+>
+      <div className="h-full flex items-center gap-1 px-2">
         {/* Menu e navegação */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={toggleSidebar}
             aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-            className="
-              p-2
-              rounded-md
-              text-white
-              hover:bg-white/20
-              transition
-            "
+            className="shrink-0 p-2 rounded-md text-white hover:bg-white/20 transition"
           >
-            {isOpen ? (
-              <X size={20} />
-            ) : (
-              <Menu size={20} />
-            )}
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Link Cadastro de cursos */}
           <Link
             href="/cronograma"
-            className="
-              text-white
-              text-sm
-              font-medium
-              hover:bg-white/20
-              px-3
-              py-1
-              rounded-md
-              transition
-            "
+            className="shrink-0 text-white text-xs sm:text-sm font-medium hover:bg-white/20 px-2 py-1 rounded-md transition"
           >
             ➕ Curso
           </Link>
 
-          {/* Link Cronogramas */}
           <Link
             href="/listcronograma"
-            className="
-              text-white
-              text-sm
-              font-medium
-              hover:bg-white/20
-              px-3
-              py-1
-              rounded-md
-              transition
-            "
+            className="shrink-0 text-white text-xs sm:text-sm font-medium hover:bg-white/20 px-2 py-1 rounded-md transition"
           >
             ☰ Cronogramas
           </Link>
         </div>
 
-        {/* Título */}
+        {/* Título: usa o espaço disponível */}
         <h1
           className="
+            hidden
+            sm:block
+            flex-1
+            min-w-0
+            truncate
+            text-center
             text-white
             font-bold
             text-sm
             md:text-base
-            whitespace-nowrap
           "
         >
           Cursos da SMMF
         </h1>
 
-        {/* Usuário e autenticação */}
-        <div className="flex items-center gap-3">
-          <span className="hidden md:block text-white text-xs">
-            👤 {user?.name || "VISITANTE"}
-          </span>
-
+        {/* Login/Sair: sempre visível à direita */}
+        <div className="ml-auto flex shrink-0 items-center">
           <button
             type="button"
             onClick={handleAuthAction}
             aria-label={user ? "Sair da conta" : "Entrar"}
             className="
               flex
+              shrink-0
               items-center
+              justify-center
               gap-1
+              whitespace-nowrap
+              rounded-md
+              px-2
+              py-2
               text-white
               text-xs
-              hover:opacity-80
+              font-medium
+              hover:bg-white/20
               transition
             "
           >
