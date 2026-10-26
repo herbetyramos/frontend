@@ -1,9 +1,9 @@
+
 "use client";
 
 import { useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-
 
 export default function LayoutClient({
   children,
@@ -14,10 +14,12 @@ export default function LayoutClient({
 
   return (
     <>
-      <Header
-        isOpen={isOpen}
-        toggleSidebar={() => setIsOpen(!isOpen)}
-      />
+      <div className="safe-area-header">
+        <Header
+          isOpen={isOpen}
+          toggleSidebar={() => setIsOpen(!isOpen)}
+        />
+      </div>
 
       <Sidebar
         isOpen={isOpen}
