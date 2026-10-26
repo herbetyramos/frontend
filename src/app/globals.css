@@ -1,8 +1,10 @@
+
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --safe-area-top: env(safe-area-inset-top, 0px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,7 +19,12 @@ body {
   min-height: 100%;
 }
 
+html {
+  padding-top: var(--safe-area-top);
+}
+
 body {
+  min-height: 100%;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
