@@ -10,7 +10,6 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 
 interface CronogramaType {
@@ -129,32 +128,25 @@ export default function ListaPresencaPage() {
       );
   }, [cursos, busca, filtroFormatura]);
 
-  // ABRIR PDF - DESKTOP E CAPACITOR
-  const abrirPdf = async (curso: CronogramaType) => {
-    const url = obterUrlPdf(curso);
-
-    if (!url) {
-      toast.info(
-        "Este curso ainda não possui lista de presença."
-      );
-      return;
-    }
-
+  // TESTE TEMPORÁRIO: ABRIR GOOGLE PELO CAPACITOR
+  const abrirPdf = async () => {
     try {
-      if (Capacitor.isNativePlatform()) {
-        await Browser.open({
-          url,
-        });
-      } else {
-        window.open(
-          url,
-          "_blank",
-          "noopener,noreferrer"
-        );
-      }
+      console.log("Testando abertura do navegador...");
+
+      await Browser.open({
+        url: "https://www.google.com",
+      });
+
+      console.log("Comando de abertura executado.");
     } catch (error) {
-      console.error("Erro ao abrir PDF:", error);
-      toast.error("Não foi possível abrir o PDF.");
+      console.error("ERRO CAPACITOR BROWSER:", error);
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      toast.error(`Erro ao abrir navegador: ${mensagem}`);
     }
   };
 
@@ -314,6 +306,7 @@ export default function ListaPresencaPage() {
           ) : (
 
             <>
+
               {/* DESKTOP */}
               <div className="hidden w-full overflow-x-auto sm:block">
 
@@ -355,11 +348,15 @@ export default function ListaPresencaPage() {
                           className="hover:bg-gray-50 dark:hover:bg-gray-900"
                         >
 
-                          <td className=".break-words {overflow-wrap: break-word;} px-4 py-3 font-medium uppercase">
+                          <td className=".break-words {
+ overflow-wrap: break-word;
+}px-4 py-3 font-medium uppercase">
                             {curso.tema || "Sem tema"}
                           </td>
 
-                          <td className=".break-words {overflow-wrap: break-word;} px-4 py-3">
+                          <td className=".break-words {
+ overflow-wrap: break-word;
+} px-4 py-3">
                             {curso.professor?.nome_professor || "Não informado"}
                           </td>
 
@@ -371,10 +368,10 @@ export default function ListaPresencaPage() {
 
                             <button
                               type="button"
-                              onClick={() => void abrirPdf(curso)}
+                              onClick={() => void abrirPdf()}
                               disabled={!pdfDisponivel}
-                              title="Visualizar lista de presença em PDF"
-                              aria-label={`Visualizar lista de presença: ${curso.tema}`}
+                              title="Testar abertura do navegador"
+                              aria-label={`Testar abertura do navegador: ${curso.tema}`}
                               className={`inline-flex rounded-lg p-2 transition-colors ${
                                 pdfDisponivel
                                   ? "text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-950"
@@ -413,14 +410,18 @@ export default function ListaPresencaPage() {
                     >
 
                       {/* TEMA */}
-                      <h3 className=".break-words {overflow-wrap: break-word;} text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
+                      <h3 className=".break-words {
+ overflow-wrap: break-word;
+} text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
                         {curso.tema || "Sem tema"}
                       </h3>
 
                       {/* PROFESSOR, DATA E PDF */}
                       <div className="mt-1.5 grid grid-cols-2 items-start gap-2">
 
-                        <p className="min-w-0 .break-words {overflow-wrap: break-word;} text-xs text-gray-700 dark:text-gray-300">
+                        <p className="min-w-0 .break-words {
+ overflow-wrap: break-word;
+} text-xs text-gray-700 dark:text-gray-300">
                           {curso.professor?.nome_professor || "Não informado"}
                         </p>
 
@@ -433,14 +434,14 @@ export default function ListaPresencaPage() {
                           {/* ÍCONE PDF ABAIXO DA DATA */}
                           <button
                             type="button"
-                            onClick={() => void abrirPdf(curso)}
+                            onClick={() => void abrirPdf()}
                             disabled={!pdfDisponivel}
                             title={
                               pdfDisponivel
-                                ? "Visualizar lista de presença"
+                                ? "Testar abertura do navegador"
                                 : "Lista de presença não cadastrada"
                             }
-                            aria-label={`Visualizar lista de presença: ${curso.tema}`}
+                            aria-label={`Testar abertura do navegador: ${curso.tema}`}
                             className={`mt-1 inline-flex items-center justify-center rounded-md p-1.5 transition-colors ${
                               pdfDisponivel
                                 ? "bg-green-50 text-green-700 active:bg-green-100 dark:bg-green-950 dark:text-green-400 dark:active:bg-green-900"
@@ -460,6 +461,7 @@ export default function ListaPresencaPage() {
                 })}
 
               </div>
+
             </>
 
           )}
