@@ -471,22 +471,25 @@ function MatriculaContent() {
         }
       />
 
-      <button
-        type="button"
-        onClick={matricularAluno}
-        className="
-          w-full
-          bg-blue-600
-          text-white
-          py-3
-          rounded-lg
-          font-bold
-        "
-      >
-        {matriculaEditando
-          ? "SALVAR ALTERAÇÕES"
-          : "MATRICULAR"}
-      </button>
+    <button
+  type="button"
+  onClick={matricularAluno}
+  className="
+    block
+    w-auto
+    mx-auto
+    px-8
+    bg-blue-600
+    text-white
+    py-3
+    rounded-lg
+    font-bold
+  "
+>
+  {matriculaEditando
+    ? "SALVAR ALTERAÇÕES"
+    : "MATRICULAR"}
+</button>
 
       <ListaMatriculados
         matriculas={matriculas}
