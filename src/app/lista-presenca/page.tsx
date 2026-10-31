@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -118,45 +119,72 @@ export default function ListaPresencaPage() {
         const professor =
           curso.professor?.nome_professor?.toLocaleLowerCase("pt-BR") ?? "";
 
-        return (
-          tema.includes(texto) ||
-          professor.includes(texto)
-        );
+        return tema.includes(texto) || professor.includes(texto);
       })
       .sort((a, b) =>
         a.tema.localeCompare(b.tema, "pt-BR")
       );
   }, [cursos, busca, filtroFormatura]);
 
-  // ABRIR PDF - DESKTOP E APLICATIVO CAPACITOR
+  // ABRIR PDF - CÓDIGO TEMPORÁRIO DE DIAGNÓSTICO
   const abrirPdf = async (curso: CronogramaType) => {
     const url = obterUrlPdf(curso);
 
     if (!url) {
-      toast.info(
-        "Este curso ainda não possui lista de presença."
-      );
+      toast.info("Este curso ainda não possui lista de presença.");
+      console.error("PDF NÃO ENCONTRADO PARA O CURSO:", curso);
       return;
     }
 
+    // INFORMAÇÕES PARA IDENTIFICAR O PROBLEMA
+    console.log("==================================");
+    console.log("DIAGNÓSTICO DE ABERTURA DO PDF");
+    console.log("CURSO:", curso.tema);
+    console.log("ID DO CURSO:", curso.id);
     console.log("URL DO PDF:", url);
+    console.log("PLATAFORMA NATIVA:", Capacitor.isNativePlatform());
+    console.log("PLATAFORMA:", Capacitor.getPlatform());
+    console.log("==================================");
 
     try {
       if (Capacitor.isNativePlatform()) {
-        await Browser.open({
+        console.log("TENTANDO ABRIR PDF PELO CAPACITOR...");
+
+        const resultado = await Browser.open({
           url,
           presentationStyle: "fullscreen",
         });
+
+        console.log("RESULTADO DO BROWSER:", resultado);
       } else {
-        window.open(
+        console.log("TENTANDO ABRIR PDF PELO NAVEGADOR...");
+
+        const novaAba = window.open(
           url,
           "_blank",
           "noopener,noreferrer"
         );
+
+        if (!novaAba) {
+          console.error("O NAVEGADOR BLOQUEOU A NOVA ABA.");
+          toast.error("O navegador bloqueou a abertura do PDF.");
+        }
       }
     } catch (error) {
-      console.error("Erro ao abrir PDF:", error);
-      toast.error("Não foi possível abrir o PDF.");
+      console.error("==================================");
+      console.error("ERRO COMPLETO AO ABRIR PDF:", error);
+      console.error("URL QUE TENTOU ABRIR:", url);
+      console.error("TIPO DO ERRO:", typeof error);
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      console.error("MENSAGEM DO ERRO:", mensagem);
+      console.error("==================================");
+
+      toast.error(`Erro ao abrir PDF: ${mensagem}`);
     }
   };
 
@@ -214,9 +242,7 @@ export default function ListaPresencaPage() {
               }
               className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-green-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
-              <option value="">
-                Todas as formaturas
-              </option>
+              <option value="">Todas as formaturas</option>
 
               {formaturas.map((data) => (
                 <option key={data} value={data}>
@@ -244,9 +270,7 @@ export default function ListaPresencaPage() {
                 id="busca-curso"
                 type="search"
                 value={busca}
-                onChange={(event) =>
-                  setBusca(event.target.value)
-                }
+                onChange={(event) => setBusca(event.target.value)}
                 placeholder="Digite o tema ou professor..."
                 className="w-full min-w-0 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-gray-100 dark:placeholder:text-gray-400"
               />
@@ -315,9 +339,7 @@ export default function ListaPresencaPage() {
 
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                     {cursosFiltrados.map((curso) => {
-                      const pdfDisponivel = Boolean(
-                        obterUrlPdf(curso)
-                      );
+                      const pdfDisponivel = Boolean(obterUrlPdf(curso));
 
                       return (
                         <tr
@@ -366,23 +388,19 @@ export default function ListaPresencaPage() {
               {/* CELULAR */}
               <div className="space-y-2 p-2 sm:hidden">
                 {cursosFiltrados.map((curso) => {
-                  const pdfDisponivel = Boolean(
-                    obterUrlPdf(curso)
-                  );
+                  const pdfDisponivel = Boolean(obterUrlPdf(curso));
 
                   return (
                     <article
                       key={curso.id}
                       className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900"
                     >
-                      {/* TEMA */}
                       <h3 className=".break-words {
  overflow-wrap: break-word;
 } text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
                         {curso.tema || "Sem tema"}
                       </h3>
 
-                      {/* PROFESSOR, DATA E PDF */}
                       <div className="mt-1.5 grid grid-cols-2 items-start gap-2">
                         <p className="min-w-0 .break-words {
  overflow-wrap: break-word;
@@ -395,7 +413,6 @@ export default function ListaPresencaPage() {
                             {formatarData(curso.data_fim)}
                           </p>
 
-                          {/* ÍCONE PDF ABAIXO DA DATA */}
                           <button
                             type="button"
                             onClick={() => void abrirPdf(curso)}
