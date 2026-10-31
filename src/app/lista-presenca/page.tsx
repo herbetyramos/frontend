@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,6 +9,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 
 interface CronogramaType {
@@ -128,38 +128,45 @@ export default function ListaPresencaPage() {
       );
   }, [cursos, busca, filtroFormatura]);
 
-  // TESTE TEMPORÁRIO: ABRIR GOOGLE PELO CAPACITOR
-  const abrirPdf = async () => {
+  // ABRIR PDF - DESKTOP E APLICATIVO CAPACITOR
+  const abrirPdf = async (curso: CronogramaType) => {
+    const url = obterUrlPdf(curso);
+
+    if (!url) {
+      toast.info(
+        "Este curso ainda não possui lista de presença."
+      );
+      return;
+    }
+
+    console.log("URL DO PDF:", url);
+
     try {
-      console.log("Testando abertura do navegador...");
-
-      await Browser.open({
-        url: "https://www.google.com",
-      });
-
-      console.log("Comando de abertura executado.");
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({
+          url,
+          presentationStyle: "fullscreen",
+        });
+      } else {
+        window.open(
+          url,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
     } catch (error) {
-      console.error("ERRO CAPACITOR BROWSER:", error);
-
-      const mensagem =
-        error instanceof Error
-          ? error.message
-          : String(error);
-
-      toast.error(`Erro ao abrir navegador: ${mensagem}`);
+      console.error("Erro ao abrir PDF:", error);
+      toast.error("Não foi possível abrir o PDF.");
     }
   };
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
-
       <div className="mx-auto w-full max-w-7xl space-y-5">
 
         {/* CABEÇALHO */}
         <header className="flex flex-wrap items-center justify-between gap-3">
-
           <div className="flex items-center gap-3">
-
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">
               <ClipboardList size={25} />
             </div>
@@ -173,7 +180,6 @@ export default function ListaPresencaPage() {
                 Consulte os cursos e visualize os PDFs.
               </p>
             </div>
-
           </div>
 
           <button
@@ -188,14 +194,11 @@ export default function ListaPresencaPage() {
             />
             Atualizar
           </button>
-
         </header>
 
         {/* FILTROS */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
           <div className="min-w-0">
-
             <label
               htmlFor="filtro-formatura"
               className="mb-1 block text-sm font-semibold"
@@ -220,13 +223,10 @@ export default function ListaPresencaPage() {
                   {formatarData(data)}
                 </option>
               ))}
-
             </select>
-
           </div>
 
           <div className="min-w-0">
-
             <label
               htmlFor="busca-curso"
               className="mb-1 block text-sm font-semibold"
@@ -235,7 +235,6 @@ export default function ListaPresencaPage() {
             </label>
 
             <div className="flex h-11 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 focus-within:border-green-600 dark:border-gray-700 dark:bg-gray-800">
-
               <Search
                 size={18}
                 className="shrink-0 text-gray-500 dark:text-gray-400"
@@ -251,18 +250,13 @@ export default function ListaPresencaPage() {
                 placeholder="Digite o tema ou professor..."
                 className="w-full min-w-0 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-gray-100 dark:placeholder:text-gray-400"
               />
-
             </div>
-
           </div>
-
         </section>
 
         {/* LISTAGEM */}
         <section className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
-
           <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-
             <h2 className="font-semibold">
               Cursos encontrados
             </h2>
@@ -270,19 +264,14 @@ export default function ListaPresencaPage() {
             <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-800 dark:bg-green-950 dark:text-green-300">
               {cursosFiltrados.length}
             </span>
-
           </div>
 
           {carregando ? (
-
             <div className="p-8 text-center text-gray-600 dark:text-gray-400">
               Carregando cursos...
             </div>
-
           ) : erro ? (
-
             <div className="space-y-3 p-8 text-center">
-
               <p className="text-red-600 dark:text-red-400">
                 Erro ao carregar a lista de cursos.
               </p>
@@ -294,26 +283,17 @@ export default function ListaPresencaPage() {
               >
                 Tentar novamente
               </button>
-
             </div>
-
           ) : cursosFiltrados.length === 0 ? (
-
             <div className="p-8 text-center text-gray-600 dark:text-gray-400">
               Nenhum curso encontrado com os filtros selecionados.
             </div>
-
           ) : (
-
             <>
-
               {/* DESKTOP */}
               <div className="hidden w-full overflow-x-auto sm:block">
-
                 <table className="w-full min-w-650px table-fixed text-left text-sm">
-
                   <thead className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-
                     <tr>
                       <th className="w-[38%] px-4 py-3 font-semibold">
                         Tema
@@ -331,13 +311,10 @@ export default function ListaPresencaPage() {
                         Lista
                       </th>
                     </tr>
-
                   </thead>
 
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-
                     {cursosFiltrados.map((curso) => {
-
                       const pdfDisponivel = Boolean(
                         obterUrlPdf(curso)
                       );
@@ -347,10 +324,9 @@ export default function ListaPresencaPage() {
                           key={curso.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-900"
                         >
-
                           <td className=".break-words {
  overflow-wrap: break-word;
-}px-4 py-3 font-medium uppercase">
+} px-4 py-3 font-medium uppercase">
                             {curso.tema || "Sem tema"}
                           </td>
 
@@ -365,13 +341,12 @@ export default function ListaPresencaPage() {
                           </td>
 
                           <td className="px-4 py-3 text-center">
-
                             <button
                               type="button"
-                              onClick={() => void abrirPdf()}
+                              onClick={() => void abrirPdf(curso)}
                               disabled={!pdfDisponivel}
-                              title="Testar abertura do navegador"
-                              aria-label={`Testar abertura do navegador: ${curso.tema}`}
+                              title="Visualizar lista de presença em PDF"
+                              aria-label={`Visualizar lista de presença: ${curso.tema}`}
                               className={`inline-flex rounded-lg p-2 transition-colors ${
                                 pdfDisponivel
                                   ? "text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-950"
@@ -380,25 +355,17 @@ export default function ListaPresencaPage() {
                             >
                               <FileText size={21} />
                             </button>
-
                           </td>
-
                         </tr>
                       );
-
                     })}
-
                   </tbody>
-
                 </table>
-
               </div>
 
               {/* CELULAR */}
               <div className="space-y-2 p-2 sm:hidden">
-
                 {cursosFiltrados.map((curso) => {
-
                   const pdfDisponivel = Boolean(
                     obterUrlPdf(curso)
                   );
@@ -408,7 +375,6 @@ export default function ListaPresencaPage() {
                       key={curso.id}
                       className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900"
                     >
-
                       {/* TEMA */}
                       <h3 className=".break-words {
  overflow-wrap: break-word;
@@ -418,7 +384,6 @@ export default function ListaPresencaPage() {
 
                       {/* PROFESSOR, DATA E PDF */}
                       <div className="mt-1.5 grid grid-cols-2 items-start gap-2">
-
                         <p className="min-w-0 .break-words {
  overflow-wrap: break-word;
 } text-xs text-gray-700 dark:text-gray-300">
@@ -426,7 +391,6 @@ export default function ListaPresencaPage() {
                         </p>
 
                         <div className="text-center">
-
                           <p className="text-xs text-gray-700 dark:text-gray-300">
                             {formatarData(curso.data_fim)}
                           </p>
@@ -434,14 +398,14 @@ export default function ListaPresencaPage() {
                           {/* ÍCONE PDF ABAIXO DA DATA */}
                           <button
                             type="button"
-                            onClick={() => void abrirPdf()}
+                            onClick={() => void abrirPdf(curso)}
                             disabled={!pdfDisponivel}
                             title={
                               pdfDisponivel
-                                ? "Testar abertura do navegador"
+                                ? "Visualizar lista de presença"
                                 : "Lista de presença não cadastrada"
                             }
-                            aria-label={`Testar abertura do navegador: ${curso.tema}`}
+                            aria-label={`Visualizar lista de presença: ${curso.tema}`}
                             className={`mt-1 inline-flex items-center justify-center rounded-md p-1.5 transition-colors ${
                               pdfDisponivel
                                 ? "bg-green-50 text-green-700 active:bg-green-100 dark:bg-green-950 dark:text-green-400 dark:active:bg-green-900"
@@ -450,26 +414,16 @@ export default function ListaPresencaPage() {
                           >
                             <FileText size={19} />
                           </button>
-
                         </div>
-
                       </div>
-
                     </article>
                   );
-
                 })}
-
               </div>
-
             </>
-
           )}
-
         </section>
-
       </div>
-
     </main>
   );
 }
