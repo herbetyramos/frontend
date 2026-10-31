@@ -148,15 +148,11 @@ export default function ListaPresencaPage() {
 
     try {
       if (Capacitor.isNativePlatform()) {
-        console.log("TENTANDO ABRIR PDF PELO CAPACITOR...");
-
-        const resultado = await Browser.open({
-          url,
-          presentationStyle: "fullscreen",
-        });
-
-        console.log("RESULTADO DO BROWSER:", resultado);
-      } else {
+  await Browser.open({
+    url,
+    presentationStyle: "fullscreen",
+  });
+} else {
         console.log("TENTANDO ABRIR PDF PELO NAVEGADOR...");
 
         const novaAba = window.open(
