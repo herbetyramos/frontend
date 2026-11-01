@@ -10,8 +10,9 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
-import { AppLauncher } from "@capacitor/app-launcher";
+
 
 interface CronogramaType {
   id: string;
@@ -135,41 +136,30 @@ const abrirPdf = async (curso: CronogramaType) => {
   const url = obterUrlPdf(curso);
 
   if (!url) {
-    toast.info(
-      "Este curso ainda não possui lista de presença."
-    );
+    toast.info("Este cronograma não possui lista de presença.");
     return;
   }
 
   try {
-    if (Capacitor.isNativePlatform()) {
-      // Android: abre no aplicativo externo compatível
-      const resultado = await AppLauncher.openUrl({
-        url,
-      });
+    console.log("URL do PDF:", url);
 
-      if (!resultado.completed) {
-        toast.error(
-          "Não foi possível abrir o PDF no celular."
-        );
-      }
+    if (Capacitor.isNativePlatform()) {
+      await Browser.open({
+        url,
+        presentationStyle: "fullscreen",
+      });
 
       return;
     }
 
-    // Desktop: mantém o comportamento atual
-    window.open(
-      url,
-      "_blank",
-      "noopener,noreferrer"
-    );
-
-  } catch (error) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  } catch (error: unknown) {
     console.error("Erro ao abrir PDF:", error);
 
-    toast.error(
-      "Não foi possível abrir o PDF."
-    );
+    const mensagem =
+      error instanceof Error ? error.message : String(error);
+
+    toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
   }
 };
 
