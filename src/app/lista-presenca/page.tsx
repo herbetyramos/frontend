@@ -156,42 +156,37 @@ export default function ListaPresencaPage() {
   }, [cursos, busca, filtroFormatura]);
 
   // ABRIR PDF
-  const abrirPdf = async (curso: CronogramaType) => {
-    const url = obterUrlPdf(curso);
+ const abrirPdf = async (curso: CronogramaType) => {
+  const url = obterUrlPdf(curso);
 
-    if (!url) {
-      toast.info("Este curso ainda não possui lista de presença cadastrada.");
-      return;
+  if (!url) {
+    toast.info("Este curso ainda não possui lista de presença cadastrada.");
+    return;
+  }
+
+  console.log("CURSO:", curso.tema);
+  console.log("URL DO PDF:", url);
+  console.log("PLATAFORMA:", Capacitor.getPlatform());
+  console.log("NATIVO:", Capacitor.isNativePlatform());
+
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await FileViewer.openDocumentFromUrl({ url });
+    } else {
+      // Abre o PDF em uma nova aba.
+      // Não verifica o retorno de window.open(),
+      // pois noopener pode retornar null mesmo funcionando.
+      window.open(url, "_blank", "noopener,noreferrer");
     }
+  } catch (error) {
+    console.error("Erro ao abrir PDF:", error);
 
-    console.log("CURSO:", curso.tema);
-    console.log("URL DO PDF:", url);
-    console.log("PLATAFORMA:", Capacitor.getPlatform());
-    console.log("NATIVO:", Capacitor.isNativePlatform());
+    const mensagem =
+      error instanceof Error ? error.message : String(error);
 
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await FileViewer.openDocumentFromUrl({ url });
-      } else {
-        const novaAba = window.open(
-          url,
-          "_blank",
-          "noopener,noreferrer"
-        );
-
-        if (!novaAba) {
-          toast.error("O navegador bloqueou a abertura do PDF.");
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao abrir PDF:", error);
-
-      const mensagem =
-        error instanceof Error ? error.message : String(error);
-
-      toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
-    }
-  };
+    toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
+  }
+};
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
