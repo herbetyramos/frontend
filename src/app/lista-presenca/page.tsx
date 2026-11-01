@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Capacitor } from "@capacitor/core";
-import { Browser } from "@capacitor/browser";
+import { FileViewer } from "@capacitor/file-viewer";
 
 interface CronogramaType {
   id: string;
@@ -128,61 +128,30 @@ export default function ListaPresencaPage() {
 
   // ABRIR PDF - CÓDIGO TEMPORÁRIO DE DIAGNÓSTICO
   const abrirPdf = async (curso: CronogramaType) => {
-    const url = obterUrlPdf(curso);
+  const url = obterUrlPdf(curso);
 
-    if (!url) {
-      toast.info("Este curso ainda não possui lista de presença.");
-      console.error("PDF NÃO ENCONTRADO PARA O CURSO:", curso);
-      return;
+  if (!url) {
+    toast.info("Este curso ainda não possui lista de presença.");
+    return;
+  }
+
+  console.log("PDF:", url);
+
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await FileViewer.openDocumentFromUrl({ url });
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
     }
+  } catch (error) {
+    console.error("ERRO AO ABRIR PDF:", error);
 
-    // INFORMAÇÕES PARA IDENTIFICAR O PROBLEMA
-    console.log("==================================");
-    console.log("DIAGNÓSTICO DE ABERTURA DO PDF");
-    console.log("CURSO:", curso.tema);
-    console.log("ID DO CURSO:", curso.id);
-    console.log("URL DO PDF:", url);
-    console.log("PLATAFORMA NATIVA:", Capacitor.isNativePlatform());
-    console.log("PLATAFORMA:", Capacitor.getPlatform());
-    console.log("==================================");
+    const mensagem =
+      error instanceof Error ? error.message : String(error);
 
-    try {
-      if (Capacitor.isNativePlatform()) {
-  await Browser.open({
-    url,
-    presentationStyle: "fullscreen",
-  });
-} else {
-        console.log("TENTANDO ABRIR PDF PELO NAVEGADOR...");
-
-        const novaAba = window.open(
-          url,
-          "_blank",
-          "noopener,noreferrer"
-        );
-
-        if (!novaAba) {
-          console.error("O NAVEGADOR BLOQUEOU A NOVA ABA.");
-          toast.error("O navegador bloqueou a abertura do PDF.");
-        }
-      }
-    } catch (error) {
-      console.error("==================================");
-      console.error("ERRO COMPLETO AO ABRIR PDF:", error);
-      console.error("URL QUE TENTOU ABRIR:", url);
-      console.error("TIPO DO ERRO:", typeof error);
-
-      const mensagem =
-        error instanceof Error
-          ? error.message
-          : String(error);
-
-      console.error("MENSAGEM DO ERRO:", mensagem);
-      console.error("==================================");
-
-      toast.error(`Erro ao abrir PDF: ${mensagem}`);
-    }
-  };
+    toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
+  }
+};
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
