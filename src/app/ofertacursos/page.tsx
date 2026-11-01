@@ -40,75 +40,56 @@ nome_curso?: string | null;
 // URL BASE DO SITE
 // ======================================================
 
-const SITE_URL = "https://gestaom.com";
+function obterBaseBackend(): string {
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://192.168.15.84:3000";
+
+  return apiUrl
+     .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
+}
 
 // ======================================================
 // MONTAR URL DA IMAGEM
 // ======================================================
 
 function montarUrlImagem(imagem?: string | null): string {
-if (!imagem) {
-return "";
-}
+  if (!imagem) {
+    return "";
+  }
 
-let valor = imagem.trim();
+  let valor = imagem.trim();
 
-if (!valor) {
-return "";
-}
+  if (!valor) {
+    return "";
+  }
 
-// ====================================================
-// CORRIGIR URLs ANTIGAS
-// ====================================================
+  const baseBackend = obterBaseBackend();
 
-valor = valor
-.replace("http://localhost:3000", SITE_URL)
-.replace("http://192.168.15.84:3000", SITE_URL)
-.replace("http://127.0.0.1:3000", SITE_URL);
+  // URLs antigas gravadas no banco.
+  valor = valor
+    .replace("http://localhost:3000", baseBackend)
+    .replace("http://192.168.15.84:3000", baseBackend)
+    .replace("http://127.0.0.1:3000", baseBackend);
 
-// ====================================================
-// URL HTTPS
-// ====================================================
+  // URL absoluta.
+  if (valor.startsWith("https://") || valor.startsWith("http://")) {
+    return valor;
+  }
 
-if (valor.startsWith("https://")) {
-return valor;
-}
+  // Caminho absoluto.
+  if (valor.startsWith("/")) {
+    return `${baseBackend}${valor}`;
+  }
 
-// ====================================================
-// URL HTTP
-// ====================================================
+  // Caminho relativo.
+  if (valor.startsWith("files/") || valor.startsWith("uploads/")) {
+    return `${baseBackend}/${valor}`;
+  }
 
-if (valor.startsWith("http://")) {
-  return valor.replace(/^http:\/\//, "https://");
-}
-
-// ====================================================
-// CAMINHO ABSOLUTO
-//
-// Exemplos:
-// /files/imagem.jpg
-// /uploads/cronogramas/imagem.jpg
-// ====================================================
-
-if (valor.startsWith("/")) {
-return `${SITE_URL}${valor}`;
-}
-
-// ====================================================
-// CAMINHO RELATIVO
-// ====================================================
-
-if (valor.startsWith("files/") || valor.startsWith("uploads/")) {
-return `${SITE_URL}/${valor}`;
-}
-
-// ====================================================
-// SOMENTE NOME DO ARQUIVO
-//
-// Assume que está em /files/
-// ====================================================
-
-return `${SITE_URL}/files/${valor}`;
+  // Somente nome do arquivo: assume /files/.
+  return `${baseBackend}/files/${valor}`;
 }
 
 // ======================================================

@@ -405,18 +405,20 @@ export default function OfertaCursoPage() {
                 ================================================== */}
 
                 <h2
-                  className="
-                    text-center
-                    text-lg
-                    font-bold
+                  className="                                                       
                     uppercase
                     leading-tight
                     text-gray-800
+                    text-xs
+                    font-bold
                   "
                 >
                   {o.tema}
                 </h2>
-
+                <p className="mt-1 text-sm text-gray-600">
+                 Materiais disponibilizados pela prefeitura.
+                </p>
+                
                 {/* ==================================================
                     INFORMAÇÕES
                 ================================================== */}

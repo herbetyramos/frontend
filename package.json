@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@capacitor/android": "7",
+    "@capacitor/app-launcher": "7.0.2",
     "@capacitor/browser": "^8.0.5",
     "@capacitor/cli": "7",
     "@capacitor/core": "7",
