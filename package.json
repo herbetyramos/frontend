@@ -9,6 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/android": "7",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/cli": "7",
+    "@capacitor/core": "7",
+    "@capacitor/file-viewer": "^1.0.7",
+    "@capacitor/ios": "7.6.9",
+    "@capacitor/status-bar": "^7.0.0",
     "axios": "^1.11.0",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
