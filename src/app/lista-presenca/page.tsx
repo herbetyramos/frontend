@@ -29,8 +29,9 @@ interface CronogramaType {
   listaPresencaUrl?: string | null;
 }
 
+// Endereço público do servidor
 const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.15.84:3000"
+  process.env.NEXT_PUBLIC_API_URL || "https://gestaom.com/api"
 )
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
@@ -48,17 +49,34 @@ function formatarData(data?: string | null): string {
   return parteData;
 }
 
+// CONVERTER CAMINHO RELATIVO EM URL COMPLETA
 function obterUrlPdf(curso: CronogramaType): string | null {
   const caminho =
     curso.lista_presenca_url || curso.listaPresencaUrl;
 
-  if (!caminho?.trim()) return null;
-
-  if (/^https?:\/\//i.test(caminho)) {
-    return caminho;
+  if (!caminho?.trim()) {
+    return null;
   }
 
-  return `${API_BASE_URL}/${caminho.replace(/^\/+/, "")}`;
+  const caminhoLimpo = caminho.trim();
+
+  try {
+    // Se já for uma URL completa
+    if (/^https?:\/\//i.test(caminhoLimpo)) {
+      const urlCompleta = new URL(caminhoLimpo);
+
+      return urlCompleta.href;
+    }
+
+    // Remove barras iniciais
+    const caminhoRelativo = caminhoLimpo.replace(/^\/+/, "");
+
+    // Monta URL absoluta
+    return new URL(caminhoRelativo, `${API_BASE_URL}/`).href;
+  } catch (error) {
+    console.error("Erro ao montar URL do PDF:", error);
+    return null;
+  }
 }
 
 export default function ListaPresencaPage() {
@@ -126,32 +144,53 @@ export default function ListaPresencaPage() {
       );
   }, [cursos, busca, filtroFormatura]);
 
-  // ABRIR PDF - CÓDIGO TEMPORÁRIO DE DIAGNÓSTICO
+  // ABRIR PDF
   const abrirPdf = async (curso: CronogramaType) => {
-  const url = obterUrlPdf(curso);
+    const url = obterUrlPdf(curso);
 
-  if (!url) {
-    toast.info("Este curso ainda não possui lista de presença.");
-    return;
-  }
-
-  console.log("PDF:", url);
-
-  try {
-    if (Capacitor.isNativePlatform()) {
-      await FileViewer.openDocumentFromUrl({ url });
-    } else {
-      window.open(url, "_blank", "noopener,noreferrer");
+    if (!url) {
+      toast.info("Este curso ainda não possui lista de presença.");
+      return;
     }
-  } catch (error) {
-    console.error("ERRO AO ABRIR PDF:", error);
 
-    const mensagem =
-      error instanceof Error ? error.message : String(error);
+    console.log("==================================");
+    console.log("DIAGNÓSTICO DO PDF");
+    console.log("CURSO:", curso.tema);
+    console.log("ID:", curso.id);
+    console.log("URL COMPLETA:", url);
+    console.log("PLATAFORMA:", Capacitor.getPlatform());
+    console.log("NATIVO:", Capacitor.isNativePlatform());
+    console.log("==================================");
 
-    toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
-  }
-};
+    if (!/^https?:\/\//i.test(url)) {
+      toast.error("O endereço do PDF não é válido.");
+      return;
+    }
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await FileViewer.openDocumentFromUrl({ url });
+      } else {
+        const novaAba = window.open(
+          url,
+          "_blank",
+          "noopener,noreferrer"
+        );
+
+        if (!novaAba) {
+          toast.error("O navegador bloqueou a abertura do PDF.");
+        }
+      }
+    } catch (error) {
+      console.error("ERRO AO ABRIR PDF:", error);
+      console.error("URL UTILIZADA:", url);
+
+      const mensagem =
+        error instanceof Error ? error.message : String(error);
+
+      toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
+    }
+  };
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
@@ -311,15 +350,11 @@ export default function ListaPresencaPage() {
                           key={curso.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-900"
                         >
-                          <td className=".break-words {
- overflow-wrap: break-word;
-} px-4 py-3 font-medium uppercase">
+                          <td className="wrap-break-word px-4 py-3 font-medium uppercase">
                             {curso.tema || "Sem tema"}
                           </td>
 
-                          <td className=".break-words {
- overflow-wrap: break-word;
-} px-4 py-3">
+                          <td className="wrap-break-word px-4 py-3">
                             {curso.professor?.nome_professor || "Não informado"}
                           </td>
 
@@ -360,16 +395,12 @@ export default function ListaPresencaPage() {
                       key={curso.id}
                       className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900"
                     >
-                      <h3 className=".break-words {
- overflow-wrap: break-word;
-} text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
+                      <h3 className="wrap-break-word text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
                         {curso.tema || "Sem tema"}
                       </h3>
 
                       <div className="mt-1.5 grid grid-cols-2 items-start gap-2">
-                        <p className="min-w-0 .break-words {
- overflow-wrap: break-word;
-} text-xs text-gray-700 dark:text-gray-300">
+                        <p className="min-w-0 wrap-break-word text-xs text-gray-700 dark:text-gray-300">
                           {curso.professor?.nome_professor || "Não informado"}
                         </p>
 
