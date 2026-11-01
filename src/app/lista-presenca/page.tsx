@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Capacitor } from "@capacitor/core";
-import { Browser } from "@capacitor/browser";
+import { AppLauncher } from "@capacitor/app-launcher";
 
 interface CronogramaType {
   id: string;
@@ -130,33 +130,48 @@ export default function ListaPresencaPage() {
   }, [cursos, busca, filtroFormatura]);
 
   // ABRIR PDF - DESKTOP E CAPACITOR
-  const abrirPdf = async (curso: CronogramaType) => {
-    const url = obterUrlPdf(curso);
+  // ABRIR PDF - ANDROID E DESKTOP
+const abrirPdf = async (curso: CronogramaType) => {
+  const url = obterUrlPdf(curso);
 
-    if (!url) {
-      toast.info(
-        "Este curso ainda não possui lista de presença."
-      );
+  if (!url) {
+    toast.info(
+      "Este curso ainda não possui lista de presença."
+    );
+    return;
+  }
+
+  try {
+    if (Capacitor.isNativePlatform()) {
+      // Android: abre no aplicativo externo compatível
+      const resultado = await AppLauncher.openUrl({
+        url,
+      });
+
+      if (!resultado.completed) {
+        toast.error(
+          "Não foi possível abrir o PDF no celular."
+        );
+      }
+
       return;
     }
 
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await Browser.open({
-          url,
-        });
-      } else {
-        window.open(
-          url,
-          "_blank",
-          "noopener,noreferrer"
-        );
-      }
-    } catch (error) {
-      console.error("Erro ao abrir PDF:", error);
-      toast.error("Não foi possível abrir o PDF.");
-    }
-  };
+    // Desktop: mantém o comportamento atual
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  } catch (error) {
+    console.error("Erro ao abrir PDF:", error);
+
+    toast.error(
+      "Não foi possível abrir o PDF."
+    );
+  }
+};
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
