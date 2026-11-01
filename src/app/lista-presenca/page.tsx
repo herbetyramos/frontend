@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Capacitor } from "@capacitor/core";
-import { FileViewer } from "@capacitor/file-viewer";
+import { Browser } from "@capacitor/browser";
 
 interface CronogramaType {
   id: string;
@@ -25,17 +25,12 @@ interface CronogramaType {
     data_formatura: string;
     local: string;
   } | null;
-
   lista_presenca_url?: string | null;
   listaPresencaUrl?: string | null;
-  lista_presenca?: string | null;
-  listaPresenca?: string | null;
-  arquivo_lista_presenca?: string | null;
-  arquivoListaPresenca?: string | null;
 }
 
 const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "https://gestaom.com/api"
+  process.env.NEXT_PUBLIC_API_URL || "http://192.168.15.84:3000"
 )
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
@@ -53,41 +48,18 @@ function formatarData(data?: string | null): string {
   return parteData;
 }
 
-// IDENTIFICAR O CAMINHO DO PDF
-function obterCaminhoPdf(curso: CronogramaType): string | null {
-  const caminho =
-    curso.lista_presenca_url ||
-    curso.listaPresencaUrl ||
-    curso.lista_presenca ||
-    curso.listaPresenca ||
-    curso.arquivo_lista_presenca ||
-    curso.arquivoListaPresenca;
-
-  if (typeof caminho !== "string" || !caminho.trim()) {
-    return null;
-  }
-
-  return caminho.trim();
-}
-
-// CONVERTER CAMINHO EM URL COMPLETA
 function obterUrlPdf(curso: CronogramaType): string | null {
-  const caminho = obterCaminhoPdf(curso);
+  const caminho = curso.lista_presenca_url || curso.listaPresencaUrl;
 
-  if (!caminho) return null;
+  if (!caminho?.trim()) return null;
 
-  try {
-    if (/^https?:\/\//i.test(caminho)) {
-      return new URL(caminho).href;
-    }
+  const caminhoLimpo = caminho.trim();
 
-    const caminhoRelativo = caminho.replace(/^\/+/, "");
-
-    return new URL(caminhoRelativo, `${API_BASE_URL}/`).href;
-  } catch (error) {
-    console.error("Erro ao montar URL do PDF:", error);
-    return null;
+  if (/^https?:\/\//i.test(caminhoLimpo)) {
+    return caminhoLimpo;
   }
+
+  return `${API_BASE_URL}/${caminhoLimpo.replace(/^\/+/, "")}`;
 }
 
 export default function ListaPresencaPage() {
@@ -97,17 +69,16 @@ export default function ListaPresencaPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
 
-  // CARREGAR CURSOS
   const carregarCursos = useCallback(async () => {
     setCarregando(true);
     setErro(false);
 
     try {
-      const resposta = await api.get<CronogramaType[]>("/listcronograma");
+      const resposta = await api.get<CronogramaType[]>(
+        "/listcronograma"
+      );
 
       setCursos(resposta.data);
-
-      console.log("CRONOGRAMAS RECEBIDOS:", resposta.data);
     } catch (error) {
       console.error("Erro ao carregar cursos:", error);
       setErro(true);
@@ -121,7 +92,6 @@ export default function ListaPresencaPage() {
     void carregarCursos();
   }, [carregarCursos]);
 
-  // FORMaturas DISPONÍVEIS
   const formaturas = useMemo(() => {
     const datas = cursos
       .map((curso) => curso.formatura?.data_formatura)
@@ -130,7 +100,6 @@ export default function ListaPresencaPage() {
     return [...new Set(datas)].sort();
   }, [cursos]);
 
-  // FILTRAR CURSOS
   const cursosFiltrados = useMemo(() => {
     const texto = busca.trim().toLocaleLowerCase("pt-BR");
 
@@ -146,7 +115,6 @@ export default function ListaPresencaPage() {
         if (!texto) return true;
 
         const tema = curso.tema?.toLocaleLowerCase("pt-BR") ?? "";
-
         const professor =
           curso.professor?.nome_professor?.toLocaleLowerCase("pt-BR") ?? "";
 
@@ -155,44 +123,32 @@ export default function ListaPresencaPage() {
       .sort((a, b) => a.tema.localeCompare(b.tema, "pt-BR"));
   }, [cursos, busca, filtroFormatura]);
 
-  // ABRIR PDF
- const abrirPdf = async (curso: CronogramaType) => {
-  const url = obterUrlPdf(curso);
+  const abrirPdf = async (curso: CronogramaType) => {
+    const url = obterUrlPdf(curso);
 
-  if (!url) {
-    toast.info("Este curso ainda não possui lista de presença cadastrada.");
-    return;
-  }
-
-  console.log("CURSO:", curso.tema);
-  console.log("URL DO PDF:", url);
-  console.log("PLATAFORMA:", Capacitor.getPlatform());
-  console.log("NATIVO:", Capacitor.isNativePlatform());
-
-  try {
-    if (Capacitor.isNativePlatform()) {
-      await FileViewer.openDocumentFromUrl({ url });
-    } else {
-      // Abre o PDF em uma nova aba.
-      // Não verifica o retorno de window.open(),
-      // pois noopener pode retornar null mesmo funcionando.
-      window.open(url, "_blank", "noopener,noreferrer");
+    if (!url) {
+      toast.info("Este curso ainda não possui lista de presença.");
+      return;
     }
-  } catch (error) {
-    console.error("Erro ao abrir PDF:", error);
 
-    const mensagem =
-      error instanceof Error ? error.message : String(error);
-
-    toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
-  }
-};
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({
+          url,
+          presentationStyle: "fullscreen",
+        });
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    } catch (error) {
+      console.error("Erro ao abrir PDF:", error);
+      toast.error("Não foi possível abrir o PDF.");
+    }
+  };
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
       <div className="mx-auto w-full max-w-7xl space-y-5">
-
-        {/* CABEÇALHO */}
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">
@@ -224,7 +180,6 @@ export default function ListaPresencaPage() {
           </button>
         </header>
 
-        {/* FILTROS */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="min-w-0">
             <label
@@ -276,7 +231,6 @@ export default function ListaPresencaPage() {
           </div>
         </section>
 
-        {/* LISTAGEM */}
         <section className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="font-semibold">Cursos encontrados</h2>
@@ -309,135 +263,78 @@ export default function ListaPresencaPage() {
               Nenhum curso encontrado com os filtros selecionados.
             </div>
           ) : (
-            <>
-              {/* DESKTOP */}
-              <div className="hidden w-full overflow-x-auto sm:block">
-                <table className="w-full min-w-650px table-fixed text-left text-sm">
-                  <thead className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <tr>
-                      <th className="w-[38%] px-4 py-3 font-semibold">
-                        Tema
-                      </th>
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-650px table-fixed text-left text-sm">
+                <thead className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                  <tr>
+                    <th className="w-[38%] px-4 py-3 font-semibold">
+                      Tema
+                    </th>
 
-                      <th className="w-[30%] px-4 py-3 font-semibold">
-                        Professor
-                      </th>
+                    <th className="w-[30%] px-4 py-3 font-semibold">
+                      Professor
+                    </th>
 
-                      <th className="w-[20%] px-4 py-3 font-semibold">
-                        Data fim
-                      </th>
+                    <th className="w-[20%] px-4 py-3 font-semibold">
+                      Data fim
+                    </th>
 
-                      <th className="w-[12%] px-4 py-3 text-center font-semibold">
-                        Lista
-                      </th>
-                    </tr>
-                  </thead>
+                    <th className="w-[12%] px-4 py-3 text-center font-semibold">
+                      Lista
+                    </th>
+                  </tr>
+                </thead>
 
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                    {cursosFiltrados.map((curso) => {
-                      const pdfDisponivel = Boolean(obterUrlPdf(curso));
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {cursosFiltrados.map((curso) => {
+                    const pdfDisponivel = Boolean(obterUrlPdf(curso));
 
-                      return (
-                        <tr
-                          key={curso.id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-900"
-                        >
-                          <td className=".break-words {
+                    return (
+                      <tr
+                        key={curso.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-900"
+                      >
+                        <td className=".break-words {
  overflow-wrap: break-word;
 } px-4 py-3 font-medium uppercase">
-                            {curso.tema || "Sem tema"}
-                          </td>
+                          {curso.tema || "Sem tema"}
+                        </td>
 
-                          <td className=".break-words {
+                        <td className=".break-words {
  overflow-wrap: break-word;
 } px-4 py-3">
-                            {curso.professor?.nome_professor || "Não informado"}
-                          </td>
-
-                          <td className="whitespace-nowrap px-4 py-3">
-                            {formatarData(curso.data_fim)}
-                          </td>
-
-                          <td className="px-4 py-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => void abrirPdf(curso)}
-                              disabled={!pdfDisponivel}
-                              title={
-                                pdfDisponivel
-                                  ? "Acessar lista de presença"
-                                  : "Lista de presença não cadastrada"
-                              }
-                              aria-label={`Visualizar lista de presença: ${curso.tema}`}
-                              className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors ${
-                                pdfDisponivel
-                                  ? "cursor-pointer bg-green-100 text-green-700 hover:bg-green-200 active:bg-green-300 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
-                                  : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600"
-                              }`}
-                            >
-                              <FileText size={21} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* CELULAR */}
-              <div className="space-y-2 p-2 sm:hidden">
-                {cursosFiltrados.map((curso) => {
-                  const pdfDisponivel = Boolean(obterUrlPdf(curso));
-
-                  return (
-                    <article
-                      key={curso.id}
-                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900"
-                    >
-                      <h3 className=".break-words {
- overflow-wrap: break-word;
-} text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
-                        {curso.tema || "Sem tema"}
-                      </h3>
-
-                      <div className="mt-1.5 grid grid-cols-2 items-start gap-2">
-                        <p className="min-w-0 .break-words {
- overflow-wrap: break-word;
-} text-xs text-gray-700 dark:text-gray-300">
                           {curso.professor?.nome_professor || "Não informado"}
-                        </p>
+                        </td>
 
-                        <div className="text-center">
-                          <p className="text-xs text-gray-700 dark:text-gray-300">
-                            {formatarData(curso.data_fim)}
-                          </p>
+                        <td className="whitespace-nowrap px-4 py-3">
+                          {formatarData(curso.data_fim)}
+                        </td>
 
+                        <td className="px-4 py-3 text-center">
                           <button
                             type="button"
                             onClick={() => void abrirPdf(curso)}
-                            disabled={!pdfDisponivel}
                             title={
                               pdfDisponivel
-                                ? "Acessar lista de presença"
-                                : "Lista de presença não cadastrada"
+                                ? "Visualizar lista de presença em PDF"
+                                : "Curso sem lista de presença cadastrada"
                             }
                             aria-label={`Visualizar lista de presença: ${curso.tema}`}
-                            className={`mt-1 inline-flex items-center justify-center rounded-md p-1.5 transition-colors ${
+                            className={`inline-flex rounded-lg p-2 transition-colors ${
                               pdfDisponivel
-                                ? "cursor-pointer bg-green-100 text-green-700 hover:bg-green-200 active:bg-green-300 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
-                                : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600"
+                                ? "text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-950"
+                                : "text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-800"
                             }`}
                           >
-                            <FileText size={19} />
+                            <FileText size={22} />
                           </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       </div>
