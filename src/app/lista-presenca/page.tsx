@@ -130,8 +130,7 @@ export default function ListaPresencaPage() {
       );
   }, [cursos, busca, filtroFormatura]);
 
-  // ABRIR PDF - DESKTOP E CAPACITOR
-  // ABRIR PDF - ANDROID E DESKTOP
+    // ABRIR PDF - ANDROID E DESKTOP
 const abrirPdf = async (curso: CronogramaType) => {
   const url = obterUrlPdf(curso);
 
@@ -140,26 +139,27 @@ const abrirPdf = async (curso: CronogramaType) => {
     return;
   }
 
-  try {
-    console.log("URL do PDF:", url);
+  console.log("URL do PDF:", url);
+  console.log("Plataforma nativa:", Capacitor.isNativePlatform());
 
+  try {
     if (Capacitor.isNativePlatform()) {
       await Browser.open({
-        url,
+        url: url,
         presentationStyle: "fullscreen",
       });
 
       return;
     }
 
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(url, "_blank");
   } catch (error: unknown) {
     console.error("Erro ao abrir PDF:", error);
 
     const mensagem =
       error instanceof Error ? error.message : String(error);
 
-    toast.error(`Não foi possível abrir o PDF: ${mensagem}`);
+    toast.error(`Erro ao abrir PDF Herbety: ${mensagem}`);
   }
 };
 
