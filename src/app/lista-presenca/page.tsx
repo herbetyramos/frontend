@@ -25,11 +25,15 @@ interface CronogramaType {
     data_formatura: string;
     local: string;
   } | null;
+
   lista_presenca_url?: string | null;
   listaPresencaUrl?: string | null;
+  lista_presenca?: string | null;
+  listaPresenca?: string | null;
+  arquivo_lista_presenca?: string | null;
+  arquivoListaPresenca?: string | null;
 }
 
-// Endereço público do servidor
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "https://gestaom.com/api"
 )
@@ -49,29 +53,36 @@ function formatarData(data?: string | null): string {
   return parteData;
 }
 
-// CONVERTER CAMINHO RELATIVO EM URL COMPLETA
-function obterUrlPdf(curso: CronogramaType): string | null {
+// IDENTIFICAR O CAMINHO DO PDF
+function obterCaminhoPdf(curso: CronogramaType): string | null {
   const caminho =
-    curso.lista_presenca_url || curso.listaPresencaUrl;
+    curso.lista_presenca_url ||
+    curso.listaPresencaUrl ||
+    curso.lista_presenca ||
+    curso.listaPresenca ||
+    curso.arquivo_lista_presenca ||
+    curso.arquivoListaPresenca;
 
-  if (!caminho?.trim()) {
+  if (typeof caminho !== "string" || !caminho.trim()) {
     return null;
   }
 
-  const caminhoLimpo = caminho.trim();
+  return caminho.trim();
+}
+
+// CONVERTER CAMINHO EM URL COMPLETA
+function obterUrlPdf(curso: CronogramaType): string | null {
+  const caminho = obterCaminhoPdf(curso);
+
+  if (!caminho) return null;
 
   try {
-    // Se já for uma URL completa
-    if (/^https?:\/\//i.test(caminhoLimpo)) {
-      const urlCompleta = new URL(caminhoLimpo);
-
-      return urlCompleta.href;
+    if (/^https?:\/\//i.test(caminho)) {
+      return new URL(caminho).href;
     }
 
-    // Remove barras iniciais
-    const caminhoRelativo = caminhoLimpo.replace(/^\/+/, "");
+    const caminhoRelativo = caminho.replace(/^\/+/, "");
 
-    // Monta URL absoluta
     return new URL(caminhoRelativo, `${API_BASE_URL}/`).href;
   } catch (error) {
     console.error("Erro ao montar URL do PDF:", error);
@@ -86,16 +97,17 @@ export default function ListaPresencaPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
 
+  // CARREGAR CURSOS
   const carregarCursos = useCallback(async () => {
     setCarregando(true);
     setErro(false);
 
     try {
-      const resposta = await api.get<CronogramaType[]>(
-        "/listcronograma"
-      );
+      const resposta = await api.get<CronogramaType[]>("/listcronograma");
 
       setCursos(resposta.data);
+
+      console.log("CRONOGRAMAS RECEBIDOS:", resposta.data);
     } catch (error) {
       console.error("Erro ao carregar cursos:", error);
       setErro(true);
@@ -109,6 +121,7 @@ export default function ListaPresencaPage() {
     void carregarCursos();
   }, [carregarCursos]);
 
+  // FORMaturas DISPONÍVEIS
   const formaturas = useMemo(() => {
     const datas = cursos
       .map((curso) => curso.formatura?.data_formatura)
@@ -117,6 +130,7 @@ export default function ListaPresencaPage() {
     return [...new Set(datas)].sort();
   }, [cursos]);
 
+  // FILTRAR CURSOS
   const cursosFiltrados = useMemo(() => {
     const texto = busca.trim().toLocaleLowerCase("pt-BR");
 
@@ -131,17 +145,14 @@ export default function ListaPresencaPage() {
 
         if (!texto) return true;
 
-        const tema =
-          curso.tema?.toLocaleLowerCase("pt-BR") ?? "";
+        const tema = curso.tema?.toLocaleLowerCase("pt-BR") ?? "";
 
         const professor =
           curso.professor?.nome_professor?.toLocaleLowerCase("pt-BR") ?? "";
 
         return tema.includes(texto) || professor.includes(texto);
       })
-      .sort((a, b) =>
-        a.tema.localeCompare(b.tema, "pt-BR")
-      );
+      .sort((a, b) => a.tema.localeCompare(b.tema, "pt-BR"));
   }, [cursos, busca, filtroFormatura]);
 
   // ABRIR PDF
@@ -149,23 +160,14 @@ export default function ListaPresencaPage() {
     const url = obterUrlPdf(curso);
 
     if (!url) {
-      toast.info("Este curso ainda não possui lista de presença.");
+      toast.info("Este curso ainda não possui lista de presença cadastrada.");
       return;
     }
 
-    console.log("==================================");
-    console.log("DIAGNÓSTICO DO PDF");
     console.log("CURSO:", curso.tema);
-    console.log("ID:", curso.id);
-    console.log("URL COMPLETA:", url);
+    console.log("URL DO PDF:", url);
     console.log("PLATAFORMA:", Capacitor.getPlatform());
     console.log("NATIVO:", Capacitor.isNativePlatform());
-    console.log("==================================");
-
-    if (!/^https?:\/\//i.test(url)) {
-      toast.error("O endereço do PDF não é válido.");
-      return;
-    }
 
     try {
       if (Capacitor.isNativePlatform()) {
@@ -182,8 +184,7 @@ export default function ListaPresencaPage() {
         }
       }
     } catch (error) {
-      console.error("ERRO AO ABRIR PDF:", error);
-      console.error("URL UTILIZADA:", url);
+      console.error("Erro ao abrir PDF:", error);
 
       const mensagem =
         error instanceof Error ? error.message : String(error);
@@ -241,9 +242,7 @@ export default function ListaPresencaPage() {
             <select
               id="filtro-formatura"
               value={filtroFormatura}
-              onChange={(event) =>
-                setFiltroFormatura(event.target.value)
-              }
+              onChange={(event) => setFiltroFormatura(event.target.value)}
               className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-green-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">Todas as formaturas</option>
@@ -285,9 +284,7 @@ export default function ListaPresencaPage() {
         {/* LISTAGEM */}
         <section className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="font-semibold">
-              Cursos encontrados
-            </h2>
+            <h2 className="font-semibold">Cursos encontrados</h2>
 
             <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-800 dark:bg-green-950 dark:text-green-300">
               {cursosFiltrados.length}
@@ -350,11 +347,15 @@ export default function ListaPresencaPage() {
                           key={curso.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-900"
                         >
-                          <td className="wrap-break-word px-4 py-3 font-medium uppercase">
+                          <td className=".break-words {
+ overflow-wrap: break-word;
+} px-4 py-3 font-medium uppercase">
                             {curso.tema || "Sem tema"}
                           </td>
 
-                          <td className="wrap-break-word px-4 py-3">
+                          <td className=".break-words {
+ overflow-wrap: break-word;
+} px-4 py-3">
                             {curso.professor?.nome_professor || "Não informado"}
                           </td>
 
@@ -367,12 +368,16 @@ export default function ListaPresencaPage() {
                               type="button"
                               onClick={() => void abrirPdf(curso)}
                               disabled={!pdfDisponivel}
-                              title="Visualizar lista de presença em PDF"
-                              aria-label={`Visualizar lista de presença: ${curso.tema}`}
-                              className={`inline-flex rounded-lg p-2 transition-colors ${
+                              title={
                                 pdfDisponivel
-                                  ? "text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-950"
-                                  : "cursor-not-allowed text-gray-400 dark:text-gray-600"
+                                  ? "Acessar lista de presença"
+                                  : "Lista de presença não cadastrada"
+                              }
+                              aria-label={`Visualizar lista de presença: ${curso.tema}`}
+                              className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors ${
+                                pdfDisponivel
+                                  ? "cursor-pointer bg-green-100 text-green-700 hover:bg-green-200 active:bg-green-300 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
+                                  : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600"
                               }`}
                             >
                               <FileText size={21} />
@@ -395,12 +400,16 @@ export default function ListaPresencaPage() {
                       key={curso.id}
                       className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900"
                     >
-                      <h3 className="wrap-break-word text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
+                      <h3 className=".break-words {
+ overflow-wrap: break-word;
+} text-sm font-bold uppercase leading-snug text-gray-900 dark:text-gray-100">
                         {curso.tema || "Sem tema"}
                       </h3>
 
                       <div className="mt-1.5 grid grid-cols-2 items-start gap-2">
-                        <p className="min-w-0 wrap-break-word text-xs text-gray-700 dark:text-gray-300">
+                        <p className="min-w-0 .break-words {
+ overflow-wrap: break-word;
+} text-xs text-gray-700 dark:text-gray-300">
                           {curso.professor?.nome_professor || "Não informado"}
                         </p>
 
@@ -415,14 +424,14 @@ export default function ListaPresencaPage() {
                             disabled={!pdfDisponivel}
                             title={
                               pdfDisponivel
-                                ? "Visualizar lista de presença"
+                                ? "Acessar lista de presença"
                                 : "Lista de presença não cadastrada"
                             }
                             aria-label={`Visualizar lista de presença: ${curso.tema}`}
                             className={`mt-1 inline-flex items-center justify-center rounded-md p-1.5 transition-colors ${
                               pdfDisponivel
-                                ? "bg-green-50 text-green-700 active:bg-green-100 dark:bg-green-950 dark:text-green-400 dark:active:bg-green-900"
-                                : "cursor-not-allowed text-gray-400 dark:text-gray-600"
+                                ? "cursor-pointer bg-green-100 text-green-700 hover:bg-green-200 active:bg-green-300 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
+                                : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600"
                             }`}
                           >
                             <FileText size={19} />
