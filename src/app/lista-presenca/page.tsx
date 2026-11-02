@@ -10,7 +10,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { Browser } from "@capacitor/browser";
+import { AppLauncher } from "@capacitor/app-launcher";
 import { Capacitor } from "@capacitor/core";
 
 
@@ -140,14 +140,16 @@ const abrirPdf = async (curso: CronogramaType) => {
   }
 
   console.log("URL do PDF:", url);
-  console.log("Plataforma nativa:", Capacitor.isNativePlatform());
 
   try {
     if (Capacitor.isNativePlatform()) {
-      await Browser.open({
-        url: url,
-        presentationStyle: "fullscreen",
-      });
+      const resultado = await AppLauncher.openUrl({ url });
+
+      console.log("Resultado AppLauncher:", resultado);
+
+      if (!resultado.completed) {
+        toast.error("O Android não conseguiu abrir o PDF.");
+      }
 
       return;
     }
@@ -159,7 +161,7 @@ const abrirPdf = async (curso: CronogramaType) => {
     const mensagem =
       error instanceof Error ? error.message : String(error);
 
-    toast.error(`Erro ao abrir PDF Herbety: ${mensagem}`);
+    toast.error(`Erro ao abrir PDF Herb: ${mensagem}`);
   }
 };
 
