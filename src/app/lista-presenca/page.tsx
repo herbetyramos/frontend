@@ -1,45 +1,62 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import dynamic from "next/dynamic";
+
 import { api } from "@/services/api";
+
 import {
   Search,
   FileText,
   RefreshCw,
   ClipboardList,
 } from "lucide-react";
-import { toast } from "react-toastify";
-import { AppLauncher } from "@capacitor/app-launcher";
-import { Capacitor } from "@capacitor/core";
 
+import { toast } from "react-toastify";
+
+const PdfViewer = dynamic(
+  () => import("@/components/PdfViewer"),
+  { ssr: false }
+);
 
 interface CronogramaType {
   id: string;
   tema: string;
   data_fim: string;
+
   professor: {
     nome_professor: string;
   } | null;
+
   formatura: {
     id: string;
     data_formatura: string;
     local: string;
   } | null;
+
   lista_presenca_url?: string | null;
   listaPresencaUrl?: string | null;
 }
 
 const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.15.84:3000"
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://192.168.15.84:3000"
 )
-  .replace(/\/api\/?$/, "")
-  .replace(/\/$/, "");
+  .replace(/\/api\/?$/i, "")
+  .replace(/\/+$/, "");
 
 function formatarData(data?: string | null): string {
   if (!data) return "—";
 
   const parteData = data.split("T")[0];
+
   const iso = parteData.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
   if (iso) {
@@ -51,7 +68,8 @@ function formatarData(data?: string | null): string {
 
 function obterUrlPdf(curso: CronogramaType): string | null {
   const caminho =
-    curso.lista_presenca_url || curso.listaPresencaUrl;
+    curso.lista_presenca_url ||
+    curso.listaPresencaUrl;
 
   if (!caminho?.trim()) return null;
 
@@ -64,11 +82,21 @@ function obterUrlPdf(curso: CronogramaType): string | null {
 
 export default function ListaPresencaPage() {
   const [cursos, setCursos] = useState<CronogramaType[]>([]);
+
   const [busca, setBusca] = useState("");
+
   const [filtroFormatura, setFiltroFormatura] = useState("");
+
   const [carregando, setCarregando] = useState(true);
+
   const [erro, setErro] = useState(false);
 
+  const [pdfSelecionado, setPdfSelecionado] = useState<{
+    url: string;
+    titulo: string;
+  } | null>(null);
+
+  // CARREGAR CURSOS
   const carregarCursos = useCallback(async () => {
     setCarregando(true);
     setErro(false);
@@ -79,10 +107,14 @@ export default function ListaPresencaPage() {
       );
 
       setCursos(resposta.data);
+
     } catch (error) {
       console.error("Erro ao carregar cursos:", error);
+
       setErro(true);
+
       toast.error("Não foi possível carregar os cursos.");
+
     } finally {
       setCarregando(false);
     }
@@ -92,14 +124,17 @@ export default function ListaPresencaPage() {
     void carregarCursos();
   }, [carregarCursos]);
 
+  // FORMaturas DISPONÍVEIS
   const formaturas = useMemo(() => {
     const datas = cursos
       .map((curso) => curso.formatura?.data_formatura)
       .filter((data): data is string => Boolean(data));
 
     return [...new Set(datas)].sort();
+
   }, [cursos]);
 
+  // FILTRAR CURSOS
   const cursosFiltrados = useMemo(() => {
     const texto = busca.trim().toLocaleLowerCase("pt-BR");
 
@@ -128,42 +163,23 @@ export default function ListaPresencaPage() {
       .sort((a, b) =>
         a.tema.localeCompare(b.tema, "pt-BR")
       );
+
   }, [cursos, busca, filtroFormatura]);
 
-    // ABRIR PDF - ANDROID E DESKTOP
-const abrirPdf = async (curso: CronogramaType) => {
-  const url = obterUrlPdf(curso);
+  // ABRIR PDF DENTRO DO GESTAOM
+  const abrirPdf = (curso: CronogramaType) => {
+    const url = obterUrlPdf(curso);
 
-  if (!url) {
-    toast.info("Este cronograma não possui lista de presença.");
-    return;
-  }
-
-  console.log("URL do PDF:", url);
-
-  try {
-    if (Capacitor.isNativePlatform()) {
-      const resultado = await AppLauncher.openUrl({ url });
-
-      console.log("Resultado AppLauncher:", resultado);
-
-      if (!resultado.completed) {
-        toast.error("O Android não conseguiu abrir o PDF.");
-      }
-
+    if (!url) {
+      toast.info("Este cronograma não possui lista de presença.");
       return;
     }
 
-    window.open(url, "_blank");
-  } catch (error: unknown) {
-    console.error("Erro ao abrir PDF:", error);
-
-    const mensagem =
-      error instanceof Error ? error.message : String(error);
-
-    toast.error(`Erro ao abrir PDF Herb: ${mensagem}`);
-  }
-};
+    setPdfSelecionado({
+      url,
+      titulo: curso.tema || "Lista de presença",
+    });
+  };
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-white p-3 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-5">
@@ -201,6 +217,7 @@ const abrirPdf = async (curso: CronogramaType) => {
               size={16}
               className={carregando ? "animate-spin" : ""}
             />
+
             Atualizar
           </button>
 
@@ -321,6 +338,7 @@ const abrirPdf = async (curso: CronogramaType) => {
           ) : (
 
             <>
+
               {/* DESKTOP */}
               <div className="hidden w-full overflow-x-auto sm:block">
 
@@ -329,6 +347,7 @@ const abrirPdf = async (curso: CronogramaType) => {
                   <thead className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
 
                     <tr>
+
                       <th className="w-[38%] px-4 py-3 font-semibold">
                         Tema
                       </th>
@@ -344,6 +363,7 @@ const abrirPdf = async (curso: CronogramaType) => {
                       <th className="w-[12%] px-4 py-3 text-center font-semibold">
                         Lista
                       </th>
+
                     </tr>
 
                   </thead>
@@ -357,6 +377,7 @@ const abrirPdf = async (curso: CronogramaType) => {
                       );
 
                       return (
+
                         <tr
                           key={curso.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -382,7 +403,7 @@ const abrirPdf = async (curso: CronogramaType) => {
 
                             <button
                               type="button"
-                              onClick={() => void abrirPdf(curso)}
+                              onClick={() => abrirPdf(curso)}
                               disabled={!pdfDisponivel}
                               title="Visualizar lista de presença em PDF"
                               aria-label={`Visualizar lista de presença: ${curso.tema}`}
@@ -398,6 +419,7 @@ const abrirPdf = async (curso: CronogramaType) => {
                           </td>
 
                         </tr>
+
                       );
 
                     })}
@@ -418,6 +440,7 @@ const abrirPdf = async (curso: CronogramaType) => {
                   );
 
                   return (
+
                     <article
                       key={curso.id}
                       className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900"
@@ -445,10 +468,10 @@ const abrirPdf = async (curso: CronogramaType) => {
                             {formatarData(curso.data_fim)}
                           </p>
 
-                          {/* ÍCONE PDF ABAIXO DA DATA */}
+                          {/* ÍCONE PDF */}
                           <button
                             type="button"
-                            onClick={() => void abrirPdf(curso)}
+                            onClick={() => abrirPdf(curso)}
                             disabled={!pdfDisponivel}
                             title={
                               pdfDisponivel
@@ -470,11 +493,13 @@ const abrirPdf = async (curso: CronogramaType) => {
                       </div>
 
                     </article>
+
                   );
 
                 })}
 
               </div>
+
             </>
 
           )}
@@ -482,6 +507,15 @@ const abrirPdf = async (curso: CronogramaType) => {
         </section>
 
       </div>
+
+      {/* VISUALIZADOR INTERNO DE PDF */}
+      {pdfSelecionado && (
+        <PdfViewer
+          url={pdfSelecionado.url}
+          titulo={pdfSelecionado.titulo}
+          onClose={() => setPdfSelecionado(null)}
+        />
+      )}
 
     </main>
   );
