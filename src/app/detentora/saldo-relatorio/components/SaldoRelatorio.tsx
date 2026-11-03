@@ -260,17 +260,22 @@ export default function SaldoRelatorio() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 p-3 sm:p-6 transition-colors">
+    <div className="saldo-relatorio-page min-h-screen bg-gray-100 dark:bg-gray-950 p-3 sm:p-6 transition-colors">
+
+      {/* CABEÇALHO EXCLUSIVO DA IMPRESSÃO */}
+      <div className="print-only text-center">
+        SECRETARIA DA MULHER E DA FAMÍLIA
+      </div>
 
       {/* CABEÇALHO */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md p-4 sm:p-5 mb-5">
+      <div className="report-header bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md p-4 sm:p-5 mb-5">
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
           <div className="flex items-center gap-3">
             <FileText
               size={30}
-              className="text-blue-700 dark:text-blue-400 shrink-0"
+              className="text-blue-700 dark:text-blue-400 shrink-0 no-print"
             />
 
             <div>
@@ -278,9 +283,17 @@ export default function SaldoRelatorio() {
                 Relatório de Saldo
               </h1>
 
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Saldo financeiro por empresa e curso
-              </p>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Saldo de cursos por empresa
+                </p>
+
+                <p className="report-identification text-sm font-bold text-gray-700 dark:text-gray-200">
+                  {empresaSelecionada
+                    ? empresaSelecionada.toLocaleUpperCase("pt-BR")
+                    : "TODAS AS EMPRESAS"}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -307,9 +320,7 @@ export default function SaldoRelatorio() {
           <select
             id="empresa"
             value={empresaSelecionada}
-            onChange={(e) =>
-              setEmpresaSelecionada(e.target.value)
-            }
+            onChange={(e) => setEmpresaSelecionada(e.target.value)}
             className="border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-w-0 sm:min-w-[320px] outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">
@@ -326,20 +337,7 @@ export default function SaldoRelatorio() {
       </div>
 
       {/* RELATÓRIO */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md p-3 sm:p-6">
-
-        {/* TÍTULO */}
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-            RELATÓRIO DE SALDO
-          </h2>
-
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {empresaSelecionada
-              ? empresaSelecionada
-              : "TODAS AS EMPRESAS"}
-          </p>
-        </div>
+      <div className="report-content bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md p-3 sm:p-6">
 
         {empresasFiltradas.length === 0 ? (
           <div className="text-center py-10 text-gray-500 dark:text-gray-400">
@@ -374,13 +372,13 @@ export default function SaldoRelatorio() {
 
                 {/* NOME DA EMPRESA */}
                 <div className="bg-blue-700 dark:bg-blue-800 text-white px-4 py-3 rounded-t-lg font-bold text-base sm:text-lg">
-                  EMPRESA: {empresa.empresa.trim()}
+                  {empresa.empresa.trim().toLocaleUpperCase("pt-BR")}
                 </div>
 
                 {/* TABELA */}
                 <div className="overflow-x-auto rounded-b-lg border border-gray-300 dark:border-gray-700">
 
-                  <table className="w-full min-w-1050px border-collapse text-sm">
+                  <table className="w-full min-w-0 border-collapse text-sm">
 
                     <thead>
                       <tr className="bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
@@ -406,7 +404,7 @@ export default function SaldoRelatorio() {
                         </th>
 
                         <th className="border border-gray-300 dark:border-gray-700 p-2 text-right">
-                          VALOR CONTRATADO
+                          V.CONTRATADO
                         </th>
 
                         <th className="border border-gray-300 dark:border-gray-700 p-2 text-right">
@@ -414,7 +412,7 @@ export default function SaldoRelatorio() {
                         </th>
 
                         <th className="border border-gray-300 dark:border-gray-700 p-2 text-right">
-                          VALOR SALDO
+                          SALDO
                         </th>
 
                       </tr>
@@ -432,7 +430,7 @@ export default function SaldoRelatorio() {
                           >
 
                             <td className="border border-gray-300 dark:border-gray-700 p-2 font-medium">
-                              {curso.curso?.trim() || "SEM CURSO"}
+                              {curso.curso?.trim().toLocaleUpperCase("pt-BR") || "SEM CURSO"}
                             </td>
 
                             <td className="border border-gray-300 dark:border-gray-700 p-2 text-center">
@@ -449,7 +447,7 @@ export default function SaldoRelatorio() {
 
                             <td className="border border-gray-300 dark:border-gray-700 p-2 text-center">
                               <span
-                                className={`inline-block min-w-42px px-3 py-1 rounded-full font-bold text-white ${obterClasseSaldo(
+                                className={`inline-block min-w-42px px-2 py-1 rounded-full font-bold text-white ${obterClasseSaldo(
                                   saldo
                                 )}`}
                               >
@@ -621,22 +619,26 @@ export default function SaldoRelatorio() {
 
       {/* IMPRESSÃO */}
       <style jsx global>{`
+        .print-only {
+          display: none;
+        }
+
         @media print {
           @page {
             size: A4 landscape;
-            margin: 8mm;
+            margin: 8mm 10mm 8mm 10mm;
           }
 
           html,
           body {
-            background: white !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
+            background: white !important;
             color: black !important;
-          }
-
-          .no-print {
-            display: none !important;
+            overflow: visible !important;
           }
 
           body {
@@ -644,39 +646,235 @@ export default function SaldoRelatorio() {
             print-color-adjust: exact !important;
           }
 
-          table {
+          /* OCULTAR ELEMENTOS DO SISTEMA */
+          body header,
+          body nav,
+          .no-print {
+            display: none !important;
+          }
+
+          /* CONTÊINER PRINCIPAL */
+          .saldo-relatorio-page {
+            display: block !important;
             width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            overflow: visible !important;
+            break-after: auto !important;
+            page-break-after: auto !important;
+          }
+
+          /* TÍTULO DA SECRETARIA */
+          .print-only {
+            display: block !important;
+            width: 100% !important;
+            text-align: center !important;
+            font-size: 21px !important;
+            font-weight: 900 !important;
+            line-height: 1.2 !important;
+            text-transform: uppercase !important;
+            color: black !important;
+            margin: 0 0 7px 0 !important;
+            padding: 0 !important;
+            break-after: avoid !important;
+            page-break-after: avoid !important;
+          }
+
+          /* CABEÇALHO */
+          .report-header {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            background: white !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 0 0 5px 0 !important;
+            margin: 0 0 5px 0 !important;
+          }
+
+          .report-header h1 {
+            color: black !important;
+            font-size: 15px !important;
+            line-height: 1.2 !important;
+            margin: 0 !important;
+          }
+
+          .report-header p {
+            color: black !important;
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+            margin: 2px 0 0 0 !important;
+          }
+
+          .report-identification {
+            font-weight: bold !important;
+          }
+
+          /* CONTEÚDO */
+          .report-content {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            background: white !important;
+            color: black !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            break-after: auto !important;
+            page-break-after: auto !important;
+          }
+
+          .report-content,
+          .report-content > div,
+          .report-content .overflow-x-auto {
+            width: 100% !important;
+            max-width: 100% !important;
             min-width: 0 !important;
-            font-size: 8px !important;
-            page-break-inside: auto;
+            box-sizing: border-box !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            overflow: visible !important;
           }
 
-          th,
-          td {
-            padding: 4px !important;
+          /* EMPRESAS */
+          .report-content .bg-blue-700 {
+            font-size: 11px !important;
+            padding: 5px 7px !important;
+            margin: 0 !important;
+            color: white !important;
+            background: #1d4ed8 !important;
+          }
+
+          /* TABELAS */
+          .report-content table {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+            margin: 0 !important;
+            font-size: 11px !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+          }
+
+          /* DISTRIBUIÇÃO DAS COLUNAS */
+          .report-content table th:first-child,
+.report-content table td:first-child {
+  width: 25% !important;
+  min-width: 0 !important;
+  text-align: left !important;
+  padding-left: 8px !important;
+  padding-right: 6px !important;
+  box-sizing: border-box !important;
+}
+
+          .report-content table th:not(:first-child),
+          .report-content table td:not(:first-child) {
+            width: 9.7% !important;
+          }
+
+          .report-content table th,
+          .report-content table td {
+            box-sizing: border-box !important;
+            padding: 5px 4px !important;
+            font-size: 12px !important;
+            line-height: 1.25 !important;
             white-space: normal !important;
+            overflow-wrap: break-word !important;
+            vertical-align: middle !important;
+            color: black !important;
           }
 
-          thead {
-            display: table-header-group;
+          .report-content table th {
+            font-size: 9.5px !important;
+            font-weight: 900 !important;
           }
 
-          tfoot {
-            display: table-row-group;
+          .report-content table thead {
+            display: table-header-group !important;
           }
 
-          tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
+          .report-content table tfoot {
+            display: table-row-group !important;
           }
 
+          .report-content table tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
+          /* SALDO */
+          .report-content table td span {
+            padding: 2px 5px !important;
+            min-width: 0 !important;
+            color: white !important;
+          }
+
+          /* RESUMO GERAL */
+          .report-content h3 {
+            font-size: 13px !important;
+            margin: 5px 0 !important;
+          }
+
+          .report-content .grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 5px !important;
+          }
+
+          .report-content .grid > div {
+            padding: 5px !important;
+            min-width: 0 !important;
+          }
+
+          .report-content .grid > div div:first-child {
+            font-size: 9px !important;
+          }
+
+          .report-content .grid > div div:last-child {
+            font-size: 14px !important;
+            margin-top: 2px !important;
+          }
+
+          /* ESPAÇAMENTOS */
+          .report-content .mb-8 {
+            margin-bottom: 7px !important;
+          }
+
+          .report-content .mb-6,
+          .report-content .mb-5 {
+            margin-bottom: 5px !important;
+          }
+
+          .report-content .mb-4 {
+            margin-bottom: 3px !important;
+          }
+
+          .report-content .mt-8 {
+            margin-top: 6px !important;
+          }
+
+          .report-content .pt-5 {
+            padding-top: 5px !important;
+          }
+
+          /* SOMBRAS E BORDAS */
           .shadow-md,
           .shadow-lg {
             box-shadow: none !important;
-          }
-
-          .overflow-x-auto {
-            overflow: visible !important;
           }
 
           .rounded-xl,
@@ -684,15 +882,15 @@ export default function SaldoRelatorio() {
             border-radius: 0 !important;
           }
 
-          .mb-8 {
-            margin-bottom: 20px !important;
-          }
-
-          /* IMPRESSÃO SEM FUNDO ESCURO */
+          /* CORES */
           .dark\\:bg-gray-950,
           .dark\\:bg-gray-900,
           .dark\\:bg-gray-800 {
             background: white !important;
+          }
+
+          .dark\\:bg-blue-950 {
+            background: #eff6ff !important;
           }
 
           .dark\\:text-gray-100,
@@ -702,7 +900,6 @@ export default function SaldoRelatorio() {
             color: black !important;
           }
 
-          /* MANTER CABEÇALHO E TOTAIS COLORIDOS */
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
