@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -39,6 +40,7 @@ type CronogramaType = {
   hora_inicio: string;
   hora_fim: string;
   especificacao: string;
+  is_status?: string;
 
   bloco_curso: {
     bloco_Curso: string;
@@ -203,10 +205,7 @@ export default function ListCronograma() {
   const aplicarFiltro = useCallback(() => {
     let filtrado = [...cronogramaFull];
 
-    // ======================================================
     // FILTRO POR DATA DE FORMATURA
-    // ======================================================
-
     if (filtroDataFormatura) {
       filtrado = filtrado.filter(
         (item) =>
@@ -215,10 +214,7 @@ export default function ListCronograma() {
       );
     }
 
-    // ======================================================
     // FILTRO POR EMPRESA
-    // ======================================================
-
     if (filtroEmpresa) {
       filtrado = filtrado.filter(
         (item) =>
@@ -226,20 +222,14 @@ export default function ListCronograma() {
       );
     }
 
-    // ======================================================
     // FILTRO POR BLOCO
-    // ======================================================
-
     if (filtroBloco) {
       filtrado = filtrado.filter(
         (item) => item.bloco_curso?.bloco_Curso === filtroBloco
       );
     }
 
-    // ======================================================
     // FILTRO POR TEMA / EMPRESA
-    // ======================================================
-
     if (busca.trim()) {
       const texto = busca.toLowerCase();
 
@@ -253,10 +243,7 @@ export default function ListCronograma() {
       });
     }
 
-    // ======================================================
     // FILTRO POR POLO
-    // ======================================================
-
     if (filtroPolo) {
       filtrado = filtrado.filter(
         (item) => item.localAula?.polo === filtroPolo
@@ -430,10 +417,7 @@ export default function ListCronograma() {
 
   return (
     <div className="w-full max-w-full px-2 pt-0 pb-1 overflow-x-hidden bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      {/* ======================================================
-          CABEÇALHO
-      ====================================================== */}
-
+      {/* CABEÇALHO */}
       <div className="w-full py-2">
         <div className="w-full flex items-center justify-between mb-1">
           <h1 className="text-lg font-semibold">
@@ -443,14 +427,10 @@ export default function ListCronograma() {
           </h1>
         </div>
 
-        {/* ======================================================
-            FILTROS
-        ====================================================== */}
-
+        {/* FILTROS */}
         <div className="w-full py-2">
           <div className="flex flex-wrap items-center gap-2 w-full">
             {/* LOCAL */}
-           
             <select
               value={filtroPolo}
               onChange={(e) => setFiltroPolo(e.target.value)}
@@ -466,7 +446,6 @@ export default function ListCronograma() {
             </select>
 
             {/* GRADE */}
-
             <select
               value={filtroBloco}
               onChange={(e) => setFiltroBloco(e.target.value)}
@@ -482,7 +461,6 @@ export default function ListCronograma() {
             </select>
 
             {/* EMPRESA */}
-
             <select
               value={filtroEmpresa}
               onChange={(e) => setFiltroEmpresa(e.target.value)}
@@ -498,12 +476,9 @@ export default function ListCronograma() {
             </select>
 
             {/* FORMATURA */}
-
             <select
               value={filtroDataFormatura}
-              onChange={(e) =>
-                setFiltroDataFormatura(e.target.value)
-              }
+              onChange={(e) => setFiltroDataFormatura(e.target.value)}
               className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm rounded-md w-30 max-w-full h-8.5 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">Formatura</option>
@@ -516,7 +491,6 @@ export default function ListCronograma() {
             </select>
 
             {/* BUSCA */}
-
             <div className="flex items-center border border-gray-300 dark:border-gray-700 px-2 py-1 rounded-md shadow-sm h-8.5 w-45 max-w-full min-w-0 bg-white dark:bg-gray-800">
               <Search
                 size={17}
@@ -532,13 +506,9 @@ export default function ListCronograma() {
               />
             </div>
 
-            {/* ======================================================
-                MENUS DE RELATÓRIO
-            ====================================================== */}
-
+            {/* MENUS DE RELATÓRIO */}
             <div className="flex flex-wrap items-center gap-2">
               {/* MENU CRONOGRAMA */}
-
               <div className="relative group">
                 <button
                   type="button"
@@ -562,12 +532,10 @@ export default function ListCronograma() {
                 >
                   <button
                     type="button"
-                    onClick={() =>
-                      relatorioGrade(
-                        cronogramaFull,
-                        filtroBloco
-                      )
-                    }
+                    onClick={() => {
+                      relatorioGrade(cronogramaFull, filtroBloco);
+                      setMenuRelatorioAberto(null);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Grade
@@ -575,15 +543,16 @@ export default function ListCronograma() {
 
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       gerarRelatorioDetentora(
                         cronogramaFull,
                         filtroBloco,
                         filtroPolo,
                         filtroDataFormatura,
                         filtroEmpresa
-                      )
-                    }
+                      );
+                      setMenuRelatorioAberto(null);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Empresa
@@ -591,14 +560,15 @@ export default function ListCronograma() {
 
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       visualizarRelatorioProfessorSala(
                         cronogramaFull,
                         filtroBloco,
                         filtroDataFormatura,
                         cronogramaFiltrado
-                      )
-                    }
+                      );
+                      setMenuRelatorioAberto(null);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Professores
@@ -614,6 +584,7 @@ export default function ListCronograma() {
                     }
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => setMenuRelatorioAberto(null)}
                     className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <FileText size={15} />
@@ -623,7 +594,6 @@ export default function ListCronograma() {
               </div>
 
               {/* MENU FORMATURA */}
-
               <div className="relative group">
                 <button
                   type="button"
@@ -647,13 +617,14 @@ export default function ListCronograma() {
                 >
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       relatorioFormatura(
                         cronogramaFull,
                         filtroDataFormatura,
                         filtroBloco
-                      )
-                    }
+                      );
+                      setMenuRelatorioAberto(null);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Formatura
@@ -661,45 +632,45 @@ export default function ListCronograma() {
 
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       visualizarRelatorioSegmento(
                         cronogramaFull,
                         filtroBloco,
                         filtroDataFormatura
-                      )
-                    }
+                      );
+                      setMenuRelatorioAberto(null);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Segmentos
                   </button>
 
-                  
-                                  
-                <button
-                  type="button"
-                  onClick={() =>
-                    relatorioFormaturaEmpresa(
-                      cronogramaFull,
-                      filtroDataFormatura,
-                      filtroBloco,
-                      filtroEmpresa
-                    )
-                  }
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  Empresa
-                </button>
-
+                  <button
+                    type="button"
+                    onClick={() => {
+                      relatorioFormaturaEmpresa(
+                        cronogramaFull,
+                        filtroDataFormatura,
+                        filtroBloco,
+                        filtroEmpresa
+                      );
+                      setMenuRelatorioAberto(null);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Empresa
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       visualizarRelatorioProfessores(
                         cronogramaFull,
                         filtroBloco,
                         filtroDataFormatura
-                      )
-                    }
+                      );
+                      setMenuRelatorioAberto(null);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Professores
@@ -710,14 +681,9 @@ export default function ListCronograma() {
           </div>
         </div>
 
-        {/* ======================================================
-            AGRUPAMENTO
-        ====================================================== */}
-
+        {/* AGRUPAMENTO */}
         {Object.keys(agrupado).map((polo) => {
-          const totalCursosPolo = Object.values(
-            agrupado[polo]
-          ).reduce(
+          const totalCursosPolo = Object.values(agrupado[polo]).reduce(
             (total, lista) => total + lista.length,
             0
           );
@@ -725,7 +691,6 @@ export default function ListCronograma() {
           return (
             <div key={polo} className="mb-5 min-w-0">
               {/* CABEÇALHO DO POLO */}
-
               <div className="flex flex-wrap items-center gap-3 mb-2">
                 <h2 className="text-xl font-bold text-blue-700 dark:text-blue-300">
                   {polo}
@@ -737,7 +702,6 @@ export default function ListCronograma() {
               </div>
 
               {/* SALAS */}
-
               {Object.keys(agrupado[polo]).map((sala) => (
                 <div
                   key={sala}
@@ -750,14 +714,11 @@ export default function ListCronograma() {
                   }}
                 >
                   {/* TABELA */}
-
                   <div className="w-full overflow-x-auto">
                     <table className="min-w-275 w-full table-fixed bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 shadow text-sm border-amber-200 dark:border-gray-700">
                       <thead>
                         <tr className="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-left">
-                          <th className="w-10 border p-2">
-                            Código
-                          </th>
+                          <th className="w-10 border p-2">Código</th>
 
                           <th className="w-50 border p-2">
                             <h3>
@@ -765,35 +726,17 @@ export default function ListCronograma() {
                                 Sala:{" "}
                               </span>
 
-                              <span
-                                style={{
-                                  color: corSala(sala),
-                                }}
-                              >
+                              <span style={{ color: corSala(sala) }}>
                                 {sala}
                               </span>
                             </h3>
                           </th>
 
-                          <th className="w-15 border p-2">
-                            Início
-                          </th>
-
-                          <th className="w-15 border p-2">
-                            Fim
-                          </th>
-
-                          <th className="w-15 border p-2">
-                            Período
-                          </th>
-
-                          <th className="w-15 border p-2">
-                            Hora Início
-                          </th>
-
-                          <th className="w-15 border p-2">
-                            Hora Fim
-                          </th>
+                          <th className="w-15 border p-2">Início</th>
+                          <th className="w-15 border p-2">Fim</th>
+                          <th className="w-15 border p-2">Período</th>
+                          <th className="w-15 border p-2">Hora Início</th>
+                          <th className="w-15 border p-2">Hora Fim</th>
 
                           <th className="w-40 border p-2 text-center">
                             Professor
@@ -814,358 +757,300 @@ export default function ListCronograma() {
                       </thead>
 
                       <tbody>
-                        {agrupado[polo][sala].map((item) => (
-                          <React.Fragment key={item.id}>
-                            {/* LINHA PRINCIPAL */}
+                        {agrupado[polo][sala].map((item) => {
+                          const cancelado =
+                            String(item.is_status ?? "")
+                              .trim()
+                              .toUpperCase() === "CANCELADO";
 
-                            <tr>
-                              <td className="border p-2">
-                                {item.codigo}
-                              </td>
-
-                              <td className="border p-2 truncate uppercase">
-                                {item.tema}
-                              </td>
-
-                              <td className="border p-2">
-                                {item.data_inicio}
-                              </td>
-
-                              <td className="border p-2">
-                                {item.data_fim}
-                              </td>
-
-                              <td className="border px-2 py-1">
-                                {obterPeriodo(
-                                  item.hora_inicio
-                                )}
-                              </td>
-
-                              <td className="border p-2">
-                                {item.hora_inicio}
-                              </td>
-
-                              <td className="border p-2">
-                                {item.hora_fim}
-                              </td>
-
-                              <td className="border p-2 uppercase">
-                                {item.professor?.nome_professor}
-                              </td>
-
-                              <td className="border p-2 text-center">
-                                {item.quantidadeAlunos}
-                              </td>
-
-                              {/* SALDO */}
-
-                              <td className="border p-2 text-center">
-                                {(() => {
-                                  const saldo =
-                                    item.saldoDetentora
-                                      ?.saldo ?? 0;
-
-                                  return (
-                                    <span
-                                      className={`px-2 py-1 rounded-full text-white text-xs font-bold ${
-                                        saldo <= 0
-                                          ? "bg-red-600"
-                                          : saldo <= 5
-                                          ? "bg-yellow-500"
-                                          : "bg-green-600"
-                                      }`}
-                                    >
-                                      {saldo}
-                                    </span>
-                                  );
-                                })()}
-                              </td>
-
-                              {/* AÇÕES */}
-
-                              <td className="border p-2 text-center">
-                                <div className="flex justify-center items-center gap-3">
-                                  <button
-                                    type="button"
-                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                                    onClick={() =>
-                                      editar(item.id)
-                                    }
-                                    title="Editar Curso"
-                                  >
-                                    <Pencil size={18} />
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    className="text-orange-600 hover:text-orange-800"
-                                    title="Visualizar Solicitação de Materiais"
-                                    onClick={() =>
-                                      visualizarSolicitacao(
-                                        item.id
-                                      )
-                                    }
-                                  >
-                                    <FileText size={18} />
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    className="text-red-600 hover:text-red-800"
-                                    onClick={() =>
-                                      excluir(item.id)
-                                    }
-                                    title="Excluir"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    className="text-green-600 hover:text-green-800"
-                                    onClick={() =>
-                                      toggleExpandir(item.id)
-                                    }
-                                    title="Mais informações"
-                                  >
-                                    {cursoExpandido ===
-                                    item.id ? (
-                                      <ChevronUp size={18} />
-                                    ) : (
-                                      <ChevronDown size={18} />
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-
-                            {/* LINHA EXPANDIDA */}
-
-                            {cursoExpandido === item.id && (
-                              <tr>
-                                {/* INFORMAÇÕES DO CURSO */}
-
-                                <td
-                                  colSpan={8}
-                                  className="border border-blue-200 dark:border-gray-700 bg-blue-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 px-2 py-2 text-sm align-top"
+                          return (
+                            <React.Fragment key={item.id}>
+                              {/* LINHA PRINCIPAL */}
+                              <tr
+                                  className={
+                                    cancelado
+                                      ? `
+                                        bg-red-50/70 dark:bg-red-950/30
+                                        [&>td:nth-child(2)]:line-through
+                                        [&>td:nth-child(5)]:line-through
+                                        [&>td:nth-child(6)]:line-through
+                                        [&>td:nth-child(7)]:line-through
+                                        [&>td:nth-child(8)]:line-through
+                                        [&>td:nth-child(2)]:decoration-red-600
+                                        [&>td:nth-child(5)]:decoration-red-600
+                                        [&>td:nth-child(6)]:decoration-red-600
+                                        [&>td:nth-child(7)]:decoration-red-600
+                                        [&>td:nth-child(8)]:decoration-red-600
+                                        [&>td:nth-child(2)]:decoration-2
+                                        [&>td:nth-child(5)]:decoration-2
+                                        [&>td:nth-child(6)]:decoration-2
+                                        [&>td:nth-child(7)]:decoration-2
+                                        [&>td:nth-child(8)]:decoration-2
+                                      `
+                                      : ""
+                                  }
                                 >
-                                  <div className="space-y-3">
-                                    <h3 className="font-bold text-blue-700 dark:text-blue-300 text-lg">
-                                      Mais Informações
-                                    </h3>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                      <div className="min-w-0">
-                                        <strong>
-                                          Curso da Ata:
-                                        </strong>{" "}
-                                        {
-                                          item.detentoras
-                                            ?.curso
-                                            ?.nome_curso
-                                        }
-                                      </div>
-
-                                      <div className="min-w-0">
-                                        <strong>
-                                          Telefone do local:
-                                        </strong>{" "}
-                                        {
-                                          item.localAula
-                                            ?.Telefone
-                                        }
-                                      </div>
-
-                                      <div className="min-w-0">
-                                        <strong>
-                                          Detentora da ATA:
-                                        </strong>{" "}
-                                        {
-                                          item.detentoras
-                                            ?.ata
-                                            ?.empresa
-                                            ?.nome_empresa
-                                        }
-                                      </div>
-
-                                      <div className="min-w-0">
-                                        <strong>
-                                          Observação:
-                                        </strong>{" "}
-                                        {item.especificacao}
-                                      </div>
-
-                                      <div className="min-w-0">
-                                        <strong>
-                                          Número da Ata:
-                                        </strong>{" "}
-                                        {
-                                          item.detentoras
-                                            ?.ata
-                                            ?.numero_ata
-                                        }
-                                      </div>
-
-                                      <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-                                        <strong>
-                                          Saldo Contratado:
-                                        </strong>{" "}
-                                        {
-                                          item.saldoDetentora
-                                            ?.contratado ?? 0
-                                        }
-                                      </div>
-
-                                      <div className="text-xs font-semibold text-orange-700">
-                                        <strong>
-                                          Saldo Utilizados:
-                                        </strong>{" "}
-                                        {
-                                          item.saldoDetentora
-                                            ?.utilizadas ?? 0
-                                        }
-                                      </div>
-
-                                      <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                        <strong>
-                                          Saldo Atual:
-                                        </strong>{" "}
-                                        {
-                                          item.saldoDetentora
-                                            ?.saldo ?? 0
-                                        }
-                                      </div>
-
-                                      {/* BOTÃO MATERIAIS */}
-
-                                      <Link
-                                        href={`/material?id_curso=${item.detentoras?.curso?.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full min-h-8 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm text-center"
-                                      >
-                                        Materiais deste curso
-                                      </Link>
-
-                                      {/* BOTÃO CHAT */}
-
-                                      <Link
-                                        href={
-                                          `/chat/atendimento?` +
-                                          `cronogramaId=${item.id}` +
-                                          `&bloco=${encodeURIComponent(
-                                            filtroBloco
-                                          )}` +
-                                          `&polo=${encodeURIComponent(
-                                            filtroPolo
-                                          )}` +
-                                          `&empresa=${encodeURIComponent(
-                                            filtroEmpresa
-                                          )}` +
-                                          `&data=${encodeURIComponent(
-                                            filtroDataFormatura
-                                          )}`
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full min-h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm text-center"
-                                      >
-                                        Chat
-                                      </Link>
-
-                                      {/* BOTÃO ALUNOS */}
-
-                                      <Link
-                                        href={`/matricula?id=${item.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        title="Alunos do Curso"
-                                        className="w-full min-h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm text-center"
-                                      >
-                                        Alunos deste curso
-                                      </Link>
-
-                                      {/* BOTÃO CERTIFICADOS */}
-
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          gerarCertificados(
-                                            item.id
-                                          )
-                                        }
-                                        className="w-full min-h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm"
-                                      >
-                                        📜 Certificados
-                                      </button>
-                                    </div>
-                                  </div>
+                                <td className="border p-2">
+                                  {item.codigo}
                                 </td>
 
-                                {/* INFORMAÇÕES DO PROFESSOR */}
+                                <td className="border p-2 truncate uppercase">
+                                  {item.tema}
+                                </td>
 
-                                <td
-                                  colSpan={3}
-                                  className="border border-blue-200 dark:border-gray-700 bg-blue-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 px-2 py-2 text-sm align-top"
-                                >
-                                  <h2 className="font-bold text-blue-700 dark:text-blue-300 text-lg mb-2">
-                                    Professor
-                                  </h2>
+                                <td className="border p-2">
+                                  {item.data_inicio}
+                                </td>
 
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {/* FOTO */}
+                                <td className="border p-2">
+                                  {item.data_fim}
+                                </td>
 
-                                    {item.professor?.foto && (
-                                      <div className="flex justify-start">
-                                        <Image
-                                          src={`http://192.168.15.84:3000/files/professor/${item.professor.foto}`}
-                                          alt={
-                                            item.professor
-                                              .nome_professor ||
-                                            "Professor"
-                                          }
-                                          width={120}
-                                          height={120}
-                                          className="rounded-lg object-cover border max-w-full h-auto"
-                                        />
-                                      </div>
-                                    )}
+                                <td className="border px-2 py-1">
+                                  {obterPeriodo(item.hora_inicio)}
+                                </td>
 
-                                    <div className="min-w-0">
-                                      <div className="font-semibold wrap-break-words">
-                                        {
-                                          item.professor
-                                            ?.especialidade
-                                        }
-                                      </div>
+                                <td className="border p-2">
+                                  {item.hora_inicio}
+                                </td>
 
-                                      <div className="font-semibold wrap-break-words">
-                                        Contato:{" "}
-                                        {
-                                          item.professor
-                                            ?.telefone
-                                        }
-                                      </div>
+                                <td className="border p-2">
+                                  {item.hora_fim}
+                                </td>
 
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          enviarPlanejamento(
-                                            item.id
-                                          )
-                                        }
-                                        className="mt-2 text-green-600 hover:text-green-800"
-                                        title="Solicitar Planejamento do Curso"
+                                <td className="border p-2 uppercase">
+                                  {item.professor?.nome_professor}
+                                </td>
+
+                                <td className="border p-2 text-center">
+                                  {item.quantidadeAlunos}
+                                </td>
+
+                                {/* SALDO */}
+                                <td className="border p-2 text-center">
+                                  {(() => {
+                                    const saldo =
+                                      item.saldoDetentora?.saldo ?? 0;
+
+                                    return (
+                                      <span
+                                        className={`px-2 py-1 rounded-full text-white text-xs font-bold ${
+                                          saldo <= 0
+                                            ? "bg-red-600"
+                                            : saldo <= 5
+                                            ? "bg-yellow-500"
+                                            : "bg-green-600"
+                                        }`}
                                       >
-                                        <Send size={18} />
-                                      </button>
-                                    </div>
+                                        {saldo}
+                                      </span>
+                                    );
+                                  })()}
+                                </td>
+
+                                {/* AÇÕES - SEM RISCO */}
+                                <td className="border p-2 text-center">
+                                  <div className="flex justify-center items-center gap-3">
+                                    <button
+                                      type="button"
+                                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                                      onClick={() => editar(item.id)}
+                                      title="Editar Curso"
+                                    >
+                                      <Pencil size={18} />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className="text-orange-600 hover:text-orange-800"
+                                      title="Visualizar Solicitação de Materiais"
+                                      onClick={() =>
+                                        visualizarSolicitacao(item.id)
+                                      }
+                                    >
+                                      <FileText size={18} />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className="text-red-600 hover:text-red-800"
+                                      onClick={() => excluir(item.id)}
+                                      title="Excluir"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className="text-green-600 hover:text-green-800"
+                                      onClick={() => toggleExpandir(item.id)}
+                                      title="Mais informações"
+                                    >
+                                      {cursoExpandido === item.id ? (
+                                        <ChevronUp size={18} />
+                                      ) : (
+                                        <ChevronDown size={18} />
+                                      )}
+                                    </button>
                                   </div>
                                 </td>
                               </tr>
-                            )}
-                          </React.Fragment>
-                        ))}
+
+                              {/* LINHA EXPANDIDA */}
+                              {cursoExpandido === item.id && (
+                                <tr>
+                                  {/* INFORMAÇÕES DO CURSO */}
+                                  <td
+                                    colSpan={8}
+                                    className="border border-blue-200 dark:border-gray-700 bg-blue-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 px-2 py-2 text-sm align-top"
+                                  >
+                                    <div className="space-y-3">
+                                      <h3 className="font-bold text-blue-700 dark:text-blue-300 text-lg">
+                                        Mais Informações
+                                      </h3>
+
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="min-w-0">
+                                          <strong>Curso da Ata:</strong>{" "}
+                                          {item.detentoras?.curso?.nome_curso}
+                                        </div>
+
+                                        <div className="min-w-0">
+                                          <strong>Telefone do local:</strong>{" "}
+                                          {item.localAula?.Telefone}
+                                        </div>
+
+                                        <div className="min-w-0">
+                                          <strong>Detentora da ATA:</strong>{" "}
+                                          {item.detentoras?.ata?.empresa?.nome_empresa}
+                                        </div>
+
+                                        <div className="min-w-0">
+                                          <strong>Observação:</strong>{" "}
+                                          {item.especificacao}
+                                        </div>
+
+                                        <div className="min-w-0">
+                                          <strong>Número da Ata:</strong>{" "}
+                                          {item.detentoras?.ata?.numero_ata}
+                                        </div>
+
+                                        <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                                          <strong>Saldo Contratado:</strong>{" "}
+                                          {item.saldoDetentora?.contratado ?? 0}
+                                        </div>
+
+                                        <div className="text-xs font-semibold text-orange-700">
+                                          <strong>Saldo Utilizados:</strong>{" "}
+                                          {item.saldoDetentora?.utilizadas ?? 0}
+                                        </div>
+
+                                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                          <strong>Saldo Atual:</strong>{" "}
+                                          {item.saldoDetentora?.saldo ?? 0}
+                                        </div>
+
+                                        {/* BOTÃO MATERIAIS */}
+                                        <Link
+                                          href={`/material?id_curso=${item.detentoras?.curso?.id}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="w-full min-h-8 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm text-center"
+                                        >
+                                          Materiais deste curso
+                                        </Link>
+
+                                        {/* BOTÃO CHAT */}
+                                        <Link
+                                          href={
+                                            `/chat/atendimento?` +
+                                            `cronogramaId=${item.id}` +
+                                            `&bloco=${encodeURIComponent(filtroBloco)}` +
+                                            `&polo=${encodeURIComponent(filtroPolo)}` +
+                                            `&empresa=${encodeURIComponent(filtroEmpresa)}` +
+                                            `&data=${encodeURIComponent(filtroDataFormatura)}`
+                                          }
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="w-full min-h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm text-center"
+                                        >
+                                          Chat
+                                        </Link>
+
+                                        {/* BOTÃO ALUNOS */}
+                                        <Link
+                                          href={`/matricula?id=${item.id}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          title="Alunos do Curso"
+                                          className="w-full min-h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm text-center"
+                                        >
+                                          Alunos deste curso
+                                        </Link>
+
+                                        {/* BOTÃO CERTIFICADOS */}
+                                        <button
+                                          type="button"
+                                          onClick={() => gerarCertificados(item.id)}
+                                          className="w-full min-h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm"
+                                        >
+                                          📜 Certificados
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* INFORMAÇÕES DO PROFESSOR */}
+                                  <td
+                                    colSpan={3}
+                                    className="border border-blue-200 dark:border-gray-700 bg-blue-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 px-2 py-2 text-sm align-top"
+                                  >
+                                    <h2 className="font-bold text-blue-700 dark:text-blue-300 text-lg mb-2">
+                                      Professor
+                                    </h2>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      {/* FOTO */}
+                                      {item.professor?.foto && (
+                                        <div className="flex justify-start">
+                                          <Image
+                                            src={`http://192.168.15.84:3000/files/professor/${item.professor.foto}`}
+                                            alt={
+                                              item.professor.nome_professor ||
+                                              "Professor"
+                                            }
+                                            width={120}
+                                            height={120}
+                                            className="rounded-lg object-cover border max-w-full h-auto"
+                                          />
+                                        </div>
+                                      )}
+
+                                      <div className="min-w-0">
+                                        <div className="font-semibold wrap-break-words">
+                                          {item.professor?.especialidade}
+                                        </div>
+
+                                        <div className="font-semibold wrap-break-words">
+                                          Contato: {item.professor?.telefone}
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => enviarPlanejamento(item.id)}
+                                          className="mt-2 text-green-600 hover:text-green-800"
+                                          title="Solicitar Planejamento do Curso"
+                                        >
+                                          <Send size={18} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1175,10 +1060,7 @@ export default function ListCronograma() {
           );
         })}
 
-        {/* ======================================================
-            TOTAL GERAL
-        ====================================================== */}
-
+        {/* TOTAL GERAL */}
         <div className="mt-8 border-t-2 pt-4 flex justify-center">
           <span className="text-2xl font-bold text-red-600 text-center">
             Total Geral de Cursos: {totalGeralCursos}
@@ -1186,10 +1068,7 @@ export default function ListCronograma() {
         </div>
       </div>
 
-      {/* ======================================================
-          MODAL DE EDIÇÃO
-      ====================================================== */}
-
+      {/* MODAL DE EDIÇÃO */}
       {modalEditar && cronogramaEditando && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2">
           <div className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 rounded-xl shadow-xl w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto">
