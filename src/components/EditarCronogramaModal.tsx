@@ -263,9 +263,13 @@ export default function EditarCronogramaModal({ dados, fechar, atualizarLista }:
   const inputImagemRef = useRef<HTMLInputElement>(null);
 
   const [listaPresencaUrl, setListaPresencaUrl] = useState(
+
     dados.lista_presenca_url || ""
+
   );
+
   const [uploadingListaPresenca, setUploadingListaPresenca] = useState(false);
+
   const inputListaPresencaRef = useRef<HTMLInputElement>(null);
 
   const [saldoDetentora, setSaldoDetentora] = useState<SaldoDetentora | null>(null);
@@ -515,87 +519,141 @@ export default function EditarCronogramaModal({ dados, fechar, atualizarLista }:
   }
 
   function abrirSeletorListaPresenca(): void {
+
     if (!uploadingListaPresenca && !salvando) {
+
       inputListaPresencaRef.current?.click();
+
     }
+
   }
 
   async function handleAlterarListaPresenca(
+
     e: ChangeEvent<HTMLInputElement>
+
   ): Promise<void> {
+
     const arquivo = e.target.files?.[0];
+
     e.target.value = "";
 
     if (!arquivo) return;
 
     if (
+
       !arquivo.name.toLowerCase().endsWith(".pdf") ||
+
       arquivo.type !== "application/pdf"
+
     ) {
+
       toast.error("Selecione um arquivo PDF válido.");
+
       return;
+
     }
 
     if (arquivo.size > 10 * 1024 * 1024) {
+
       toast.error("O PDF deve ter no máximo 10 MB.");
+
       return;
+
     }
 
     try {
+
       setUploadingListaPresenca(true);
 
       const formData = new FormData();
+
       formData.append("arquivo", arquivo);
 
       const response = await api.post("/upload/lista-presenca", formData, {
+
         headers: { "Content-Type": "multipart/form-data" },
+
       });
 
       const dadosUpload: unknown = response.data;
 
       if (!dadosUpload || typeof dadosUpload !== "object") {
+
         toast.error("O backend não retornou o caminho do PDF.");
+
         return;
+
       }
 
       const resposta = dadosUpload as Record<string, unknown>;
+
       const novaUrl = resposta.lista_presenca_url;
 
       if (typeof novaUrl !== "string" || !novaUrl.trim()) {
+
         toast.error("O servidor não retornou o caminho do PDF.");
+
         return;
+
       }
 
       setListaPresencaUrl(novaUrl);
+
       toast.success(
+
         "PDF enviado. Clique em Salvar alterações para confirmar."
+
       );
+
     } catch (error: unknown) {
+
       console.error("Erro ao enviar lista de presença:", error);
 
       if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
+
         if (error.response?.status === 413) {
+
           toast.error("O PDF é muito grande para o servidor.");
+
         } else {
+
           toast.error(
+
             error.response?.data?.message ||
+
               error.response?.data?.error ||
+
               "Erro ao enviar a lista de presença."
+
           );
+
         }
+
       } else {
+
         toast.error("Erro ao enviar a lista de presença.");
+
       }
+
     } finally {
+
       setUploadingListaPresenca(false);
+
     }
+
   }
 
   function removerListaPresenca(): void {
+
     setListaPresencaUrl("");
+
     toast.info(
+
       "A lista será removida do cronograma ao salvar as alterações."
+
     );
+
   }
 
   function restaurarImagemOriginal(): void {
@@ -641,8 +699,11 @@ export default function EditarCronogramaModal({ dados, fechar, atualizarLista }:
     }
 
     if (uploadingImagem || uploadingListaPresenca) {
+
       toast.error("Aguarde o término dos envios de arquivos.");
+
       return;
+
     }
 
     if (saldoDetentora && saldoDetentora.saldo <= 0 && detentoras_id !== dados.detentoras_id) {
@@ -688,6 +749,7 @@ export default function EditarCronogramaModal({ dados, fechar, atualizarLista }:
       quantidade_aluno: quantidade_aluno === "" ? null : quantidade_aluno,
 
       link_inscricao: link_inscricao.trim() || null,
+
       lista_presenca_url: listaPresencaUrl.trim() || null,
 
     };
@@ -926,209 +988,361 @@ export default function EditarCronogramaModal({ dados, fechar, atualizarLista }:
 
         </div>
 
-       
 {/* LINK DE INSCRIÇÃO */}
+
 <div className="sm:col-span-2 min-w-0">
+
   <label htmlFor="link_inscricao" className={labelClass}>
+
     Link de inscrição
+
   </label>
 
   <input
+
     id="link_inscricao"
+
     type="url"
+
     value={link_inscricao}
+
     onChange={(e) => setLink_inscricao(e.target.value)}
+
     placeholder="https://..."
+
     className={fieldClass}
+
     disabled={formularioBloqueado}
+
   />
+
 </div>
 
 {/* GRADE DOS QUADROS: FOTO E LISTA DE PRESENÇA */}
-<div className="sm:col-span-2 grid w-full min-w-0 grid-cols-1 items-stretch gap-5 sm:grid-cols-2">
+
+<div className="sm:col-span-2 grid w-full min-w-0 grid-cols-1 items-stretch gap-5 sm:grid-cols-[1.2fr_0.8fr]">
 
   {/* COLUNA ESQUERDA: FOTO DO CURSO */}
+
   <div className="flex min-w-0 flex-col gap-2">
+
     <p className={labelClass}>
+
       Foto do curso
+
     </p>
 
    <section className="flex min-w-0 flex-1 flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+
       {/* FOTO ATUAL */}
+
       <div className="min-w-0">
+
         <p className={labelClass}>
+
           Foto atual
+
         </p>
 
         {imagemUrl ? (
+
           <div>
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-900">
+
+            <div className="relative aspect-4/3 min-h-300px w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-900 sm:min-h-380px">
+
               <Image
+
                 src={imagemUrl}
+
                 alt="Imagem do curso"
+
                 fill
+
                 sizes="(max-width: 768px) 100vw, 50vw"
+
                 className="object-contain"
+
                 unoptimized
+
                 onError={() => setImagemValida(false)}
+
                 onLoad={() => setImagemValida(true)}
+
               />
+
             </div>
 
             {!imagemValida && (
+
               <p className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+
                 Não foi possível carregar a imagem. Verifique o caminho
+
                 retornado pelo servidor.
+
               </p>
+
             )}
+
           </div>
+
         ) : (
-          <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-400">
+
+          <div className="flex min-h-300px items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-400 sm:min-h-380px">
+
             Nenhuma foto cadastrada
+
           </div>
+
         )}
+
       </div>
 
       {/* ALTERAR FOTO */}
+
       <div className="min-w-0">
+
         <p className={labelClass}>
+
           Alterar foto
+
         </p>
 
         <input
+
           ref={inputImagemRef}
+
           type="file"
+
           accept="image/*"
+
           onChange={(e) => void handleAlterarImagem(e)}
+
           className="hidden"
+
         />
 
         <div className="flex flex-wrap items-center gap-3">
+
           <button
+
             type="button"
+
             onClick={abrirSeletorImagem}
+
             disabled={formularioBloqueado}
+
             className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+
           >
+
             {uploadingImagem ? "Enviando foto..." : "Alterar foto"}
+
           </button>
 
           {imagemAlterada && (
+
             <button
+
               type="button"
+
               onClick={restaurarImagemOriginal}
+
               disabled={formularioBloqueado}
+
               className="rounded-lg border border-gray-300 px-4 py-3 font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+
             >
+
               Desfazer
+
             </button>
+
           )}
+
         </div>
 
         <p className={`mt-3 ${secondaryTextClass}`}>
+
           Clique em <strong>Alterar foto</strong> para selecionar uma nova
+
           imagem do computador.
+
         </p>
 
         <p className={`mt-1 text-xs ${secondaryTextClass}`}>
+
           Formatos recomendados: JPG, JPEG, PNG ou WEBP. Tamanho máximo: 10 MB.
+
         </p>
 
         {imagemAlterada && (
+
           <div className="mt-3 rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200">
+
             Nova foto enviada. Clique em{" "}
+
             <strong>Salvar alterações</strong> para confirmar.
+
           </div>
+
         )}
+
       </div>
+
     </section>
+
   </div>
 
   {/* COLUNA DIREITA: LISTA DE PRESENÇA PDF */}
+
   <div className="flex min-w-0 flex-col gap-2">
+
     <p className={labelClass}>
+
       Lista de presença do aluno (PDF)
+
     </p>
 
     <section className="flex min-w-0 flex-1 flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+
       {/* DESCRIÇÃO */}
+
       <div>
+
         <p className={secondaryTextClass}>
+
           Anexe a lista de presença em PDF. Tamanho máximo: 10 MB.
+
         </p>
+
       </div>
 
       {/* SELETOR DE PDF */}
+
       <input
+
         ref={inputListaPresencaRef}
+
         type="file"
+
         accept=".pdf,application/pdf"
+
         onChange={(e) => void handleAlterarListaPresenca(e)}
+
         className="hidden"
+
       />
 
       {/* PDF CADASTRADO */}
+
       {listaPresencaUrl ? (
+
         <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-red-100 text-sm font-bold text-red-700 dark:bg-red-950 dark:text-red-300">
+
             PDF
+
           </div>
 
           <div className="min-w-0 flex-1">
+
             <p className="font-medium text-gray-800 dark:text-gray-100">
+
               Lista de presença anexada
+
             </p>
 
             <a
+
               href={listaPresencaUrl}
+
               target="_blank"
+
               rel="noopener noreferrer"
+
               className="text-sm text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+
             >
+
               Abrir PDF
+
             </a>
+
           </div>
 
           <button
+
             type="button"
+
             onClick={removerListaPresenca}
+
             disabled={formularioBloqueado}
+
             className="rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950"
+
           >
+
             Remover
+
           </button>
+
         </div>
+
       ) : (
+
         <p className={secondaryTextClass}>
+
           Nenhuma lista de presença cadastrada.
+
         </p>
+
       )}
 
       {/* ANEXAR OU SUBSTITUIR PDF */}
+
       <div className="flex flex-wrap items-center gap-3">
+
         <button
+
           type="button"
+
           onClick={abrirSeletorListaPresenca}
+
           disabled={formularioBloqueado}
+
           className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+
         >
+
           {uploadingListaPresenca
+
             ? "Enviando PDF..."
+
             : listaPresencaUrl
+
               ? "Substituir lista de presença"
+
               : "Anexar lista de presença PDF"}
+
         </button>
+
       </div>
 
       <p className={`text-xs ${secondaryTextClass}`}>
+
         Após anexar ou remover o arquivo, clique em{" "}
+
         <strong>Salvar alterações</strong> para gravar a alteração no cronograma.
+
       </p>
+
     </section>
+
   </div>
+
 </div>
-
-
 
         <div className="sm:col-span-2 sm:max-w-sm">
 
