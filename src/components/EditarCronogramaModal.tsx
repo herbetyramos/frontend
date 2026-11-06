@@ -438,7 +438,7 @@ export default function EditarCronogramaModal({ dados, fechar, atualizarLista }:
 
     }
 
-    if (arquivo.size > 10 * 1024 * 1024) {
+    if (arquivo.size > 15 * 1024 * 1024) {
 
       toast.error("A imagem deve ter no máximo 10 MB.");
 
