@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
-import { FileText, Printer } from "lucide-react";
+import { FileText, Printer, FileSpreadsheet } from "lucide-react";
 
 type CursoSaldo = {
   id: string;
@@ -208,6 +208,166 @@ export default function SaldoRelatorio() {
     window.print();
   };
 
+  // EXPORTAR PARA EXCEL
+  const exportarExcel = () => {
+    const escaparHtml = (valor: unknown) =>
+      String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    const numeroExcel = (valor: number) =>
+      Number(valor || 0).toLocaleString("pt-BR");
+
+    const moedaExcel = (valor: number) =>
+      Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+    const linhasEmpresas = empresasFiltradas
+      .map((empresa) => {
+        const cursos = empresa.cursos
+          .map((curso) => {
+            const saldo = Number(curso.saldo || 0);
+            const corSaldo =
+              saldo <= 0 ? "#dc2626" : saldo <= 5 ? "#eab308" : "#16a34a";
+
+            return `
+              <tr>
+                <td class="curso">${escaparHtml(
+                  curso.curso?.trim().toLocaleUpperCase("pt-BR") || "SEM CURSO"
+                )}</td>
+                <td class="centro">${numeroExcel(curso.contratado)}</td>
+                <td class="centro">${numeroExcel(curso.utilizadas)}</td>
+                <td class="centro saldo" style="background-color:${corSaldo};color:#ffffff;">
+                  ${numeroExcel(saldo)}
+                </td>
+                <td class="direita">${moedaExcel(curso.valorUnitario)}</td>
+                <td class="direita">${moedaExcel(curso.valorContratado)}</td>
+                <td class="direita">${moedaExcel(curso.valorUtilizado)}</td>
+                <td class="direita">${moedaExcel(curso.valorSaldo)}</td>
+              </tr>`;
+          })
+          .join("");
+
+        return `
+          <table>
+            <tr>
+              <th colspan="8" class="empresa">
+                ${escaparHtml(empresa.empresa.trim().toLocaleUpperCase("pt-BR"))}
+              </th>
+            </tr>
+            <tr class="cabecalho">
+              <th>CURSO</th>
+              <th>CONTRATADO</th>
+              <th>UTILIZADO</th>
+              <th>SALDO</th>
+              <th>VALOR UNITÁRIO</th>
+              <th>V.CONTRATADO</th>
+              <th>VALOR USADO</th>
+              <th>SALDO</th>
+            </tr>
+            ${cursos}
+            <tr class="total">
+              <td class="direita">TOTAL DA EMPRESA:</td>
+              <td class="centro">${numeroExcel(empresa.totalContratado)}</td>
+              <td class="centro">${numeroExcel(empresa.totalUtilizado)}</td>
+              <td class="centro">${numeroExcel(empresa.saldoAtual)}</td>
+              <td class="direita">—</td>
+              <td class="direita">${moedaExcel(empresa.totalValorContratado)}</td>
+              <td class="direita">${moedaExcel(empresa.totalValorUtilizado)}</td>
+              <td class="direita">${moedaExcel(empresa.totalValorSaldo)}</td>
+            </tr>
+          </table>
+          <br/>`;
+      })
+      .join("");
+
+    const nomeArquivo = empresaSelecionada
+      ? `relatorio_saldo_${empresaSelecionada
+          .trim()
+          .replace(/[^a-zA-Z0-9À-ÿ]+/g, "_")}`
+      : "relatorio_saldo_todas_as_empresas";
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8"/>
+        <style>
+          body { font-family: Arial, sans-serif; color: #111827; }
+          h1 { text-align: center; font-size: 20pt; font-weight: bold; }
+          h2 { text-align: center; font-size: 14pt; }
+          .identificacao { text-align: center; font-weight: bold; font-size: 12pt; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th, td { border: 1px solid #9ca3af; padding: 6px; font-size: 10pt; }
+          .empresa { background: #1d4ed8; color: #ffffff; text-align: left; font-size: 12pt; }
+          .cabecalho th { background: #e5e7eb; color: #111827; font-weight: bold; text-align: center; }
+          td.curso { text-align: left; font-weight: bold; }
+          td.centro { text-align: center; }
+          td.direita { text-align: right; white-space: nowrap; }
+          td.saldo { font-weight: bold; text-align: center; }
+          .total td { background: #eff6ff; font-weight: bold; }
+          .resumo-titulo { background: #1d4ed8; color: #ffffff; font-weight: bold; text-align: center; }
+          .resumo-label { background: #f3f4f6; font-weight: bold; }
+          .resumo-valor { background: #eff6ff; font-weight: bold; text-align: right; }
+        </style>
+      </head>
+      <body>
+        <h1>SECRETARIA DA MULHER E DA FAMÍLIA</h1>
+        <h2>RELATÓRIO DE SALDO</h2>
+        <p class="identificacao">
+          ${escaparHtml(
+            empresaSelecionada
+              ? empresaSelecionada.toLocaleUpperCase("pt-BR")
+              : "TODAS AS EMPRESAS"
+          )}
+        </p>
+        ${linhasEmpresas}
+        <table>
+          <tr><th colspan="3" class="resumo-titulo">RESUMO GERAL - QUANTIDADE DE TURMAS</th></tr>
+          <tr>
+            <td class="resumo-label">TOTAL CONTRATADO</td>
+            <td class="resumo-label">TOTAL UTILIZADO</td>
+            <td class="resumo-label">TOTAL DE TURMAS EM SALDO</td>
+          </tr>
+          <tr>
+            <td class="resumo-valor">${numeroExcel(totais.contratado)}</td>
+            <td class="resumo-valor">${numeroExcel(totais.utilizado)}</td>
+            <td class="resumo-valor">${numeroExcel(totais.saldo)}</td>
+          </tr>
+          <tr><th colspan="3" class="resumo-titulo">RESUMO GERAL - VALORES FINANCEIROS</th></tr>
+          <tr>
+            <td class="resumo-label">VALOR TOTAL CONTRATADO</td>
+            <td class="resumo-label">VALOR TOTAL UTILIZADO</td>
+            <td class="resumo-label">VALOR TOTAL DO SALDO</td>
+          </tr>
+          <tr>
+            <td class="resumo-valor">${moedaExcel(totaisFinanceiros.valorContratado)}</td>
+            <td class="resumo-valor">${moedaExcel(totaisFinanceiros.valorUtilizado)}</td>
+            <td class="resumo-valor">${moedaExcel(totaisFinanceiros.valorSaldo)}</td>
+          </tr>
+        </table>
+      </body>
+      </html>`;
+
+    const blob = new Blob(["\ufeff", html], {
+      type: "application/vnd.ms-excel;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${nomeArquivo}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // COR DO SALDO
   const obterClasseSaldo = (saldo: number) => {
     if (saldo <= 0) {
@@ -297,14 +457,25 @@ export default function SaldoRelatorio() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={imprimir}
-            className="no-print flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition w-full sm:w-auto"
-          >
-            <Printer size={18} />
-            Imprimir / PDF
-          </button>
+          <div className="no-print flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={exportarExcel}
+              className="flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg font-semibold transition w-full sm:w-auto"
+            >
+              <FileSpreadsheet size={18} />
+              Exportar Excel
+            </button>
+
+            <button
+              type="button"
+              onClick={imprimir}
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition w-full sm:w-auto"
+            >
+              <Printer size={18} />
+              Imprimir / PDF
+            </button>
+          </div>
         </div>
 
         {/* FILTRO */}
