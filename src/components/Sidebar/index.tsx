@@ -60,7 +60,7 @@ export default function Sidebar({
     <>
       {/* Fundo escuro */}
       <div
-        className="fixed inset-0 bg-black/40 z-40"
+        className="fixed inset-0 bg-black/40 dark:bg-black/70 z-40"
         onClick={onClose}
       />
 
@@ -74,16 +74,24 @@ export default function Sidebar({
           max-h-[85vh]
           overflow-y-auto
           bg-white
+          dark:bg-gray-900
+          text-gray-900
+          dark:text-gray-100
+          border
+          border-gray-200
+          dark:border-gray-700
           rounded-xl
           shadow-xl
+          dark:shadow-black/40
           z-50
           p-3
         "
       >
         <nav className="space-y-2">
-
           {links.map(({ href, label, children }) => {
-            const active = pathname === href;
+            const active =
+              pathname === href ||
+              (href !== "/" && pathname.startsWith(`${href}/`));
 
             if (children) {
               return (
@@ -98,7 +106,11 @@ export default function Sidebar({
                       px-3
                       py-2
                       rounded-lg
+                      text-gray-800
+                      dark:text-gray-100
                       hover:bg-gray-100
+                      dark:hover:bg-gray-800
+                      transition-colors
                     "
                   >
                     <span>{label}</span>
@@ -111,23 +123,44 @@ export default function Sidebar({
                   </button>
 
                   {openMenus[href] && (
-                    <div className="ml-4 mt-1 space-y-1">
-                      {children.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={onClose}
-                          className="
-                            block
-                            px-3
-                            py-2
-                            rounded-md
-                            hover:bg-gray-100
-                          "
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
+                    <div
+                      className="
+                        ml-4
+                        mt-1
+                        space-y-1
+                        border-l
+                        border-gray-200
+                        dark:border-gray-700
+                        pl-2
+                      "
+                    >
+                      {children.map((item) => {
+                        const childActive =
+                          pathname === item.href ||
+                          pathname.startsWith(`${item.href}/`);
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={onClose}
+                            className={`
+                              block
+                              px-3
+                              py-2
+                              rounded-md
+                              transition-colors
+                              ${
+                                childActive
+                                  ? "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300 font-semibold"
+                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                              }
+                            `}
+                          >
+                            {item.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -144,10 +177,11 @@ export default function Sidebar({
                   px-3
                   py-2
                   rounded-lg
+                  transition-colors
                   ${
                     active
-                      ? "bg-fuchsia-100 font-semibold"
-                      : "hover:bg-gray-100"
+                      ? "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300 font-semibold"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }
                 `}
               >

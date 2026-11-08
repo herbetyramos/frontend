@@ -15,25 +15,79 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await signIn({ email, password });  // Agora apenas dispara o login
+      await signIn({ email, password });
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center p-4">
-      <div className="bg-white shadow-xl rounded-2xl w-full max-w-md p-6 sm:p-8">
-        
-        <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
+    <div
+      className="
+        min-h-screen
+        flex
+        items-center
+        justify-center
+        p-4
+        .bg-gradient-to-br {
+        --tw-gradient-position: to bottom right in oklab;
+        background-image: linear-gradient(var(--tw-gradient-stops));
+        }
+        from-blue-100
+        to-purple-200
+        dark:from-gray-950
+        dark:via-gray-900
+        dark:to-slate-950
+        transition-colors
+        duration-300
+      "
+    >
+      <div
+        className="
+          bg-white
+          dark:bg-gray-900
+          border
+          border-gray-200
+          dark:border-gray-700
+          shadow-xl
+          dark:shadow-black/40
+          rounded-2xl
+          w-full
+          max-w-md
+          p-6
+          sm:p-8
+          transition-colors
+          duration-300
+        "
+      >
+        <h2
+          className="
+            text-3xl
+            font-extrabold
+            text-center
+            text-gray-800
+            dark:text-gray-100
+            mb-6
+          "
+        >
           Login e Senha
         </h2>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          
+
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="
+                block
+                text-sm
+                font-medium
+                text-gray-700
+                dark:text-gray-300
+                mb-1
+              "
+            >
               Email
             </label>
 
@@ -41,8 +95,27 @@ export default function Login() {
               type="email"
               id="email"
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              autoComplete="username"
+              className="
+                w-full
+                px-4
+                py-3
+                rounded-lg
+                border
+                border-gray-300
+                dark:border-gray-600
+                bg-white
+                dark:bg-gray-800
+                text-gray-900
+                dark:text-gray-100
+                placeholder-gray-400
+                dark:placeholder-gray-500
+                focus:outline-none
+                focus:ring-2
+                focus:ring-blue-500
+                focus:border-transparent
+                transition
+              "
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -50,7 +123,17 @@ export default function Login() {
 
           {/* Senha */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="
+                block
+                text-sm
+                font-medium
+                text-gray-700
+                dark:text-gray-300
+                mb-1
+              "
+            >
               Senha
             </label>
 
@@ -58,8 +141,27 @@ export default function Login() {
               type="password"
               id="password"
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              autoComplete="current-password"
+              className="
+                w-full
+                px-4
+                py-3
+                rounded-lg
+                border
+                border-gray-300
+                dark:border-gray-600
+                bg-white
+                dark:bg-gray-800
+                text-gray-900
+                dark:text-gray-100
+                placeholder-gray-400
+                dark:placeholder-gray-500
+                focus:outline-none
+                focus:ring-2
+                focus:ring-blue-500
+                focus:border-transparent
+                transition
+              "
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -67,20 +169,29 @@ export default function Login() {
 
           {/* Botão */}
           <button
-            
             type="submit"
             disabled={loading}
-            className={`w-full font-semibold py-3 rounded-lg shadow-md text-white transition-all duration-200
-              ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
+            className={`
+              w-full
+              font-semibold
+              py-3
+              rounded-lg
+              shadow-md
+              text-white
+              transition-all
+              duration-200
+              ${
+                loading
+                  ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              }
             `}
           >
             {loading ? "Carregando..." : "Logar"}
           </button>
 
         </form>
-
       </div>
     </div>
   );
-  
 }
