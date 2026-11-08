@@ -416,7 +416,7 @@ export default function OfertaCursoPage() {
                   {o.tema}
                 </h2>
                 <p className="mt-1 text-sm text-gray-600">
-                 Todos os materiais disponibilizados gratuitamente pela Prefeitura.
+                 Materiais fornecidos gratuitamente pela Prefeitura.
                 </p>
                 
                 {/* ==================================================
