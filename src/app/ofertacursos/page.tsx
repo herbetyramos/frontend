@@ -403,7 +403,7 @@ TÍTULO
                 <span className="font-semibold text-gray-700">
                   De:
                 </span>{" "}
-                {formatarData(o.data_inicio)} •{" à "}
+                {formatarData(o.data_inicio)}{" à "}
                 {formatarData(o.data_fim)}
               </p>
 

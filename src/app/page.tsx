@@ -416,7 +416,7 @@ export default function OfertaCursoPage() {
                   {o.tema}
                 </h2>
                 <p className="mt-1 text-sm text-gray-600">
-                 Materiais disponibilizados pela prefeitura.
+                 Todos os materiais disponibilizados gratuitamente pela Prefeitura.
                 </p>
                 
                 {/* ==================================================
@@ -435,9 +435,9 @@ export default function OfertaCursoPage() {
 
                   <p>
                     <span className="font-semibold text-gray-700">
-                      Período:
+                      De:
                     </span>{" "}
-                    {formatarData(o.data_inicio)} •{" "}
+                    {formatarData(o.data_inicio)} {" à "}
                     {formatarData(o.data_fim)}
                   </p>
 
