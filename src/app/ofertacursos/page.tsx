@@ -401,9 +401,9 @@ TÍTULO
 
               <p>
                 <span className="font-semibold text-gray-700">
-                  Período:
+                  De:
                 </span>{" "}
-                {formatarData(o.data_inicio)} •{" "}
+                {formatarData(o.data_inicio)} •{" à "}
                 {formatarData(o.data_fim)}
               </p>
 
