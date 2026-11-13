@@ -287,18 +287,57 @@ export default function ListCronograma() {
     }
   };
 
-  const enviarPlanejamento = async (id: string) => {
-    try {
-      const link = `${window.location.origin}/planejamento?id=${id}`;
+ const enviarPlanejamento = (id: string) => {
+  try {
+    const cronograma = cronogramaFull.find((item) => item.id === id);
 
-      await navigator.clipboard.writeText(link);
-
-      toast.success("Link copiado para a área de transferência!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Não foi possível copiar o link.");
+    if (!cronograma) {
+      toast.error("Cronograma não encontrado.");
+      return;
     }
-  };
+
+    const telefone = cronograma.professor?.telefone;
+
+    if (!telefone) {
+      toast.error("Professor não possui telefone cadastrado.");
+      return;
+    }
+
+    // Remove caracteres não numéricos
+    let numero = telefone.replace(/\D/g, "");
+
+    // Acrescenta o código do Brasil, se necessário
+    if (!numero.startsWith("55")) {
+      numero = `55${numero}`;
+    }
+
+    const link = `${window.location.origin}/planejamento?id=${id}`;
+
+    const mensagem = `
+Olá, ${cronograma.professor?.nome_professor}!
+
+Solicitamos o preenchimento do planejamento de aulas do curso:
+
+*${cronograma.tema}*
+
+Acesse o link abaixo para preencher o planejamento:
+
+${link}
+
+Atenciosamente,
+Secretaria da Mulher e da Família.
+    `.trim();
+
+    const whatsappUrl = `https://wa.me/${numero}?text=${encodeURIComponent(
+      mensagem
+    )}`;
+
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    console.error("Erro ao enviar planejamento:", error);
+    toast.error("Não foi possível abrir o WhatsApp.");
+  }
+};
 
   const visualizarSolicitacao = async (id: string) => {
     try {

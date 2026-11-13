@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ const links = [
   { href: "/listcronograma", label: "📅 Cronograma" },
   { href: "/relatorios", label: "📊 Relatórios" },
   { href: "/usuario", label: "👤 Usuário" },
+  { href: "/banco-talentos/acesso", label: "💼 Banco de Talentos" },
+  { href: "/banco-talentos/admin", label: "🛠️ Gestão do Banco de Talentos" },
 
   {
     href: "/cadastro",
@@ -42,6 +45,7 @@ export default function Sidebar({
   onClose,
 }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useContext(AuthContext);
 
   const [openMenus, setOpenMenus] = useState<{
     [key: string]: boolean;
@@ -88,7 +92,7 @@ export default function Sidebar({
         "
       >
         <nav className="space-y-2">
-          {links.map(({ href, label, children }) => {
+          {links.filter((item) => item.href !== "/banco-talentos/admin" || Boolean(user)).map(({ href, label, children }) => {
             const active =
               pathname === href ||
               (href !== "/" && pathname.startsWith(`${href}/`));

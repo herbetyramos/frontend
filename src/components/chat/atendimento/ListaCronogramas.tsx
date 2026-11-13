@@ -45,6 +45,8 @@ interface Props {
 
   onMostrarConversas(): void;
 
+  onMostrarProfessores(): void;
+
   modoConversas: boolean;
 }
 
@@ -58,6 +60,7 @@ export default function ListaCronogramas({
   cronogramaSelecionado,
   onSelecionar,
   onMostrarConversas,
+  onMostrarProfessores,
   modoConversas,
 }: Props) {
   const [cronogramas, setCronogramas] = useState<Cronograma[]>([]);
@@ -415,25 +418,37 @@ export default function ListaCronogramas({
       ====================================================== */}
 
       <div className="border-b bg-blue-600 p-3 text-white">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-bold">
-            Cronogramas
-          </h2>
+  <div className="flex items-center justify-between gap-2">
+    <h2 className="text-lg font-bold">
+      Cronogramas
+    </h2>
 
-          <button
-            type="button"
-            onClick={onMostrarConversas}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-              modoConversas
-                ? "bg-white text-blue-700"
-                : "bg-blue-500 text-white hover:bg-blue-400"
-            }`}
-            title="Visualizar conversas iniciadas"
-          >
-            💬 Conversas
-          </button>
-        </div>
-      </div>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={onMostrarProfessores}
+        disabled={!cronogramaSelecionado}
+        className="rounded-lg bg-blue-500 px-2 py-2 text-xs font-semibold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-40"
+        title="Enviar mensagem aos professores do bloco"
+      >
+        👨‍🏫
+      </button>
+
+      <button
+        type="button"
+        onClick={onMostrarConversas}
+        className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+          modoConversas
+            ? "bg-white text-blue-700"
+            : "bg-blue-500 text-white hover:bg-blue-400"
+        }`}
+        title="Visualizar conversas iniciadas"
+      >
+        💬 Conversas
+      </button>
+    </div>
+  </div>
+</div>
 
       {/* =====================================================
           LISTA
