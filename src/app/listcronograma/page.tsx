@@ -13,7 +13,11 @@ import { visualizarRelatorioSegmento } from "@/reports/relatorioSegmento";
 import { relatorioGrade } from "@/reports/relatorioGrade";
 import { gerarRelatorioDetentora } from "@/reports/relatorioDetentora";
 import { gerarRelatorioSolicitacao } from "@/reports/gerarRelatorioSolicitacao";
-import { gerarCertificados } from "@/utils/gerarCertificadoPDF";
+import {
+  gerarCertificados,
+  gerarCertificadosPorSegmento,
+  gerarRelatorioEquipePorSegmento,
+} from "@/utils/gerarCertificadoPDF";
 import { relatorioFormaturaEmpresa } from "@/reports/relatorioFormaturaEmpresa";
 
 import Link from "next/link";
@@ -138,6 +142,11 @@ export default function ListCronograma() {
   const [empresas, setEmpresas] = useState<string[]>([]);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
 
+  const [segmentos, setSegmentos] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [filtroSegmento, setFiltroSegmento] = useState("");
+
   // Controla os menus de relatórios por toque no celular e clique no computador.
   const [menuRelatorioAberto, setMenuRelatorioAberto] =
     useState<"cronograma" | "formatura" | null>(null);
@@ -192,6 +201,22 @@ export default function ListCronograma() {
 
       setEmpresas(empresasUnicas);
 
+      const segmentosUnicos = Array.from(
+        new Map(
+          res.data
+            .map((item) => item.detentoras?.curso?.segmento)
+            .filter(
+              (segmento): segmento is { id: string; name: string } =>
+                Boolean(segmento?.id && segmento?.name)
+            )
+            .map((segmento) => [segmento.id, segmento] as const)
+        ).values()
+      ).sort((a, b) =>
+        a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+      );
+
+      setSegmentos(segmentosUnicos);
+
       agrupar(res.data);
     } catch (err) {
       console.error("Erro ao carregar cronograma:", err);
@@ -229,6 +254,13 @@ export default function ListCronograma() {
       );
     }
 
+    // FILTRO POR SEGMENTO
+    if (filtroSegmento) {
+      filtrado = filtrado.filter(
+        (item) => item.detentoras?.curso?.segmento?.id === filtroSegmento
+      );
+    }
+
     // FILTRO POR TEMA / EMPRESA
     if (busca.trim()) {
       const texto = busca.toLowerCase();
@@ -259,6 +291,7 @@ export default function ListCronograma() {
     filtroBloco,
     filtroDataFormatura,
     filtroEmpresa,
+    filtroSegmento,
     busca,
   ]);
 
@@ -499,6 +532,21 @@ Secretaria da Mulher e da Família.
               ))}
             </select>
 
+            {/* SEGMENTO */}
+            <select
+              value={filtroSegmento}
+              onChange={(e) => setFiltroSegmento(e.target.value)}
+              className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm rounded-md w-37.5 max-w-full h-8.5 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+            >
+              <option value="">Segmento</option>
+
+              {segmentos.map((segmento) => (
+                <option key={segmento.id} value={segmento.id}>
+                  {segmento.name}
+                </option>
+              ))}
+            </select>
+
             {/* EMPRESA */}
             <select
               value={filtroEmpresa}
@@ -713,6 +761,114 @@ Secretaria da Mulher e da Família.
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Professores
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cronogramasParaCertificados = cronogramaFull
+                        .filter((item) => Boolean(item.formatura))
+                        .filter(
+                          (item) =>
+                            String(item.is_status ?? "").trim().toUpperCase() !==
+                            "CANCELADO"
+                        )
+                        .filter(
+                          (item) =>
+                            !filtroDataFormatura ||
+                            item.formatura?.data_formatura?.trim() ===
+                              filtroDataFormatura.trim()
+                        )
+                        .filter(
+                          (item) =>
+                            !filtroBloco ||
+                            item.bloco_curso?.bloco_Curso === filtroBloco
+                        )
+                        .filter(
+                          (item) =>
+                            !filtroSegmento ||
+                            item.detentoras?.curso?.segmento?.id ===
+                              filtroSegmento
+                        )
+                        .map((item) => ({
+                          idCronograma: item.id,
+                          segmentoId:
+                            item.detentoras?.curso?.segmento?.id ??
+                            "sem-segmento",
+                          segmentoNome:
+                            item.detentoras?.curso?.segmento?.name ??
+                            "Sem segmento",
+                        }));
+
+                      if (cronogramasParaCertificados.length === 0) {
+                        toast.warning(
+                          "Nenhum curso de formatura encontrado para os filtros selecionados."
+                        );
+                      } else {
+                        void gerarCertificadosPorSegmento(
+                          cronogramasParaCertificados
+                        );
+                      }
+
+                      setMenuRelatorioAberto(null);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm font-semibold text-green-700 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    📜 Certificados
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cronogramasParaRelatorio = cronogramaFull
+                        .filter((item) => Boolean(item.formatura))
+                        .filter(
+                          (item) =>
+                            String(item.is_status ?? "").trim().toUpperCase() !==
+                            "CANCELADO"
+                        )
+                        .filter(
+                          (item) =>
+                            !filtroDataFormatura ||
+                            item.formatura?.data_formatura?.trim() ===
+                              filtroDataFormatura.trim()
+                        )
+                        .filter(
+                          (item) =>
+                            !filtroBloco ||
+                            item.bloco_curso?.bloco_Curso === filtroBloco
+                        )
+                        .filter(
+                          (item) =>
+                            !filtroSegmento ||
+                            item.detentoras?.curso?.segmento?.id ===
+                              filtroSegmento
+                        )
+                        .map((item) => ({
+                          idCronograma: item.id,
+                          segmentoId:
+                            item.detentoras?.curso?.segmento?.id ??
+                            "sem-segmento",
+                          segmentoNome:
+                            item.detentoras?.curso?.segmento?.name ??
+                            "Sem segmento",
+                        }));
+
+                      if (cronogramasParaRelatorio.length === 0) {
+                        toast.warning(
+                          "Nenhum curso de formatura encontrado para os filtros selecionados."
+                        );
+                      } else {
+                        void gerarRelatorioEquipePorSegmento(
+                          cronogramasParaRelatorio
+                        );
+                      }
+
+                      setMenuRelatorioAberto(null);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    📋 Relatório da Mesa
                   </button>
                 </div>
               </div>

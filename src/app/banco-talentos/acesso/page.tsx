@@ -66,7 +66,7 @@ export default function BancoTalentosAcessoPage() {
       <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-900 sm:p-8">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-fuchsia-100 text-2xl dark:bg-fuchsia-900/40">💼</div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Banco de Talentos</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Oportunidades</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Oportunidades profissionais para alunos concluintes dos cursos da Secretaria.</p>
         </div>
 
@@ -94,9 +94,9 @@ export default function BancoTalentosAcessoPage() {
             <input id="confirmarSenha" type="password" className={inputClass} value={confirmarSenha} onChange={(event) => setConfirmarSenha(event.target.value)} minLength={8} autoComplete="new-password" required />
           </div>}
           {erro && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">{erro}</p>}
-          <button type="submit" disabled={loading} className="w-full rounded-lg bg-fuchsia-700 px-4 py-3 font-semibold text-white transition hover:bg-fuchsia-800 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Aguarde..." : modo === "ativar" ? "Ativar meu acesso" : "Entrar no Banco de Talentos"}</button>
+          <button type="submit" disabled={loading} className="w-full rounded-lg bg-fuchsia-700 px-4 py-3 font-semibold text-white transition hover:bg-fuchsia-800 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Aguarde..." : modo === "ativar" ? "Ativar meu acesso" : "Verificar oportunidades"}</button>
         </form>
-        <p className="mt-5 text-center text-xs text-gray-500 dark:text-gray-400">O acesso é independente da conta administrativa do GestãoM.</p>
+        
       </div>
     </div>
   );
