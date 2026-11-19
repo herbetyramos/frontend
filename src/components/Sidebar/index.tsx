@@ -16,8 +16,8 @@ const links = [
   { href: "/listcronograma", label: "📅 Cronograma" },
   { href: "/relatorios", label: "📊 Relatórios" },
   { href: "/usuario", label: "👤 Usuário" },
-  { href: "/banco-talentos/acesso", label: "💼 Banco de Talentos" },
-  { href: "/banco-talentos/admin", label: "🛠️ Gestão do Banco de Talentos" },
+  { href: "/banco-talentos/acesso", label: "💼 Banco de Oportunidades" },
+  { href: "/banco-talentos/admin", label: "🛠️ Gestão de Oportunidades" },
 
   {
     href: "/cadastro",

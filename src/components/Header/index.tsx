@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -7,7 +8,7 @@ import {
   LogOut,
   ClipboardList,
 } from "lucide-react";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -24,8 +25,18 @@ export default function Header({
   const { user, signOut } = useContext(AuthContext);
   const router = useRouter();
 
+  // Evita divergência de renderização entre servidor e navegador
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Só considera o usuário após a montagem no navegador
+  const usuarioLogado = mounted && !!user;
+
   function handleAuthAction() {
-    if (user) {
+    if (usuarioLogado) {
       signOut();
     } else {
       router.push("/login");
@@ -53,97 +64,103 @@ export default function Header({
         {/* Menu e navegação */}
         <div className="flex shrink-0 items-center gap-1">
 
-          {/* Botão menu lateral */}
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-            className="
-              shrink-0
-              p-2
-              rounded-md
-              text-white
-              hover:bg-white/20
-              transition
-            "
-          >
-            {isOpen ? (
-              <X size={20} />
-            ) : (
-              <Menu size={20} />
-            )}
-          </button>
+          {/* Menus disponíveis somente para usuários logados */}
+          {usuarioLogado && (
+            <>
+              {/* Botão menu lateral */}
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
+                className="
+                  shrink-0
+                  p-2
+                  rounded-md
+                  text-white
+                  hover:bg-white/20
+                  transition
+                "
+              >
+                {isOpen ? (
+                  <X size={20} />
+                ) : (
+                  <Menu size={20} />
+                )}
+              </button>
 
-          {/* Link Cadastro de cursos */}
-          <Link
-            href="/cronograma"
-            title="Cadastro de cursos"
-            className="
-              shrink-0
-              text-white
-              text-xs
-              sm:text-sm
-              font-medium
-              hover:bg-white/20
-              px-2
-              sm:px-3
-              py-1
-              rounded-md
-              transition
-            "
-          >
-            ➕ Curso
-          </Link>
+              {/* Link Cadastro de cursos */}
+              <Link
+                href="/cronograma"
+                title="Cadastro de cursos"
+                className="
+                  shrink-0
+                  text-white
+                  text-xs
+                  sm:text-sm
+                  font-medium
+                  hover:bg-white/20
+                  px-2
+                  sm:px-3
+                  py-1
+                  rounded-md
+                  transition
+                "
+              >
+                ➕ Curso
+              </Link>
 
-          {/* Link Cronogramas */}
-          <Link
-            href="/listcronograma"
-            title="Cronogramas"
-            className="
-              shrink-0
-              text-white
-              text-xs
-              sm:text-sm
-              font-medium
-              hover:bg-white/20
-              px-2
-              sm:px-3
-              py-1
-              rounded-md
-              transition
-            "
-          >
-            ☰ Cronogramas
-          </Link>
+              {/* Link Cronogramas */}
+              <Link
+                href="/listcronograma"
+                title="Cronogramas"
+                className="
+                  shrink-0
+                  text-white
+                  text-xs
+                  sm:text-sm
+                  font-medium
+                  hover:bg-white/20
+                  px-2
+                  sm:px-3
+                  py-1
+                  rounded-md
+                  transition
+                "
+              >
+                ☰ Cronogramas
+              </Link>
 
-          {/* Link Lista de Presença */}
-          <Link
-            href="/lista-presenca"
-            title="Lista de Presença"
-            aria-label="Lista de Presença"
-            className="
-              shrink-0
-              flex
-              items-center
-              justify-center
-              gap-1
-              text-white
-              text-xs
-              sm:text-sm
-              font-medium
-              hover:bg-white/20
-              px-2
-              sm:px-3
-              py-1
-              rounded-md
-              transition
-            "
-          >
-            <ClipboardList size={19} />
-            <span className="hidden sm:inline">
-              Lista
-            </span>
-          </Link>
+              {/* Link Lista de Presença */}
+              <Link
+                href="/lista-presenca"
+                title="Lista de Presença"
+                aria-label="Lista de Presença"
+                className="
+                  shrink-0
+                  flex
+                  items-center
+                  justify-center
+                  gap-1
+                  text-white
+                  text-xs
+                  sm:text-sm
+                  font-medium
+                  hover:bg-white/20
+                  px-2
+                  sm:px-3
+                  py-1
+                  rounded-md
+                  transition
+                "
+              >
+                <ClipboardList size={19} />
+
+                <span className="hidden sm:inline">
+                  Lista
+                </span>
+              </Link>
+            </>
+          )}
 
         </div>
 
@@ -169,13 +186,13 @@ export default function Header({
         <div className="ml-auto flex shrink-0 items-center">
 
           <span className="hidden md:block text-white text-xs mr-2">
-            👤 {user?.name || "VISITANTE"}
+            👤 {usuarioLogado ? user?.name : "VISITANTE"}
           </span>
 
           <button
             type="button"
             onClick={handleAuthAction}
-            aria-label={user ? "Sair da conta" : "Entrar"}
+            aria-label={usuarioLogado ? "Sair da conta" : "Entrar"}
             className="
               flex
               shrink-0
@@ -193,7 +210,7 @@ export default function Header({
               transition
             "
           >
-            {user ? (
+            {usuarioLogado ? (
               <>
                 <LogOut size={16} />
                 SAIR
